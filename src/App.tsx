@@ -9,9 +9,11 @@ import JoinWithInvitePage from './pages/public/JoinWithInvitePage'
 import DashboardPage from './pages/DashboardPage'
 import MembersPage from './pages/MembersPage'
 import BillsPage from './pages/BillsPage'
+import PaymentHistoryPage from './pages/PaymentHistoryPage'
 import MealsPage from './pages/MealsPage'
 import TasksPage from './pages/TasksPage'
 import VotingPage from './pages/VotingPage'
+import ProfilePage from './pages/ProfilePage'
 import SettingsPage from './pages/SettingsPage'
 import InviteManagementPage from './pages/admin/InviteManagementPage'
 import MemberApprovalsPage from './pages/admin/MemberApprovalsPage'
@@ -114,6 +116,22 @@ function App() {
             element={
               <ProtectedRoute>
                 <SettingsPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/profile"
+            element={
+              <ProtectedRoute>
+                <ProfilePage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/payments/history"
+            element={
+              <ProtectedRoute>
+                <PaymentHistoryPage />
               </ProtectedRoute>
             }
           />
