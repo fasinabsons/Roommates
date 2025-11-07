@@ -1,4 +1,4 @@
-import AppLayout from '../components/layout/AppLayout'
+import Sidebar from '../components/layout/Sidebar'
 import { 
   DollarSign, 
   Users, 
@@ -8,78 +8,94 @@ import {
   Clock,
   UtensilsCrossed,
   Vote,
-  Award
+  Award,
+  Calendar,
+  Bell,
+  ArrowRight
 } from 'lucide-react'
 
 export default function DashboardPage() {
   return (
-    <AppLayout>
-      {/* Page Header */}
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">Dashboard</h1>
-        <p className="text-gray-600">Welcome back! Here's what's happening in your apartment.</p>
-      </div>
+    <div className="flex min-h-screen bg-gray-50">
+      <Sidebar />
+      
+      <div className="flex-1 ml-64">
+        {/* Header */}
+        <div className="bg-white border-b border-gray-200 px-8 py-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
+              <p className="text-sm text-gray-500 mt-1">Welcome back! Here's what's happening in your apartment.</p>
+            </div>
+            <button className="bg-indigo-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-indigo-700 transition-colors flex items-center gap-2">
+              <Bell className="w-4 h-4" />
+              3 Notifications
+            </button>
+          </div>
+        </div>
 
-      {/* Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-        {/* Stat Card 1 */}
-        <div className="card hover:shadow-lg transition-shadow">
+        <div className="p-8">
+
+        {/* Stats Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+          {/* Stat Card 1 */}
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-lg transition-shadow">
           <div className="flex items-center justify-between mb-3">
             <div className="p-3 bg-blue-100 rounded-lg">
               <DollarSign className="w-6 h-6 text-blue-600" />
             </div>
-            <span className="badge badge-primary">Due Soon</span>
+            <span className="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-medium">Due Soon</span>
           </div>
           <h3 className="text-2xl font-bold text-gray-900 mb-1">₹12,500</h3>
           <p className="text-sm text-gray-600">Pending Bills</p>
         </div>
 
-        {/* Stat Card 2 */}
-        <div className="card hover:shadow-lg transition-shadow">
+          {/* Stat Card 2 */}
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-lg transition-shadow">
           <div className="flex items-center justify-between mb-3">
             <div className="p-3 bg-green-100 rounded-lg">
               <Users className="w-6 h-6 text-green-600" />
             </div>
-            <span className="badge" style={{ backgroundColor: '#D1FAE5', color: '#065F46' }}>Active</span>
+            <span className="px-3 py-1 bg-green-100 text-green-700 rounded-full text-xs font-medium">Active</span>
           </div>
           <h3 className="text-2xl font-bold text-gray-900 mb-1">8 / 10</h3>
           <p className="text-sm text-gray-600">Members</p>
         </div>
 
-        {/* Stat Card 3 */}
-        <div className="card hover:shadow-lg transition-shadow">
-          <div className="flex items-center justify-between mb-3">
-            <div className="p-3 bg-purple-100 rounded-lg">
-              <Award className="w-6 h-6 text-purple-600" />
+          {/* Stat Card 3 */}
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-lg transition-shadow">
+            <div className="flex items-center justify-between mb-3">
+              <div className="p-3 bg-purple-100 rounded-lg">
+                <Award className="w-6 h-6 text-purple-600" />
+              </div>
+              <span className="px-3 py-1 bg-purple-100 text-purple-700 rounded-full text-xs font-medium">Gold Tier</span>
             </div>
-            <span className="badge" style={{ backgroundColor: '#F3E8FF', color: '#6B21A8' }}>Gold Tier</span>
+            <h3 className="text-2xl font-bold text-gray-900 mb-1">2,450</h3>
+            <p className="text-sm text-gray-600">Loyalty Points</p>
           </div>
-          <h3 className="text-2xl font-bold text-gray-900 mb-1">2,450</h3>
-          <p className="text-sm text-gray-600">Loyalty Points</p>
+
+          {/* Stat Card 4 */}
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-lg transition-shadow">
+            <div className="flex items-center justify-between mb-3">
+              <div className="p-3 bg-orange-100 rounded-lg">
+                <TrendingUp className="w-6 h-6 text-orange-600" />
+              </div>
+              <span className="px-3 py-1 bg-orange-100 text-orange-700 rounded-full text-xs font-medium">+12%</span>
+            </div>
+            <h3 className="text-2xl font-bold text-gray-900 mb-1">₹45,000</h3>
+            <p className="text-sm text-gray-600">Total Investments</p>
+          </div>
         </div>
 
-        {/* Stat Card 4 */}
-        <div className="card hover:shadow-lg transition-shadow">
-          <div className="flex items-center justify-between mb-3">
-            <div className="p-3 bg-orange-100 rounded-lg">
-              <TrendingUp className="w-6 h-6 text-orange-600" />
-            </div>
-            <span className="badge" style={{ backgroundColor: '#FED7AA', color: '#9A3412' }}>+12%</span>
-          </div>
-          <h3 className="text-2xl font-bold text-gray-900 mb-1">₹45,000</h3>
-          <p className="text-sm text-gray-600">Total Investments</p>
-        </div>
-      </div>
-
-      {/* Two Column Layout */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Main Content - 2 columns */}
-        <div className="lg:col-span-2 space-y-6">
-          {/* Pending Actions */}
-          <div className="card">
+        {/* Two Column Layout */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Main Content - 2 columns */}
+          <div className="lg:col-span-2 space-y-6">
+            {/* Pending Actions */}
+            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-xl font-bold text-gray-900">Pending Actions</h2>
-              <span className="badge" style={{ backgroundColor: '#FEE2E2', color: '#991B1B' }}>3 Items</span>
+              <span className="px-3 py-1 bg-red-100 text-red-700 rounded-full text-xs font-medium">3 Items</span>
             </div>
 
             <div className="space-y-3">
@@ -116,8 +132,8 @@ export default function DashboardPage() {
           </div>
 
           {/* Recent Activity */}
-          <div className="card">
-            <h2 className="text-xl font-bold text-gray-900 mb-6">Recent Activity</h2>
+            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+              <h2 className="text-xl font-bold text-gray-900 mb-6">Recent Activity</h2>
 
             <div className="space-y-4">
               {/* Activity Item */}
@@ -164,9 +180,9 @@ export default function DashboardPage() {
 
         {/* Sidebar - 1 column */}
         <div className="space-y-6">
-          {/* Quick Links */}
-          <div className="card">
-            <h3 className="text-lg font-bold text-gray-900 mb-4">Quick Actions</h3>
+            {/* Quick Links */}
+            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+              <h3 className="text-lg font-bold text-gray-900 mb-4">Quick Actions</h3>
             <div className="space-y-2">
               <button className="w-full btn-primary justify-start">
                 <DollarSign className="w-5 h-5" />
@@ -183,9 +199,9 @@ export default function DashboardPage() {
             </div>
           </div>
 
-          {/* Leaderboard */}
-          <div className="card">
-            <h3 className="text-lg font-bold text-gray-900 mb-4">🏆 Leaderboard</h3>
+            {/* Leaderboard */}
+            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+              <h3 className="text-lg font-bold text-gray-900 mb-4">🏆 Leaderboard</h3>
             <div className="space-y-3">
               {[
                 { rank: 1, name: 'Amit P.', points: 3200, badge: '🥇' },
@@ -217,7 +233,9 @@ export default function DashboardPage() {
           </div>
         </div>
       </div>
-    </AppLayout>
+        </div>
+      </div>
+    </div>
   )
 }
 
