@@ -11,6 +11,8 @@ import MembersPage from './pages/MembersPage'
 import BillsPage from './pages/BillsPage'
 import MealsPage from './pages/MealsPage'
 import TasksPage from './pages/TasksPage'
+import VotingPage from './pages/VotingPage'
+import SettingsPage from './pages/SettingsPage'
 import InviteManagementPage from './pages/admin/InviteManagementPage'
 import MemberApprovalsPage from './pages/admin/MemberApprovalsPage'
 import TestPage from './pages/TestPage'
@@ -96,6 +98,22 @@ function App() {
             element={
               <ProtectedRoute>
                 <TasksPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/voting"
+            element={
+              <ProtectedRoute>
+                <VotingPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/settings"
+            element={
+              <ProtectedRoute>
+                <SettingsPage />
               </ProtectedRoute>
             }
           />
