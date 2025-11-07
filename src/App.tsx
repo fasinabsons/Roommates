@@ -13,10 +13,13 @@ import PaymentHistoryPage from './pages/PaymentHistoryPage'
 import MealsPage from './pages/MealsPage'
 import TasksPage from './pages/TasksPage'
 import VotingPage from './pages/VotingPage'
+import MoneyPoolsPage from './pages/MoneyPoolsPage'
+import NotificationsPage from './pages/NotificationsPage'
 import ProfilePage from './pages/ProfilePage'
 import SettingsPage from './pages/SettingsPage'
 import InviteManagementPage from './pages/admin/InviteManagementPage'
 import MemberApprovalsPage from './pages/admin/MemberApprovalsPage'
+import UserManagementPage from './pages/admin/UserManagementPage'
 import TestPage from './pages/TestPage'
 
 // Protected Route Component
@@ -135,6 +138,22 @@ function App() {
               </ProtectedRoute>
             }
           />
+          <Route
+            path="/money-pools"
+            element={
+              <ProtectedRoute>
+                <MoneyPoolsPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/notifications"
+            element={
+              <ProtectedRoute>
+                <NotificationsPage />
+              </ProtectedRoute>
+            }
+          />
 
           {/* Admin Routes */}
           <Route
@@ -150,6 +169,14 @@ function App() {
             element={
               <ProtectedRoute>
                 <MemberApprovalsPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/users"
+            element={
+              <ProtectedRoute>
+                <UserManagementPage />
               </ProtectedRoute>
             }
           />
