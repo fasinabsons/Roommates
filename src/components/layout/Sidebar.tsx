@@ -12,7 +12,8 @@ import {
   UserCheck,
   Mail,
   ShoppingCart,
-  Home
+  Home,
+  Award
 } from 'lucide-react'
 import { useState } from 'react'
 
@@ -33,6 +34,7 @@ const navItems: NavItem[] = [
   { icon: ShoppingCart, label: 'Grocery Teams', href: '/grocery-teams' },
   { icon: Vote, label: 'Voting & Polls', href: '/voting' },
   { icon: Home, label: 'Resources', href: '/resources' },
+  { icon: Award, label: 'Loyalty Points', href: '/loyalty' },
   { icon: TrendingUp, label: 'Investments', href: '/investments' },
   { icon: CheckSquare, label: 'Tasks', href: '/tasks' },
   { icon: Calendar, label: 'Calendar', href: '/calendar' },
