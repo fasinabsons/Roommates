@@ -17,6 +17,8 @@ import MoneyPoolsPage from './pages/MoneyPoolsPage'
 import NotificationsPage from './pages/NotificationsPage'
 import ProfilePage from './pages/ProfilePage'
 import SettingsPage from './pages/SettingsPage'
+import GroceryTeamsPage from './pages/GroceryTeamsPage'
+import ResourceBookingPage from './pages/ResourceBookingPage'
 import InviteManagementPage from './pages/admin/InviteManagementPage'
 import MemberApprovalsPage from './pages/admin/MemberApprovalsPage'
 import UserManagementPage from './pages/admin/UserManagementPage'
@@ -151,6 +153,22 @@ function App() {
             element={
               <ProtectedRoute>
                 <NotificationsPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/grocery-teams"
+            element={
+              <ProtectedRoute>
+                <GroceryTeamsPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/resources"
+            element={
+              <ProtectedRoute>
+                <ResourceBookingPage />
               </ProtectedRoute>
             }
           />

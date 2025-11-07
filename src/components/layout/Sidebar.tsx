@@ -10,7 +10,9 @@ import {
   MessageSquare,
   Settings,
   UserCheck,
-  Mail
+  Mail,
+  ShoppingCart,
+  Home
 } from 'lucide-react'
 import { useState } from 'react'
 
@@ -28,7 +30,9 @@ const navItems: NavItem[] = [
   { icon: Users, label: 'Members', href: '/members' },
   { icon: DollarSign, label: 'Bills & Payments', href: '/bills', badge: 3 },
   { icon: UtensilsCrossed, label: 'Community Meals', href: '/meals' },
+  { icon: ShoppingCart, label: 'Grocery Teams', href: '/grocery-teams' },
   { icon: Vote, label: 'Voting & Polls', href: '/voting' },
+  { icon: Home, label: 'Resources', href: '/resources' },
   { icon: TrendingUp, label: 'Investments', href: '/investments' },
   { icon: CheckSquare, label: 'Tasks', href: '/tasks' },
   { icon: Calendar, label: 'Calendar', href: '/calendar' },
