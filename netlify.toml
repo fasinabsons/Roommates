@@ -1,0 +1,94 @@
+# ============================================================================
+# ZIBERLIVE - NETLIFY CONFIGURATION
+# ============================================================================
+
+[build]
+  # Build command
+  command = "npm run build"
+  
+  # Output directory
+  publish = "dist"
+  
+  # Node version
+  [build.environment]
+    NODE_VERSION = "18"
+
+# ============================================================================
+# REDIRECTS & REWRITES
+# ============================================================================
+
+# SPA redirect - all routes go to index.html
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+
+# ============================================================================
+# HEADERS
+# ============================================================================
+
+# Security headers for all pages
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Frame-Options = "DENY"
+    X-Content-Type-Options = "nosniff"
+    X-XSS-Protection = "1; mode=block"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+    Permissions-Policy = "camera=(), microphone=(), geolocation=()"
+
+# Cache static assets
+[[headers]]
+  for = "/assets/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
+# ============================================================================
+# ENVIRONMENT VARIABLES
+# ============================================================================
+# Set these in Netlify Dashboard → Site Settings → Environment Variables
+#
+# Required:
+# - VITE_SUPABASE_URL
+# - VITE_SUPABASE_ANON_KEY
+# - VITE_CLOUDINARY_CLOUD_NAME
+# - VITE_CLOUDINARY_API_KEY
+#
+# Optional:
+# - VITE_APP_ENV=production
+# - VITE_APP_DOMAIN=ziberlive.com
+#
+# ============================================================================
+
+# ============================================================================
+# DEPLOYMENT CONTEXT
+# ============================================================================
+
+# Production settings
+[context.production]
+  command = "npm run build"
+  [context.production.environment]
+    NODE_ENV = "production"
+
+# Preview/branch deployments
+[context.deploy-preview]
+  command = "npm run build"
+
+# Branch deployments
+[context.branch-deploy]
+  command = "npm run build"
+
+# ============================================================================
+# FUNCTIONS (For future use)
+# ============================================================================
+[functions]
+  directory = "netlify/functions"
+  node_bundler = "esbuild"
+
+# ============================================================================
+# PLUGINS (Optional)
+# ============================================================================
+# Uncomment to add plugins
+# [[plugins]]
+#   package = "@netlify/plugin-lighthouse"
+
