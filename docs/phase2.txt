@@ -1,0 +1,501 @@
+================================================================================
+PHASE 2 - COMMUNITY MEALS & TASKS MANAGEMENT (WEEK 5-8)
+RoomMate Manager - Grocery Rotation & Task Scheduling
+================================================================================
+
+PHASE GOAL: Implement community meal management with grocery team rotation, 
+OCR receipt scanning, and automated task rotation system.
+
+TIMELINE: 4 Weeks
+PRIORITY: Core Feature - High Complexity
+
+================================================================================
+WEEK 5: COMMUNITY MEAL SETUP & MENU MANAGEMENT
+================================================================================
+
+5.1 DATABASE TABLES
+-------------------
+**community_meals table**
+- id, apartment_id, has_chef, chef_name, chef_photo_url
+- chef_contact, chef_id_card_url, chef_salary, is_active
+
+**meal_participants table**
+- id, community_meal_id, user_id, meal_types (array)
+- include_water (boolean), joined_at
+
+**menus table**
+- id, community_meal_id, day_of_week, meal_type
+- main_course, curry_1, curry_2, side_dish, dessert, beverage, photo_url
+
+**grocery_teams table**
+- id, community_meal_id, team_number, week_number, year
+
+**grocery_team_members table**
+- id, grocery_team_id, user_id
+
+**grocery_purchases table**
+- id, grocery_team_id, purchase_date, total_amount
+- receipt_url, purchased_by, approved_by
+
+**grocery_items table**
+- id, grocery_purchase_id, item_name, quantity, price
+
+5.2 COMMUNITY MEAL SETUP (ADMIN)
+---------------------------------
+□ Create Community Meal Modal
+  - Select apartment
+  - Include chef? (Yes/No toggle)
+  - If Yes: Chef profile form (name, contact, ID upload, salary)
+  - Meal types enabled (checkboxes: Breakfast, Lunch, Dinner)
+  - Operating days (select days or all 7 days)
+  - Submit creates community_meals record
+
+□ Community Meal Dashboard Page
+  - Show active meal programs per apartment
+  - Participant count
+  - Current week's grocery team
+  - This week's menu preview
+  - Quick actions: Edit Chef, Manage Participants, Edit Menu
+
+5.3 MENU MANAGEMENT
+-------------------
+□ Weekly Menu Planner Page
+  - 7-day calendar grid view
+  - Each day shows 3 columns (Breakfast, Lunch, Dinner if enabled)
+  - Click cell to edit meal
+  - Edit Meal Modal:
+    * Main course (text input)
+    * Curry 1, Curry 2 (text inputs)
+    * Side dish (text input)
+    * Dessert (text input, optional)
+    * Beverage (text input, optional)
+    * Upload food photo (Cloudinary)
+  - Save menu
+  - Copy previous week's menu (quick action)
+  - Template system (save frequently used menus)
+
+□ Menu Viewing (Users)
+  - User-facing weekly menu page
+  - Beautiful card layout with food photos
+  - Filter by meal type
+  - Today's menu highlighted
+  - Users can favorite dishes
+
+
+================================================================================
+WEEK 6: GROCERY TEAM ROTATION & PURCHASE TRACKING
+================================================================================
+
+6.1 TEAM GENERATION SYSTEM
+---------------------------
+□ Auto-Generate Grocery Teams (Admin Function)
+  - Algorithm:
+    * Get all meal participants for apartment
+    * Calculate team size: target 2-3 members per team
+    * Example: 17 users → 8 teams (7 teams of 2, 1 team of 3)
+    * Example: 18 users → 9 teams (all teams of 2)
+  - Create grocery_teams records for 4-week cycle
+  - Assign team_members randomly or admin-specified
+  - Store rotation schedule
+
+□ Edge Function: generate-grocery-teams
+  ```typescript
+  // Input: community_meal_id, start_date
+  // Logic:
+  const participants = await getParticipants(mealId)
+  const teamSize = 2
+  const teams = createTeams(participants, teamSize)
+  
+  for (let week = 1; week <= 4; week++) {
+    const teamIndex = (week - 1) % teams.length
+    await createGroceryTeam({
+      community_meal_id: mealId,
+      team_number: teamIndex + 1,
+      week_number: week,
+      year: currentYear,
+      members: teams[teamIndex]
+    })
+  }
+  ```
+
+6.2 GROCERY SHOPPING INTERFACE
+-------------------------------
+□ My Grocery Team Page (User View)
+  - Show current week's team assignment
+  - Team members list with contact info
+  - Week date range
+  - Shopping checklist (based on menu)
+  - Team chat/coordination (WhatsApp link for MVP)
+  - "Upload Purchase Receipt" button
+
+□ Upload Grocery Receipt Modal
+  - Step 1: Upload Receipt Photo
+    * Cloudinary upload widget
+    * Preview uploaded image
+    * Multiple receipts allowed (if shopped multiple times)
+  
+  - Step 2: OCR Processing
+    * Auto-extract items using Cloudinary AI
+    * Display extracted data in editable table:
+      - Item Name (editable)
+      - Quantity (editable)
+      - Price (editable)
+      - Delete row button
+    * Add item button (manual entry)
+  
+  - Step 3: Additional Info
+    * Purchase date (date picker)
+    * Store name (text input)
+    * Total amount (auto-sum from items)
+    * Notes (optional)
+  
+  - Step 4: Submit
+    * Create grocery_purchase record
+    * Insert grocery_items records
+    * Notify admin for approval
+    * Notify other team members
+
+6.3 ADMIN REVIEW & APPROVAL
+---------------------------
+□ Grocery Purchases Review Page
+  - List all pending purchases
+  - Each purchase card shows:
+    * Team number and week
+    * Purchased by (user)
+    * Purchase date
+    * Total amount
+    * Item count
+    * Receipt thumbnail
+  - Click to view details
+  - Approve/Reject buttons
+
+□ Purchase Detail Modal
+  - Show full itemized list
+  - View original receipt (full size)
+  - Compare with expected weekly budget
+  - Budget variance indicator (over/under budget)
+  - Admin notes field
+  - Approve: Updates status, triggers cost calculation
+  - Reject: Requires reason, notifies team
+
+6.4 COST SPLITTING CALCULATION
+-------------------------------
+□ Edge Function: calculate-meal-costs
+  - Trigger: When purchase is approved
+  - Logic:
+    ```typescript
+    const totalCost = groceryPurchase.total_amount
+    const participants = await getMealParticipants(mealId)
+    
+    // Calculate shares based on meal type participation
+    for (const participant of participants) {
+      let share = 0
+      const mealTypes = participant.meal_types
+      
+      // Full meals (3): 100% share
+      // Lunch only: 40% share
+      // Dinner only: 50% share
+      // Adjust for water inclusion
+      
+      share = calculateShare(mealTypes, participant.include_water, totalCost)
+      
+      // Create bill entry for this user
+      await createUserBill({
+        user_id: participant.user_id,
+        bill_type: 'community_meal',
+        amount_due: share,
+        week: currentWeek
+      })
+    }
+    ```
+
+6.5 TEAM PERFORMANCE RATING
+----------------------------
+□ Rate Grocery Team Modal (Appears at end of week)
+  - Notification sent to all participants (except team members)
+  - Rating categories (1-5 stars each):
+    * Budget Management
+    * Quality of Items
+    * Timeliness
+    * Communication
+  - Overall rating (auto-average)
+  - Feedback comments (optional)
+  - Submit rating
+  - Team members see ratings and feedback
+  - High-rated teams (4+) earn +25 loyalty points each
+
+
+================================================================================
+WEEK 7: TASK MANAGEMENT SYSTEM
+================================================================================
+
+7.1 DATABASE TABLES
+-------------------
+**tasks table**
+- id, apartment_id, task_name, description
+- task_type (individual/team), frequency, difficulty
+- loyalty_points_reward, estimated_duration
+
+**task_assignments table**
+- id, task_id, assigned_to (user_id or array for team)
+- assigned_date, due_date, status
+- started_at, completed_at, completion_proof_url
+- quality_rating, verified_by
+
+7.2 TASK CREATION (ADMIN)
+--------------------------
+□ Task Templates Page
+  - Predefined tasks library:
+    * Clean Bathroom
+    * Clean Kitchen
+    * Take Out Trash
+    * Mop Common Areas
+    * Clean Refrigerator
+    * Cooking (if no chef)
+  - Each template shows: Name, Description, Typical Duration, Points
+  - "Create Custom Task" button
+
+□ Create Task Modal
+  - Task name (required)
+  - Description (rich text)
+  - Task type (radio: Individual / Team)
+  - If Team: Number of people required
+  - Frequency (dropdown: Daily, Weekly, Bi-weekly, Monthly)
+  - Difficulty (Easy/Medium/Hard)
+  - Loyalty points reward (auto-suggest based on difficulty)
+  - Estimated duration (minutes)
+  - Preferred time slots (optional)
+  - Submit creates task template
+
+7.3 TASK ROTATION GENERATION
+-----------------------------
+□ Auto-Generate Task Schedule (Admin Button)
+  - Select apartment
+  - Select task template
+  - Choose assignment mode:
+    * Round-robin (automatic rotation)
+    * Random each time
+    * Manual assignment
+  - Start date
+  - Generate: Creates task_assignments for next 30 days
+
+□ Edge Function: generate-task-rotation
+  ```typescript
+  // Get all eligible users in apartment
+  const users = await getApartmentUsers(apartmentId)
+  const task = await getTask(taskId)
+  
+  if (task.frequency === 'daily') {
+    let userIndex = 0
+    for (let day = 0; day < 30; day++) {
+      const assignedUser = users[userIndex % users.length]
+      await createTaskAssignment({
+        task_id: taskId,
+        assigned_to: assignedUser.id,
+        assigned_date: addDays(startDate, day),
+        due_date: addDays(startDate, day),
+        status: 'pending'
+      })
+      userIndex++
+    }
+  }
+  // Similar logic for weekly, bi-weekly, monthly
+  ```
+
+7.4 TASK VIEWING (USERS)
+-------------------------
+□ My Tasks Page
+  - Today's Tasks (highlighted section):
+    * Show all tasks due today
+    * Status badges (Pending/In Progress/Completed)
+    * "Start Task" / "Complete Task" buttons
+    * Countdown timer if started
+  
+  - Upcoming Tasks (next 7 days):
+    * Calendar view or list view toggle
+    * Each task shows: Name, Date, Estimated time, Points reward
+  
+  - Task History:
+    * Completed tasks with ratings
+    * Total points earned from tasks
+    * Completion rate percentage
+
+□ Task Detail Page
+  - Task information (name, description, difficulty)
+  - Assigned date and due date
+  - Points reward
+  - Status
+  - If team task: Show other team members
+  - Action buttons based on status:
+    * Pending: "Start Task"
+    * Started: "Upload Proof & Complete"
+    * Completed: "View Rating"
+
+7.5 TASK COMPLETION FLOW
+-------------------------
+□ Start Task Button
+  - Updates status to 'started'
+  - Records started_at timestamp
+  - Shows timer (tracks how long task takes)
+
+□ Complete Task Modal
+  - Upload completion proof:
+    * Take photo (camera access)
+    * Upload from gallery
+    * Cloudinary upload
+    * Multiple photos allowed
+  - Add completion notes (optional)
+  - Confirm completion
+  - Updates status to 'completed', records completed_at
+  - Submits for admin review (if enabled)
+  - Awards loyalty points (if auto-approve enabled)
+
+7.6 ADMIN TASK VERIFICATION
+----------------------------
+□ Task Verification Queue Page
+  - List of completed tasks pending verification
+  - Each card shows:
+    * Task name
+    * Assigned user (with photo)
+    * Completion date and time taken
+    * Completion photos (thumbnails)
+    * User notes
+  - Click to verify
+
+□ Verify Task Modal
+  - View all completion proofs (full size)
+  - Quality rating (1-5 stars)
+  - Admin notes
+  - Approve: Awards points + updates status
+  - Reject: Requires reason, task marked as incomplete
+
+
+================================================================================
+WEEK 8: TASK EXCHANGE & NOTIFICATIONS
+================================================================================
+
+8.1 TASK EXCHANGE SYSTEM
+-------------------------
+□ Task Exchange Request (User Flow)
+  - From My Tasks page, click "Swap This Task"
+  - Select user to swap with
+  - Add message explaining why
+  - Submit request
+  - Other user receives notification
+  - If admin approval required: Admin also notified
+
+□ Review Exchange Request Modal
+  - Show task details (original user's task)
+  - Show your task that will be swapped
+  - Request message
+  - Accept/Reject buttons
+  - If accepted:
+    * Swap assigned_to for both tasks
+    * Notify both users
+    * Log exchange in activity
+
+8.2 TASK REMINDERS
+------------------
+□ Edge Function: send-task-reminders
+  - Run daily at 6 AM
+  - Query task_assignments due today or tomorrow
+  - Send notifications:
+    * 1 day before: "Your task tomorrow: Clean Kitchen"
+    * 3 hours before: "Task reminder: Clean Kitchen starts in 3 hours"
+    * At due time: "Your task is due now: Clean Kitchen"
+  - Mark as overdue if not completed by end of day
+
+8.3 MISSED TASK HANDLING
+-------------------------
+□ Automated Missed Task Detection
+  - Cron job runs daily at midnight
+  - Find task_assignments:
+    * Status = 'pending' OR 'started'
+    * due_date < today
+  - Update status to 'missed'
+  - Deduct loyalty points (-30 points)
+  - Send notification to user
+  - Send alert to admin (after 3 missed tasks)
+  - Reassign task to next person in rotation
+
+8.4 TASK ANALYTICS
+-------------------
+□ Task Performance Dashboard (Admin)
+  - Overall completion rate (%)
+  - Completed vs. Missed (pie chart)
+  - Average time per task type
+  - Top performers (leaderboard)
+  - Tasks by status (bar chart)
+  - Weekly completion trends (line chart)
+
+□ User Task Stats (User Profile)
+  - Total tasks completed
+  - On-time completion rate
+  - Average quality rating
+  - Total points from tasks
+  - Current streak (consecutive days)
+  - Task completion badges
+
+
+================================================================================
+TESTING & INTEGRATION
+================================================================================
+
+□ Community Meal Testing
+  - Create meal program with chef
+  - Add participants with different meal types
+  - Generate grocery teams
+  - Upload receipt with OCR
+  - Admin approve purchase
+  - Verify cost splitting accuracy
+  - Rate team performance
+  - Check loyalty points awarded
+
+□ Task Management Testing
+  - Create task templates
+  - Generate rotation schedule
+  - Assign tasks to users
+  - User starts task
+  - User completes task with photo
+  - Admin verifies task
+  - Test task exchange flow
+  - Test missed task penalties
+  - Verify reminders sent on time
+
+□ Integration Testing
+  - Meal costs added to user bills
+  - Task points added to loyalty system
+  - Notifications for all events
+  - Real-time updates across users
+  - Mobile responsiveness
+
+================================================================================
+PHASE 2 DELIVERABLES
+================================================================================
+
+✅ Community meal program setup with chef profile
+✅ Meal participant management (opt-in/opt-out)
+✅ Weekly menu planner with food photos
+✅ Automatic grocery team generation and rotation
+✅ Receipt upload with OCR extraction
+✅ Itemized grocery purchase tracking
+✅ Admin approval workflow for purchases
+✅ Dynamic cost splitting based on meal participation
+✅ Team performance rating system
+✅ Task template creation and management
+✅ Automated task rotation generation
+✅ User task dashboard and calendar
+✅ Task completion with photo proof
+✅ Admin task verification
+✅ Task exchange system
+✅ Task reminders and missed task handling
+✅ Loyalty points integration for tasks and meals
+✅ Analytics for meals and tasks
+
+================================================================================
+READY FOR PHASE 3
+================================================================================
+
+Next Phase: Resources, Voting & Disputes
+Timeline: Week 9-12
+

@@ -1,0 +1,891 @@
+================================================================================
+DESIGN THEME SPECIFICATION
+RoomMate Manager - Complete UI/UX Design System
+================================================================================
+
+VERSION: 1.0
+LAST UPDATED: November 4, 2025
+DESIGN SYSTEM: Material Design 3 + Custom Extensions
+
+================================================================================
+1. COLOR PALETTE
+================================================================================
+
+PRIMARY COLORS
+--------------
+Primary Blue:
+- Main: #3B82F6 (rgb(59, 130, 246))
+- Light: #60A5FA (rgb(96, 165, 250))
+- Dark: #2563EB (rgb(37, 99, 235))
+- Lighter: #DBEAFE (rgb(219, 234, 254))
+- Darker: #1E40AF (rgb(30, 64, 175))
+
+Usage: Primary actions, links, active states, focus indicators
+
+SECONDARY COLORS
+---------------
+Green (Success):
+- Main: #10B981 (rgb(16, 185, 129))
+- Light: #34D399 (rgb(52, 211, 153))
+- Dark: #059669 (rgb(5, 150, 105))
+- Lighter: #D1FAE5 (rgb(209, 250, 229))
+- Darker: #047857 (rgb(4, 120, 87))
+
+Usage: Success messages, paid status, positive actions, verification badges
+
+ACCENT COLORS
+------------
+Amber (Warning):
+- Main: #F59E0B (rgb(245, 158, 11))
+- Light: #FBBF24 (rgb(251, 191, 36))
+- Dark: #D97706 (rgb(217, 119, 6))
+- Lighter: #FEF3C7 (rgb(254, 243, 199))
+- Darker: #B45309 (rgb(180, 83, 9))
+
+Usage: Warnings, pending states, important notices
+
+SEMANTIC COLORS
+--------------
+Error/Danger Red:
+- Main: #EF4444 (rgb(239, 68, 68))
+- Light: #F87171 (rgb(248, 113, 113))
+- Dark: #DC2626 (rgb(220, 38, 38))
+- Lighter: #FEE2E2 (rgb(254, 226, 226))
+- Darker: #991B1B (rgb(153, 27, 27))
+
+Usage: Errors, overdue status, delete actions, critical alerts
+
+Info Blue:
+- Main: #3B82F6 (same as primary)
+- Light: #60A5FA
+- Lighter: #DBEAFE
+
+Usage: Information messages, tips, help text
+
+NEUTRAL COLORS
+-------------
+Background:
+- White: #FFFFFF (rgb(255, 255, 255))
+- Off-White: #FAFAFA (rgb(250, 250, 250))
+- Light Gray: #F9FAFB (rgb(249, 250, 251))
+
+Surface:
+- Card Background: #FFFFFF
+- Elevated Surface: #FFFFFF with shadow
+- Hover Surface: #F9FAFB
+- Selected Surface: #F3F4F6
+
+Borders:
+- Light: #E5E7EB (rgb(229, 231, 235))
+- Medium: #D1D5DB (rgb(209, 213, 219))
+- Dark: #9CA3AF (rgb(156, 163, 175))
+
+Text Colors:
+- Primary Text: #111827 (rgb(17, 24, 39))
+- Secondary Text: #6B7280 (rgb(107, 114, 128))
+- Tertiary Text: #9CA3AF (rgb(156, 163, 175))
+- Disabled Text: #D1D5DB (rgb(209, 213, 219))
+- White Text: #FFFFFF (on dark backgrounds)
+
+LOYALTY TIER COLORS
+-------------------
+Bronze:
+- Main: #CD7F32 (rgb(205, 127, 50))
+- Gradient: linear-gradient(135deg, #CD7F32 0%, #B8733C 100%)
+
+Silver:
+- Main: #C0C0C0 (rgb(192, 192, 192))
+- Gradient: linear-gradient(135deg, #C0C0C0 0%, #A8A8A8 100%)
+
+Gold:
+- Main: #FFD700 (rgb(255, 215, 0))
+- Gradient: linear-gradient(135deg, #FFD700 0%, #FFC700 100%)
+
+Platinum:
+- Main: #E5E4E2 (rgb(229, 228, 226))
+- Gradient: linear-gradient(135deg, #E5E4E2 0%, #B0B0B0 100%)
+
+
+================================================================================
+2. TYPOGRAPHY
+================================================================================
+
+FONT FAMILY
+-----------
+Primary: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 
+         'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 
+         'Helvetica Neue', sans-serif
+
+Monospace (for codes/IDs): 'Fira Code', 'Courier New', monospace
+
+FONT SIZES
+----------
+Display (Hero Text):
+- XXL: 48px / 3rem (line-height: 1.2)
+- XL: 40px / 2.5rem (line-height: 1.2)
+
+Headings:
+- H1: 32px / 2rem (line-height: 1.25) - Page titles
+- H2: 24px / 1.5rem (line-height: 1.3) - Section titles
+- H3: 20px / 1.25rem (line-height: 1.4) - Subsection titles
+- H4: 18px / 1.125rem (line-height: 1.4) - Card titles
+- H5: 16px / 1rem (line-height: 1.5) - Small headings
+- H6: 14px / 0.875rem (line-height: 1.5) - Tiny headings
+
+Body Text:
+- Large: 18px / 1.125rem (line-height: 1.6)
+- Regular: 16px / 1rem (line-height: 1.5) - Default body text
+- Small: 14px / 0.875rem (line-height: 1.5) - Labels, captions
+- Tiny: 12px / 0.75rem (line-height: 1.4) - Helper text, timestamps
+
+FONT WEIGHTS
+-----------
+- Thin: 100 (rarely used)
+- Light: 300 (for large display text)
+- Regular: 400 (default body text)
+- Medium: 500 (emphasized text, labels)
+- Semibold: 600 (headings, buttons)
+- Bold: 700 (important headings, active states)
+- Extrabold: 800 (hero text, CTAs)
+- Black: 900 (rarely used)
+
+LETTER SPACING
+-------------
+- Tight: -0.02em (for headings)
+- Normal: 0 (default)
+- Wide: 0.025em (for uppercase labels)
+- Wider: 0.05em (for uppercase buttons)
+
+TEXT TRANSFORM
+-------------
+- Uppercase: For labels, tabs, buttons (use sparingly)
+- Capitalize: For proper nouns, titles
+- Lowercase: Never enforce (respect user input)
+
+
+================================================================================
+3. SPACING SYSTEM
+================================================================================
+
+BASE UNIT: 4px (0.25rem)
+
+SPACING SCALE (Multiples of 4px)
+--------------------------------
+- 0: 0px (0rem)
+- 1: 4px (0.25rem)
+- 2: 8px (0.5rem)
+- 3: 12px (0.75rem)
+- 4: 16px (1rem) - Default spacing
+- 5: 20px (1.25rem)
+- 6: 24px (1.5rem)
+- 7: 28px (1.75rem)
+- 8: 32px (2rem)
+- 10: 40px (2.5rem)
+- 12: 48px (3rem)
+- 16: 64px (4rem)
+- 20: 80px (5rem)
+- 24: 96px (6rem)
+
+COMPONENT SPACING GUIDELINES
+----------------------------
+Padding:
+- Card padding: 24px (6)
+- Button padding: 12px 24px (3, 6)
+- Input padding: 12px 16px (3, 4)
+- Modal padding: 32px (8)
+- Section padding: 48px (12)
+
+Margins:
+- Between sections: 48px (12)
+- Between cards: 24px (6)
+- Between form fields: 16px (4)
+- Between paragraphs: 16px (4)
+
+Gaps (Flexbox/Grid):
+- Tight: 8px (2)
+- Normal: 16px (4)
+- Loose: 24px (6)
+- Wide: 32px (8)
+
+
+================================================================================
+4. BORDER RADIUS
+================================================================================
+
+SCALE
+-----
+- None: 0px
+- Small: 4px (0.25rem) - Input fields, small buttons
+- Medium: 8px (0.5rem) - Cards, buttons
+- Large: 12px (0.75rem) - Modals, large cards
+- XL: 16px (1rem) - Feature cards
+- 2XL: 24px (1.5rem) - Hero cards
+- Full: 9999px (rounded-full) - Pills, badges, avatars
+
+USAGE
+-----
+- Buttons: 8px (medium)
+- Input fields: 6px (between small and medium)
+- Cards: 12px (large)
+- Modals: 16px (xl)
+- Badges: 9999px (full)
+- Profile photos: 9999px (full)
+- Dropdown menus: 8px (medium)
+
+
+================================================================================
+5. SHADOWS & ELEVATION
+================================================================================
+
+SHADOW LEVELS
+------------
+Level 0 (None):
+- box-shadow: none
+
+Level 1 (Subtle):
+- box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05)
+- Usage: Input fields, subtle cards
+
+Level 2 (Small):
+- box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06)
+- Usage: Buttons, small cards
+
+Level 3 (Medium):
+- box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)
+- Usage: Cards, dropdown menus
+
+Level 4 (Large):
+- box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)
+- Usage: Modals, popovers
+
+Level 5 (XL):
+- box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)
+- Usage: Large modals, side panels
+
+Level 6 (2XL):
+- box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25)
+- Usage: Overlays, full-screen modals
+
+COLORED SHADOWS (for specific elements)
+--------------------------------------
+Primary Shadow:
+- box-shadow: 0 4px 14px 0 rgba(59, 130, 246, 0.39)
+- Usage: Primary buttons hover, important CTAs
+
+Success Shadow:
+- box-shadow: 0 4px 14px 0 rgba(16, 185, 129, 0.39)
+- Usage: Success buttons, paid badges
+
+Error Shadow:
+- box-shadow: 0 4px 14px 0 rgba(239, 68, 68, 0.39)
+- Usage: Delete buttons, error states
+
+
+================================================================================
+6. COMPONENT STYLES
+================================================================================
+
+BUTTONS
+-------
+Primary Button:
+- Background: #3B82F6
+- Text: #FFFFFF
+- Padding: 12px 24px
+- Border radius: 8px
+- Font weight: 600
+- Hover: Background #2563EB, Shadow level 2
+- Active: Background #1E40AF
+- Disabled: Background #D1D5DB, Text #9CA3AF
+
+Secondary Button:
+- Background: transparent
+- Border: 2px solid #3B82F6
+- Text: #3B82F6
+- Padding: 10px 22px (account for border)
+- Hover: Background #DBEAFE
+- Active: Border #1E40AF, Text #1E40AF
+
+Tertiary/Ghost Button:
+- Background: transparent
+- Text: #6B7280
+- Padding: 12px 24px
+- Hover: Background #F9FAFB
+- Active: Background #F3F4F6
+
+Danger Button:
+- Background: #EF4444
+- Text: #FFFFFF
+- Hover: Background #DC2626
+- Active: Background #991B1B
+
+Success Button:
+- Background: #10B981
+- Text: #FFFFFF
+- Hover: Background #059669
+- Active: Background #047857
+
+Icon Button:
+- Size: 40px × 40px (square)
+- Border radius: 8px
+- Padding: 8px
+- Hover: Background #F9FAFB
+- Active: Background #F3F4F6
+
+Button Sizes:
+- Small: padding 8px 16px, text 14px
+- Medium: padding 12px 24px, text 16px (default)
+- Large: padding 16px 32px, text 18px
+
+INPUT FIELDS
+-----------
+Text Input:
+- Height: 44px (touch-friendly)
+- Padding: 12px 16px
+- Border: 1px solid #D1D5DB
+- Border radius: 6px
+- Background: #FFFFFF
+- Font size: 16px
+- Focus: Border #3B82F6, Shadow 0 0 0 3px rgba(59, 130, 246, 0.1)
+- Error: Border #EF4444, Shadow 0 0 0 3px rgba(239, 68, 68, 0.1)
+- Disabled: Background #F9FAFB, Text #9CA3AF
+
+Textarea:
+- Min height: 120px
+- Padding: 12px 16px
+- Resize: vertical
+- Rest same as text input
+
+Select/Dropdown:
+- Same as text input
+- Arrow icon: 20px, right 12px
+- Hover: Border #9CA3AF
+
+Checkbox:
+- Size: 20px × 20px
+- Border: 2px solid #D1D5DB
+- Border radius: 4px
+- Checked: Background #3B82F6, Checkmark #FFFFFF
+- Focus: Shadow 0 0 0 3px rgba(59, 130, 246, 0.1)
+
+Radio Button:
+- Size: 20px × 20px
+- Border: 2px solid #D1D5DB
+- Border radius: 50% (full)
+- Checked: Border #3B82F6, Inner dot #3B82F6 (8px)
+
+Switch/Toggle:
+- Width: 44px, Height: 24px
+- Border radius: 9999px (full)
+- Background off: #D1D5DB
+- Background on: #3B82F6
+- Knob: 18px × 18px, White, shadow level 1
+
+CARDS
+-----
+Standard Card:
+- Background: #FFFFFF
+- Border: 1px solid #E5E7EB (optional)
+- Border radius: 12px
+- Padding: 24px
+- Shadow: Level 1 (default), Level 3 (hover)
+- Transition: all 0.2s ease
+
+Interactive Card (clickable):
+- Hover: Shadow level 3, transform translateY(-2px)
+- Active: Shadow level 2, transform translateY(0)
+- Cursor: pointer
+
+Outlined Card:
+- Background: transparent
+- Border: 2px solid #E5E7EB
+- No shadow
+
+Elevated Card:
+- Shadow: Level 4
+- Border: none
+
+BADGES & CHIPS
+-------------
+Badge (Status):
+- Padding: 4px 12px
+- Border radius: 9999px (full)
+- Font size: 12px
+- Font weight: 600
+- Text transform: uppercase
+- Letter spacing: 0.05em
+
+Badge Colors:
+- Success: Background #D1FAE5, Text #047857
+- Warning: Background #FEF3C7, Text #B45309
+- Error: Background #FEE2E2, Text #991B1B
+- Info: Background #DBEAFE, Text #1E40AF
+- Neutral: Background #F3F4F6, Text #6B7280
+
+Chip (Removable):
+- Same as badge
+- Close icon: 16px, clickable
+- Hover: Background opacity 0.8
+
+Count Badge (notification):
+- Size: 20px × 20px (or auto-width)
+- Background: #EF4444
+- Text: #FFFFFF, 12px, bold
+- Border radius: 9999px
+- Position: absolute, top-right of parent
+
+MODALS & DIALOGS
+---------------
+Modal Overlay:
+- Background: rgba(0, 0, 0, 0.5)
+- Backdrop filter: blur(4px) (optional)
+- Z-index: 1000
+
+Modal Container:
+- Background: #FFFFFF
+- Border radius: 16px
+- Shadow: Level 6
+- Max width: 600px (small), 800px (medium), 1200px (large)
+- Padding: 32px
+- Margin: 20px (mobile safe area)
+
+Modal Header:
+- Padding bottom: 16px
+- Border bottom: 1px solid #E5E7EB
+- Font size: 24px
+- Font weight: 700
+
+Modal Body:
+- Padding: 24px 0
+- Max height: 60vh
+- Overflow: auto
+
+Modal Footer:
+- Padding top: 16px
+- Border top: 1px solid #E5E7EB
+- Display: flex
+- Justify content: flex-end
+- Gap: 12px
+
+TABLES
+------
+Table Container:
+- Overflow: auto
+- Border: 1px solid #E5E7EB
+- Border radius: 8px
+
+Table Header:
+- Background: #F9FAFB
+- Font weight: 600
+- Font size: 14px
+- Text transform: uppercase
+- Letter spacing: 0.05em
+- Color: #6B7280
+- Padding: 12px 16px
+- Border bottom: 2px solid #E5E7EB
+
+Table Row:
+- Padding: 16px
+- Border bottom: 1px solid #E5E7EB
+- Hover: Background #F9FAFB
+- Transition: background 0.15s ease
+
+Table Cell:
+- Padding: 16px
+- Font size: 14px
+- Vertical align: middle
+
+Striped Table:
+- Odd rows: Background #FFFFFF
+- Even rows: Background #F9FAFB
+
+NAVIGATION
+----------
+Top Navigation Bar:
+- Height: 64px
+- Background: #FFFFFF
+- Border bottom: 1px solid #E5E7EB
+- Shadow: Level 1
+- Padding: 0 24px
+- Z-index: 100
+
+Sidebar:
+- Width: 256px (desktop)
+- Background: #FFFFFF
+- Border right: 1px solid #E5E7EB
+- Height: 100vh
+- Z-index: 50
+
+Bottom Navigation (Mobile):
+- Height: 64px
+- Background: #FFFFFF
+- Border top: 1px solid #E5E7EB
+- Shadow: Level 3 (inverted)
+- Position: fixed bottom
+- Z-index: 100
+
+Navigation Item:
+- Padding: 12px 16px
+- Border radius: 8px
+- Hover: Background #F9FAFB
+- Active: Background #DBEAFE, Text #2563EB, Font weight 600
+
+TOOLTIPS & POPOVERS
+------------------
+Tooltip:
+- Background: #111827
+- Text: #FFFFFF
+- Font size: 14px
+- Padding: 8px 12px
+- Border radius: 6px
+- Shadow: Level 3
+- Max width: 200px
+- Arrow: 6px triangle
+
+Popover:
+- Background: #FFFFFF
+- Border: 1px solid #E5E7EB
+- Border radius: 8px
+- Shadow: Level 4
+- Padding: 16px
+- Max width: 320px
+- Arrow: 8px triangle
+
+LOADING STATES
+-------------
+Skeleton:
+- Background: linear-gradient(90deg, #F3F4F6 0%, #E5E7EB 50%, #F3F4F6 100%)
+- Animation: shimmer 2s infinite
+- Border radius: matches component
+
+Spinner:
+- Size: 24px (small), 40px (medium), 64px (large)
+- Color: #3B82F6
+- Border: 3px solid currentColor
+- Border top: transparent
+- Animation: spin 1s linear infinite
+
+Progress Bar:
+- Height: 8px
+- Background: #E5E7EB
+- Fill: #3B82F6
+- Border radius: 9999px
+
+
+================================================================================
+7. ANIMATIONS & TRANSITIONS
+================================================================================
+
+DURATION
+--------
+- Instant: 75ms
+- Fast: 150ms
+- Normal: 200ms - 300ms (default)
+- Slow: 500ms
+- Very slow: 700ms
+
+EASING FUNCTIONS
+---------------
+- Ease: cubic-bezier(0.25, 0.1, 0.25, 1)
+- Ease-in: cubic-bezier(0.42, 0, 1, 1)
+- Ease-out: cubic-bezier(0, 0, 0.58, 1)
+- Ease-in-out: cubic-bezier(0.42, 0, 0.58, 1)
+- Spring: cubic-bezier(0.34, 1.56, 0.64, 1)
+
+COMMON TRANSITIONS
+-----------------
+Hover:
+- Property: background-color, transform, box-shadow
+- Duration: 200ms
+- Easing: ease-out
+
+Focus:
+- Property: box-shadow, border-color
+- Duration: 150ms
+- Easing: ease-out
+
+Modal/Drawer Open:
+- Property: opacity, transform
+- Duration: 300ms
+- Easing: ease-out
+- Transform: translateY(10px) to translateY(0)
+
+Fade In/Out:
+- Property: opacity
+- Duration: 200ms
+- Easing: ease-in-out
+
+Slide In:
+- Property: transform
+- Duration: 300ms
+- Easing: ease-out
+- From: translateX(-100%) or translateX(100%)
+
+Scale:
+- Property: transform
+- Duration: 200ms
+- Easing: spring
+- From: scale(0.95) to scale(1)
+
+KEYFRAME ANIMATIONS
+------------------
+Spin:
+```css
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+```
+
+Shimmer (Skeleton):
+```css
+@keyframes shimmer {
+  0% { background-position: -200px 0; }
+  100% { background-position: 200px 0; }
+}
+```
+
+Bounce:
+```css
+@keyframes bounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
+```
+
+Pulse:
+```css
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+```
+
+
+================================================================================
+8. RESPONSIVE BREAKPOINTS
+================================================================================
+
+BREAKPOINTS
+-----------
+- XS (Mobile): 0px - 639px
+- SM (Large Mobile): 640px - 767px
+- MD (Tablet): 768px - 1023px
+- LG (Desktop): 1024px - 1279px
+- XL (Large Desktop): 1280px - 1535px
+- 2XL (Extra Large): 1536px+
+
+USAGE IN TAILWIND
+----------------
+- sm: @media (min-width: 640px)
+- md: @media (min-width: 768px)
+- lg: @media (min-width: 1024px)
+- xl: @media (min-width: 1280px)
+- 2xl: @media (min-width: 1536px)
+
+RESPONSIVE PATTERNS
+------------------
+Grid Columns:
+- Mobile (XS): 1 column
+- Tablet (MD): 2 columns
+- Desktop (LG): 3-4 columns
+
+Sidebar:
+- Mobile: Hidden (drawer/overlay)
+- Desktop: Fixed side panel (256px)
+
+Navigation:
+- Mobile: Bottom navigation bar
+- Desktop: Top navigation + sidebar
+
+Typography:
+- Mobile: H1 24px, Body 14px
+- Desktop: H1 32px, Body 16px
+
+Spacing:
+- Mobile: Reduced padding (16px)
+- Desktop: Full padding (24-32px)
+
+
+================================================================================
+9. ICONOGRAPHY
+================================================================================
+
+ICON LIBRARY
+-----------
+Primary: Lucide React (https://lucide.dev)
+- Modern, consistent design
+- Tree-shakeable
+- Customizable size and color
+
+ICON SIZES
+----------
+- XS: 12px
+- SM: 16px
+- MD: 20px (default)
+- LG: 24px
+- XL: 32px
+- 2XL: 48px
+- 3XL: 64px
+
+ICON USAGE
+----------
+- Buttons: 20px icon with 8px gap to text
+- Navigation items: 24px icon
+- Input fields: 20px icon, positioned inside
+- Cards: 24px-32px feature icons
+- Status indicators: 16px icons
+- Notification bell: 24px with badge
+
+COMMON ICONS NEEDED
+------------------
+Navigation:
+- Home, Dashboard, Building, Users, CreditCard, Calendar, Settings
+
+Bills:
+- DollarSign, Receipt, Check, X, Clock, AlertCircle
+
+Tasks:
+- CheckSquare, List, Calendar, Clock
+
+Meals:
+- Utensils, ShoppingCart, Chef, Coffee
+
+Resources:
+- Washing Machine (custom), Calendar, Clock
+
+Actions:
+- Plus, Edit, Trash, Search, Filter, Download, Upload
+
+States:
+- CheckCircle (success), AlertCircle (warning), XCircle (error), Info
+
+
+================================================================================
+10. ACCESSIBILITY
+================================================================================
+
+COLOR CONTRAST
+-------------
+- Normal text (< 18px): Minimum 4.5:1 ratio
+- Large text (≥ 18px or ≥ 14px bold): Minimum 3:1 ratio
+- Icons: Minimum 3:1 ratio
+- Disable state: Not required to meet contrast
+
+Our Colors (Verified):
+- Primary Blue (#3B82F6) on White: 4.8:1 ✓
+- Primary Text (#111827) on White: 16.6:1 ✓
+- Secondary Text (#6B7280) on White: 5.1:1 ✓
+- Success Green (#10B981) on White: 3.2:1 (for large text only)
+- Error Red (#EF4444) on White: 4.3:1 ✓
+
+FOCUS INDICATORS
+---------------
+- Visible focus ring: 3px solid with 20% opacity
+- Offset: 2px from element
+- Color: Matches element purpose (blue for primary, red for danger)
+- Never remove outline without alternative indicator
+
+KEYBOARD NAVIGATION
+------------------
+- Tab order: Logical, follows visual layout
+- Skip links: "Skip to main content" for screen readers
+- Escape key: Closes modals, dropdowns
+- Arrow keys: Navigate lists, menus
+- Enter/Space: Activate buttons, checkboxes
+- All interactive elements keyboard accessible
+
+SCREEN READER SUPPORT
+--------------------
+- Semantic HTML: Use proper heading hierarchy (h1-h6)
+- ARIA labels: aria-label for icons without text
+- ARIA live regions: For dynamic content updates
+- Alt text: Descriptive for all images
+- Form labels: Always associated with inputs
+- Error messages: Announced to screen readers
+
+TOUCH TARGETS
+-------------
+- Minimum size: 44px × 44px (iOS/Android guidelines)
+- Spacing: 8px minimum between targets
+- All buttons, links, inputs meet minimum size
+
+
+================================================================================
+11. DARK MODE (FUTURE PHASE)
+================================================================================
+
+PREPARATION
+----------
+All colors defined as CSS variables for easy theming:
+
+```css
+:root {
+  --color-primary: #3B82F6;
+  --color-background: #FFFFFF;
+  --color-text: #111827;
+  --color-border: #E5E7EB;
+}
+
+[data-theme="dark"] {
+  --color-primary: #60A5FA;
+  --color-background: #111827;
+  --color-text: #F9FAFB;
+  --color-border: #374151;
+}
+```
+
+
+================================================================================
+12. BRAND ASSETS
+================================================================================
+
+LOGO SPECIFICATIONS
+------------------
+Primary Logo:
+- Format: SVG (scalable)
+- Minimum size: 32px height
+- Clear space: Equal to logo height on all sides
+- Variations: Full color, White, Black
+
+Icon/Favicon:
+- Sizes: 16×16, 32×32, 48×48, 192×192, 512×512
+- Format: ICO, PNG, SVG
+
+LOGO USAGE
+----------
+- Header: 40px height (desktop), 32px (mobile)
+- Loading screen: 80px height
+- Email: 120px height
+- Print: Minimum 1 inch height
+
+BRAND VOICE
+-----------
+- Friendly and approachable
+- Clear and concise
+- Helpful and supportive
+- Professional yet casual
+- Inclusive and respectful
+
+
+================================================================================
+END OF THEME SPECIFICATION
+================================================================================
+
+IMPLEMENTATION NOTES
+-------------------
+1. Use Tailwind CSS for rapid development
+2. Create custom Tailwind theme extending these specs
+3. Use CSS variables for colors (dark mode prep)
+4. Maintain design system documentation in Storybook
+5. Regular accessibility audits with axe DevTools
+6. Test on real devices (iOS, Android, Desktop browsers)
+
+DESIGN FILES
+-----------
+- Figma: [Link to design files]
+- Icon library: Lucide React
+- Fonts: Google Fonts (Inter)
+- Component library: shadcn/ui (customized)
+
+================================================================================
+

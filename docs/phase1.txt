@@ -1,0 +1,1265 @@
+================================================================================
+PHASE 1 - CORE MVP (WEEK 1-4)
+RoomMate Manager - Foundation & Basic Payment Tracking
+================================================================================
+
+PHASE GOAL: Establish core infrastructure with user management, apartment hierarchy, 
+and basic manual payment tracking system.
+
+TIMELINE: 4 Weeks
+PRIORITY: Must Have - Critical for Launch
+
+================================================================================
+WEEK 1: PROJECT SETUP & AUTHENTICATION
+================================================================================
+
+1.1 PROJECT INITIALIZATION
+--------------------------
+□ Create React app with Vite
+  - Command: npm create vite@latest roommate-manager -- --template react
+  - Install core dependencies:
+    * react-router-dom (v6)
+    * @supabase/supabase-js
+    * @tanstack/react-query
+    * react-hook-form
+    * yup (validation)
+    * date-fns (date handling)
+
+□ Setup TailwindCSS
+  - Install: npm install -D tailwindcss postcss autoprefixer
+  - Configure: npx tailwindcss init -p
+  - Setup tailwind.config.js with custom colors
+
+□ Install UI Component Library
+  - Option A: Material-UI (MUI)
+    * npm install @mui/material @emotion/react @emotion/styled
+    * npm install @mui/icons-material
+  - Option B: Ant Design
+    * npm install antd
+
+□ Project Structure Setup
+  /src
+    /components
+      /common (Button, Input, Modal, etc.)
+      /layout (Header, Sidebar, Footer)
+      /auth (Login, Register, Profile)
+    /pages
+      /auth (LoginPage, RegisterPage)
+      /dashboard (DashboardPage)
+      /apartments (ApartmentListPage, ApartmentDetailPage)
+      /bills (BillsPage, PaymentHistoryPage)
+    /hooks (custom React hooks)
+    /services (API services)
+    /utils (helper functions)
+    /context (React Context for global state)
+    /constants (app constants)
+    /assets (images, icons)
+
+□ Environment Variables Setup
+  - Create .env file:
+    VITE_SUPABASE_URL=your_supabase_url
+    VITE_SUPABASE_ANON_KEY=your_supabase_key
+    VITE_CLOUDINARY_CLOUD_NAME=your_cloud_name
+    VITE_CLOUDINARY_UPLOAD_PRESET=your_preset
+
+
+1.2 SUPABASE BACKEND SETUP
+--------------------------
+□ Create Supabase Project
+  - Go to supabase.com
+  - Create new project
+  - Note down project URL and anon key
+  - Set up database password
+
+□ Enable Authentication
+  - Enable Email/Password authentication
+  - Configure email templates (Welcome, Reset Password)
+  - Set site URL and redirect URLs
+
+□ Database Schema - Core Tables (Week 1)
+  
+  **users table** (extends auth.users)
+  CREATE TABLE public.users (
+    id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
+    email TEXT UNIQUE NOT NULL,
+    full_name TEXT NOT NULL,
+    age INTEGER,
+    phone_number TEXT,
+    profile_photo_url TEXT,
+    id_card_url TEXT,
+    resume_url TEXT,
+    labour_card_url TEXT,
+    role TEXT NOT NULL DEFAULT 'roommate_full' 
+      CHECK (role IN ('super_admin', 'admin', 'roommate_full', 'roommate_partial', 'guest', 'outsider')),
+    loyalty_points INTEGER DEFAULT 0,
+    loyalty_tier TEXT DEFAULT 'bronze' CHECK (loyalty_tier IN ('bronze', 'silver', 'gold', 'platinum')),
+    is_active BOOLEAN DEFAULT false,
+    approved_by UUID REFERENCES public.users(id),
+    sponsored_by UUID REFERENCES public.users(id),
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+  );
+
+  **apartments table**
+  CREATE TABLE public.apartments (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    name TEXT NOT NULL,
+    address TEXT,
+    total_rent DECIMAL(10,2),
+    created_by UUID REFERENCES public.users(id) NOT NULL,
+    is_active BOOLEAN DEFAULT true,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+  );
+
+  **rooms table**
+  CREATE TABLE public.rooms (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    apartment_id UUID REFERENCES public.apartments(id) ON DELETE CASCADE NOT NULL,
+    name TEXT NOT NULL,
+    floor_number INTEGER,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+  );
+
+  **beds table**
+  CREATE TABLE public.beds (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    room_id UUID REFERENCES public.rooms(id) ON DELETE CASCADE NOT NULL,
+    bed_type TEXT NOT NULL CHECK (bed_type IN ('flat', 'lower', 'upper')),
+    price DECIMAL(10,2) NOT NULL,
+    is_occupied BOOLEAN DEFAULT false,
+    occupied_by UUID REFERENCES public.users(id),
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+  );
+
+□ Row Level Security (RLS) Policies
+  -- Users can view users in same apartment
+  CREATE POLICY "Users view same apartment" ON public.users
+    FOR SELECT USING (
+      id IN (
+        SELECT occupied_by FROM beds 
+        WHERE room_id IN (
+          SELECT id FROM rooms 
+          WHERE apartment_id IN (
+            SELECT apartment_id FROM rooms 
+            WHERE id IN (
+              SELECT room_id FROM beds WHERE occupied_by = auth.uid()
+            )
+          )
+        )
+      )
+    );
+
+  -- Users can update own profile
+  CREATE POLICY "Users update own profile" ON public.users
+    FOR UPDATE USING (auth.uid() = id);
+
+  -- Admins can view/edit apartments
+  CREATE POLICY "Admins manage apartments" ON public.apartments
+    FOR ALL USING (
+      EXISTS (
+        SELECT 1 FROM public.users 
+        WHERE id = auth.uid() 
+        AND role IN ('super_admin', 'admin')
+      )
+    );
+
+
+1.3 CLOUDINARY SETUP
+--------------------
+□ Create Cloudinary Account
+  - Sign up at cloudinary.com
+  - Note down Cloud Name
+
+□ Setup Upload Presets
+  - Preset 1: "profile_photos"
+    * Mode: Signed
+    * Transformation: c_fill,w_300,h_300,g_face
+    * Format: Auto
+    * Quality: Auto
+  
+  - Preset 2: "documents"
+    * Mode: Signed
+    * Format: Auto
+    * Quality: 90
+  
+  - Preset 3: "id_cards"
+    * Mode: Signed
+    * Max file size: 5MB
+    * Allowed formats: jpg, png, pdf
+
+□ Folder Structure in Cloudinary
+  /roommate-manager
+    /users
+      /{user_id}
+        /profile
+        /documents
+
+□ Install Cloudinary SDK
+  - npm install cloudinary-react
+  - npm install @cloudinary/url-gen @cloudinary/react
+
+
+1.4 AUTHENTICATION IMPLEMENTATION
+---------------------------------
+□ Auth Context Setup
+  - Create AuthContext.jsx
+  - Implement:
+    * useAuth hook
+    * Login function
+    * Logout function
+    * Sign up function
+    * Get current user
+    * Session management
+
+□ Login Page (src/pages/auth/LoginPage.jsx)
+  - Email and password fields
+  - Form validation (required, email format)
+  - Error handling (invalid credentials, network errors)
+  - "Remember me" checkbox
+  - "Forgot password" link
+  - Redirect to dashboard on success
+  - Link to registration page
+
+□ Registration Page (src/pages/auth/RegisterPage.jsx)
+  - Step 1: Basic Info
+    * Email (with validation)
+    * Password (min 8 chars, alphanumeric + special)
+    * Confirm Password
+    * Full Name
+    * Age
+    * Phone Number
+  
+  - Step 2: Profile Photo Upload
+    * Cloudinary upload widget
+    * Face detection validation
+    * Preview before submit
+  
+  - Step 3: Document Upload
+    * ID Card upload (required)
+    * Resume upload (optional)
+    * Labour Card upload (optional)
+    * Multi-file upload support
+  
+  - Step 4: Review & Submit
+    * Show all entered data
+    * Edit buttons for each section
+    * Terms & conditions checkbox
+    * Submit application
+    * Show "Pending Approval" message
+
+□ Protected Route Component
+  - Create ProtectedRoute.jsx wrapper
+  - Check authentication status
+  - Redirect to login if not authenticated
+  - Check user approval status
+  - Show "Pending Approval" page if not approved
+
+□ Profile Page (src/pages/profile/ProfilePage.jsx)
+  - View current user profile
+  - Edit basic info
+  - Change password
+  - Upload/update profile photo
+  - View uploaded documents
+  - Display loyalty points and tier
+
+
+================================================================================
+WEEK 2: APARTMENT HIERARCHY & NAVIGATION
+================================================================================
+
+2.1 DATABASE TABLES (Week 2 additions)
+--------------------------------------
+□ Create indexes for performance
+  CREATE INDEX idx_rooms_apartment ON rooms(apartment_id);
+  CREATE INDEX idx_beds_room ON beds(room_id);
+  CREATE INDEX idx_beds_occupied ON beds(occupied_by);
+  CREATE INDEX idx_users_role ON users(role);
+
+□ Create database functions
+  -- Function to check bed availability
+  CREATE OR REPLACE FUNCTION check_bed_availability(bed_id UUID)
+  RETURNS BOOLEAN AS $$
+  BEGIN
+    RETURN (SELECT is_occupied FROM beds WHERE id = bed_id) = false;
+  END;
+  $$ LANGUAGE plpgsql;
+
+  -- Function to get user's current location
+  CREATE OR REPLACE FUNCTION get_user_location(user_id UUID)
+  RETURNS TABLE(apartment_name TEXT, room_name TEXT, bed_type TEXT) AS $$
+  BEGIN
+    RETURN QUERY
+    SELECT a.name, r.name, b.bed_type
+    FROM beds b
+    JOIN rooms r ON b.room_id = r.id
+    JOIN apartments a ON r.apartment_id = a.id
+    WHERE b.occupied_by = user_id;
+  END;
+  $$ LANGUAGE plpgsql;
+
+
+2.2 APARTMENT MANAGEMENT (ADMIN)
+---------------------------------
+□ Apartment List Page (src/pages/apartments/ApartmentListPage.jsx)
+  - Display all apartments as cards
+  - Show for each apartment:
+    * Apartment name
+    * Total rooms
+    * Total beds
+    * Occupied beds / Total beds
+    * Occupancy percentage (with progress bar)
+    * Total monthly rent
+    * Created by (admin name)
+  - Search and filter apartments
+  - "Create New Apartment" button (admin only)
+  - Click card to view apartment details
+
+□ Create Apartment Modal (src/components/apartments/CreateApartmentModal.jsx)
+  - Form fields:
+    * Apartment Name (required)
+    * Address (required)
+    * Total Monthly Rent (required, number)
+  - Validation
+  - Submit to Supabase
+  - Success notification
+  - Redirect to apartment details page
+
+□ Apartment Detail Page (src/pages/apartments/ApartmentDetailPage.jsx)
+  - Breadcrumb navigation: Home > Apartments > {Apartment Name}
+  - Apartment header:
+    * Name (editable by admin)
+    * Address (editable by admin)
+    * Total rent (editable by admin)
+    * Edit/Delete buttons (admin only)
+  
+  - Rooms Section:
+    * Display rooms as grid of cards
+    * Each room card shows:
+      - Room name
+      - Floor number
+      - Total beds in room
+      - Occupied beds count
+      - Visual bed layout (icons)
+    * "Add New Room" button (admin only)
+    * Click room to view room details
+
+□ Create Room Modal (src/components/apartments/CreateRoomModal.jsx)
+  - Form fields:
+    * Room Name (required)
+    * Floor Number (optional, number)
+  - Submit to Supabase
+  - Refresh apartment view
+
+□ Room Detail Page (src/pages/apartments/RoomDetailPage.jsx)
+  - Breadcrumb: Home > Apartments > {Apartment} > {Room}
+  - Room header (name, floor, edit/delete buttons)
+  
+  - Beds Section:
+    * Visual bed layout designer
+    * Add bed buttons:
+      - Add Flat Bed
+      - Add Lower Bed
+      - Add Upper Bed
+    * Each bed shows:
+      - Bed type (with icon)
+      - Price per month
+      - Occupancy status (Available/Occupied)
+      - If occupied: User profile photo and name
+      - Assign/Unassign user button (admin only)
+
+□ Add Bed Modal (src/components/apartments/AddBedModal.jsx)
+  - Form fields:
+    * Bed Type (dropdown: Flat/Lower/Upper)
+    * Monthly Price (required, number)
+  - Price suggestions based on bed type
+  - Submit to Supabase
+
+□ Assign Bed Modal (src/components/apartments/AssignBedModal.jsx)
+  - Search and select user from apartment
+  - Show user profile info
+  - Confirm assignment
+  - Update bed.occupied_by and bed.is_occupied
+  - Send notification to user
+
+
+2.3 USER APARTMENT VIEW
+-----------------------
+□ User Dashboard (src/pages/dashboard/DashboardPage.jsx)
+  - Welcome banner with user name and profile photo
+  - Quick Stats Cards:
+    * Current location (Apartment > Room > Bed)
+    * Next payment due (amount and date)
+    * Loyalty points and tier
+    * Tasks pending (Phase 2)
+  
+  - Recent Activity Feed:
+    * Recent payments
+    * Recent notifications
+    * Upcoming tasks
+  
+  - Quick Actions:
+    * View Bills
+    * View Apartment
+    * View Profile
+    * Watch Ads (Phase 4)
+
+□ My Apartment Page (src/pages/apartments/MyApartmentPage.jsx)
+  - Show user's current apartment
+  - Display room layout
+  - Show all roommates with:
+    * Profile photos
+    * Names
+    * Bed types
+    * Loyalty tier badges
+  - Filter: View only my room / View all rooms
+  - Cannot edit (read-only for non-admins)
+
+□ Roommates List (src/components/apartments/RoommatesList.jsx)
+  - List all users in apartment
+  - Display as cards or list view toggle
+  - Each card shows:
+    * Profile photo
+    * Name and age
+    * Location (Room > Bed)
+    * Loyalty tier badge
+    * Contact button (opens phone/email)
+  - Search roommates by name
+  - Filter by room
+
+
+2.4 NAVIGATION & LAYOUT
+-----------------------
+□ Main Layout Component (src/components/layout/MainLayout.jsx)
+  - Header:
+    * App logo and name
+    * Search bar (global)
+    * Notification bell icon (with unread count)
+    * User profile dropdown
+      - View Profile
+      - Settings
+      - Logout
+  
+  - Sidebar (Desktop) / Bottom Nav (Mobile):
+    * Dashboard (home icon)
+    * My Apartment (building icon)
+    * Bills (money icon)
+    * Profile (user icon)
+    * Admin Panel (admin only, gear icon)
+  
+  - Main Content Area:
+    * Breadcrumb navigation
+    * Page content
+  
+  - Footer:
+    * Copyright
+    * Links (Privacy, Terms, Contact)
+
+□ Responsive Design
+  - Mobile (< 768px):
+    * Bottom navigation bar
+    * Hamburger menu for secondary nav
+    * Stacked cards
+  
+  - Tablet (768px - 1023px):
+    * Collapsible sidebar
+    * Grid layout (2 columns)
+  
+  - Desktop (> 1024px):
+    * Fixed sidebar
+    * Grid layout (3-4 columns)
+    * Expanded cards
+
+
+================================================================================
+WEEK 3: BILLING SYSTEM - PART 1 (SETUP & CALCULATION)
+================================================================================
+
+3.1 DATABASE TABLES (Week 3)
+----------------------------
+□ Create billing tables
+
+  **bills table**
+  CREATE TABLE public.bills (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    apartment_id UUID REFERENCES public.apartments(id) ON DELETE CASCADE NOT NULL,
+    bill_type TEXT NOT NULL CHECK (bill_type IN ('rent', 'electricity', 'internet', 'gas', 'water', 'custom')),
+    custom_name TEXT,
+    amount DECIMAL(10,2) NOT NULL,
+    billing_cycle TEXT NOT NULL CHECK (billing_cycle IN ('monthly', 'quarterly', 'annual')),
+    billing_date DATE NOT NULL,
+    due_date DATE NOT NULL,
+    created_by UUID REFERENCES public.users(id) NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+  );
+
+  **user_bills table** (junction table)
+  CREATE TABLE public.user_bills (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    user_id UUID REFERENCES public.users(id) ON DELETE CASCADE NOT NULL,
+    bill_id UUID REFERENCES public.bills(id) ON DELETE CASCADE NOT NULL,
+    amount_due DECIMAL(10,2) NOT NULL,
+    amount_paid DECIMAL(10,2) DEFAULT 0,
+    payment_status TEXT NOT NULL DEFAULT 'pending' 
+      CHECK (payment_status IN ('pending', 'paid', 'overdue', 'disputed')),
+    payment_date DATE,
+    payment_method TEXT,
+    payment_reference TEXT,
+    payment_proof_url TEXT,
+    payment_notes TEXT,
+    verified_by UUID REFERENCES public.users(id),
+    verified_at TIMESTAMP WITH TIME ZONE,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    UNIQUE(user_id, bill_id)
+  );
+
+  **bill_splits table** (for custom split logic)
+  CREATE TABLE public.bill_splits (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    bill_id UUID REFERENCES public.bills(id) ON DELETE CASCADE NOT NULL,
+    split_type TEXT NOT NULL DEFAULT 'equal' 
+      CHECK (split_type IN ('equal', 'proportional', 'custom')),
+    exclude_users UUID[],
+    custom_percentages JSONB,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+  );
+
+□ Create indexes
+  CREATE INDEX idx_bills_apartment ON bills(apartment_id);
+  CREATE INDEX idx_bills_due_date ON bills(due_date);
+  CREATE INDEX idx_user_bills_user ON user_bills(user_id);
+  CREATE INDEX idx_user_bills_status ON user_bills(payment_status);
+
+□ Create database functions for billing
+
+  -- Calculate user's share of a bill
+  CREATE OR REPLACE FUNCTION calculate_user_bill_share(
+    p_user_id UUID,
+    p_bill_id UUID
+  ) RETURNS DECIMAL AS $$
+  DECLARE
+    v_amount DECIMAL;
+    v_split_type TEXT;
+    v_total_users INTEGER;
+  BEGIN
+    -- Get bill amount and split type
+    SELECT b.amount, COALESCE(bs.split_type, 'equal')
+    INTO v_amount, v_split_type
+    FROM bills b
+    LEFT JOIN bill_splits bs ON bs.bill_id = b.id
+    WHERE b.id = p_bill_id;
+
+    -- Count eligible users (not excluded)
+    SELECT COUNT(DISTINCT occupied_by)
+    INTO v_total_users
+    FROM beds
+    WHERE room_id IN (
+      SELECT id FROM rooms WHERE apartment_id = (
+        SELECT apartment_id FROM bills WHERE id = p_bill_id
+      )
+    )
+    AND occupied_by IS NOT NULL;
+
+    -- Simple equal split for MVP
+    RETURN v_amount / v_total_users;
+  END;
+  $$ LANGUAGE plpgsql;
+
+
+3.2 BILL MANAGEMENT (ADMIN)
+---------------------------
+□ Bills Dashboard (Admin) (src/pages/admin/BillsDashboardPage.jsx)
+  - Overview Cards:
+    * Total bills created this month
+    * Total amount to collect
+    * Total collected
+    * Outstanding amount
+    * Overdue count (red badge)
+  
+  - Bills List:
+    * Show all bills with filters:
+      - By apartment
+      - By bill type
+      - By status (pending, paid, overdue)
+      - By date range
+    * Each row shows:
+      - Bill type (with icon)
+      - Amount
+      - Due date
+      - Payment status (collected/total users)
+      - Actions (View, Edit, Delete)
+    * "Create New Bill" button
+
+□ Create Bill Modal (src/components/bills/CreateBillModal.jsx)
+  - Step 1: Basic Information
+    * Select Apartment (dropdown)
+    * Bill Type (dropdown: Rent, Electricity, Internet, Gas, Water, Custom)
+    * If Custom: Custom Name (text input)
+    * Total Amount (number input)
+  
+  - Step 2: Billing Cycle
+    * Frequency (dropdown: Monthly, Quarterly, Annual)
+    * Billing Date (date picker)
+    * Due Date (date picker)
+    * Auto-calculate due date (billing date + 7 days default)
+  
+  - Step 3: Split Configuration
+    * Split Type (radio buttons):
+      - Equal split (default)
+      - Proportional (based on bed prices)
+      - Custom percentages
+    * Exclude specific users (multi-select)
+    * Preview: Show per-user amounts in table
+  
+  - Step 4: Review & Create
+    * Summary of all settings
+    * Preview user bills table
+    * Create button
+    * On success:
+      - Insert into bills table
+      - Calculate shares for each user
+      - Insert into user_bills table
+      - Send notifications to all users
+
+□ Edit Bill Modal (src/components/bills/EditBillModal.jsx)
+  - Similar to Create Bill
+  - Pre-populate existing data
+  - Warning: "Changing amount will recalculate all user bills"
+  - Update functionality
+  - Audit log of changes
+
+□ Bill Detail Page (src/pages/bills/BillDetailPage.jsx)
+  - Bill header:
+    * Bill type and custom name
+    * Total amount
+    * Billing date and due date
+    * Status summary (X/Y users paid)
+  
+  - User Payment Status Table:
+    * Columns:
+      - User Name & Photo
+      - Bed Location
+      - Amount Due
+      - Amount Paid
+      - Status (badge: Paid/Pending/Overdue)
+      - Payment Date
+      - Payment Method
+      - Verification Status
+      - Actions (View Details, Verify)
+    * Filters:
+      - Show only pending
+      - Show only paid
+      - Show only overdue
+    * Sort by name, status, amount
+  
+  - Actions:
+    * Send reminder to all pending users
+    * Send reminder to specific user
+    * Export payment report (CSV)
+
+
+3.3 AUTOMATED BILL CALCULATION
+------------------------------
+□ Supabase Edge Function: generate-user-bills
+  - Trigger: After bill creation
+  - Logic:
+    1. Get all active users in apartment
+    2. Get bill split configuration
+    3. Calculate each user's share
+    4. Insert records into user_bills table
+    5. Send notifications to users
+  
+  - Code structure (Deno/TypeScript):
+    ```typescript
+    import { serve } from "https://deno.land/std/http/server.ts"
+    import { createClient } from '@supabase/supabase-js'
+
+    serve(async (req) => {
+      const { billId } = await req.json()
+      
+      // Get bill details
+      const { data: bill } = await supabase
+        .from('bills')
+        .select('*, apartments(*)')
+        .eq('id', billId)
+        .single()
+      
+      // Get all users in apartment
+      const { data: users } = await supabase
+        .from('beds')
+        .select('occupied_by')
+        .in('room_id', (
+          // Get room IDs from apartment
+        ))
+        .not('occupied_by', 'is', null)
+      
+      // Calculate shares
+      const userBills = users.map(user => ({
+        user_id: user.occupied_by,
+        bill_id: billId,
+        amount_due: calculateShare(bill, users.length),
+        payment_status: 'pending'
+      }))
+      
+      // Insert user bills
+      await supabase.from('user_bills').insert(userBills)
+      
+      // Send notifications
+      await sendBillNotifications(users, bill)
+      
+      return new Response(JSON.stringify({ success: true }))
+    })
+    ```
+
+□ Create service for bill calculations (src/services/billService.js)
+  - Functions:
+    * calculateEqualSplit(amount, userCount)
+    * calculateProportionalSplit(amount, bedPrices)
+    * calculateCustomSplit(amount, percentages)
+    * getEligibleUsers(apartmentId, excludedUsers)
+    * createUserBills(billId, userShares)
+
+
+================================================================================
+WEEK 4: BILLING SYSTEM - PART 2 (USER PAYMENT & TRACKING)
+================================================================================
+
+4.1 USER BILLS INTERFACE
+------------------------
+□ My Bills Page (src/pages/bills/MyBillsPage.jsx)
+  - Summary Cards:
+    * Total Due This Month (large, prominent)
+    * Paid This Month (green)
+    * Overdue Amount (red, if any)
+    * Next Payment Due (date countdown)
+  
+  - Bills Breakdown:
+    * Accordion/Expandable sections:
+      - Pending Bills (expanded by default)
+      - Paid Bills
+      - Overdue Bills (if any)
+    
+    * Each bill card shows:
+      - Bill type (icon + name)
+      - Amount due
+      - Due date (with countdown: "3 days left")
+      - Status badge
+      - "Pay Now" button (if pending/overdue)
+      - "View Receipt" button (if paid)
+  
+  - Filter & Sort:
+    * Filter by bill type
+    * Sort by due date, amount
+    * Date range selector
+  
+  - Payment History Section:
+    * Table of all past payments
+    * Columns: Date, Bill Type, Amount, Method, Status
+    * Export option
+
+□ Bill Detail Page (User View) (src/pages/bills/UserBillDetailPage.jsx)
+  - Bill information:
+    * Bill type and description
+    * Total apartment bill (show full amount)
+    * Your share (calculated amount)
+    * Split logic explanation
+    * Due date (highlighted if close/overdue)
+  
+  - Payment Status:
+    * If pending: "Payment Required" banner
+    * If paid: "Paid on [date]" with checkmark
+    * If overdue: "Overdue by X days" with warning
+  
+  - Breakdown:
+    * Your bed type and location
+    * Monthly rent (from bed)
+    * Share of this bill
+    * Total due for this bill
+  
+  - Actions:
+    * "Mark as Paid" button (opens payment form)
+    * "Dispute Amount" button (if disagree)
+    * Download invoice (PDF - future)
+
+
+4.2 PAYMENT SUBMISSION FLOW
+---------------------------
+□ Payment Form Modal (src/components/bills/PaymentFormModal.jsx)
+  - Display bill summary (read-only):
+    * Bill type
+    * Amount due
+    * Due date
+  
+  - Payment Details Form:
+    * Payment Method (dropdown):
+      - Cash
+      - Bank Transfer
+      - UPI
+      - Online Banking
+      - Other (specify)
+    
+    * Payment Date (date picker, default: today)
+    
+    * Payment Reference/Transaction ID (text input)
+    
+    * Payment Notes (optional text area)
+      "Add any notes about this payment"
+    
+    * Upload Payment Proof (optional):
+      - Cloudinary upload widget
+      - Accepted: Images, PDFs
+      - Preview uploaded file
+      - Max size: 5MB
+  
+  - Validation:
+    * All fields except notes and proof are required
+    * Payment date cannot be future date
+    * Reference number minimum 4 characters
+  
+  - Submit button: "Submit Payment for Verification"
+  
+  - On submit:
+    1. Upload proof to Cloudinary (if provided)
+    2. Update user_bills record:
+       - payment_method
+       - payment_date
+       - payment_reference
+       - payment_notes
+       - payment_proof_url
+       - payment_status = 'pending' (still pending admin verification)
+       - updated_at
+    3. Create notification for admin
+    4. Show success message: "Payment submitted! Awaiting admin verification"
+    5. Close modal
+    6. Refresh bills list
+
+□ Payment Proof Upload (Cloudinary Integration)
+  - Folder path: /roommate-manager/payments/{user_id}/{bill_id}/
+  - Transformations: Auto-rotate, quality 85, format auto
+  - Generate signed URL for secure access
+  - Store URL in user_bills.payment_proof_url
+
+
+4.3 ADMIN PAYMENT VERIFICATION
+------------------------------
+□ Payment Verification Queue (src/pages/admin/PaymentVerificationPage.jsx)
+  - Pending Verifications List:
+    * Show all user_bills with status = 'pending' (after user submission)
+    * Sort by submission date (oldest first)
+    * Highlight overdue bills (red background)
+  
+  - Each verification card shows:
+    * User info (name, photo, location)
+    * Bill type and amount
+    * Payment method
+    * Payment reference
+    * Payment date
+    * User notes
+    * Payment proof (thumbnail, click to view full)
+    * Actions:
+      - Verify (green button)
+      - Reject (red button)
+      - Request More Info (yellow button)
+
+□ Verify Payment Modal (src/components/bills/VerifyPaymentModal.jsx)
+  - Show all payment details (read-only)
+  - Display payment proof (full size or PDF viewer)
+  - Admin notes field:
+    "Add verification notes (optional)"
+  - Verify button
+  - On verify:
+    1. Update user_bills:
+       - payment_status = 'paid'
+       - verified_by = admin.id
+       - verified_at = NOW()
+    2. Award loyalty points to user (+50 for on-time, +75 for early)
+    3. Send notification to user: "Your payment has been verified"
+    4. Log activity
+    5. Refresh verification queue
+
+□ Reject Payment Modal (src/components/bills/RejectPaymentModal.jsx)
+  - Reason for rejection (required text area)
+  - Common reasons (quick select):
+    * Invalid reference number
+    * Amount mismatch
+    * Payment proof unclear
+    * Payment not received in account
+    * Other (specify)
+  - Reject button
+  - On reject:
+    1. Update user_bills:
+       - payment_status = 'pending' (back to pending)
+       - Add admin notes with reason
+    2. Send notification to user with rejection reason
+    3. User can resubmit with corrections
+
+
+4.4 PAYMENT REMINDERS SYSTEM
+----------------------------
+□ Supabase Edge Function: send-payment-reminders
+  - Scheduled via pg_cron (runs daily at 9 AM)
+  - Logic:
+    1. Query user_bills with:
+       - payment_status = 'pending'
+       - due_date within reminder windows (5 days, 1 day before)
+    2. For each bill:
+       - Check if reminder already sent (track in notifications table)
+       - Calculate days until due
+       - Determine reminder type:
+         * 5 days before: "Upcoming payment reminder"
+         * 1 day before: "Payment due tomorrow"
+         * On due date: "Payment due today"
+         * 1 day after: "Payment overdue" (update status to 'overdue')
+       - Create notification
+       - Send email (optional - Phase 4)
+  
+  - Code structure:
+    ```typescript
+    // Get bills due in 5 days
+    const fiveDayReminders = await supabase
+      .from('user_bills')
+      .select('*, users(*), bills(*)')
+      .eq('payment_status', 'pending')
+      .gte('bills.due_date', today)
+      .lte('bills.due_date', addDays(today, 5))
+    
+    // Send notifications
+    for (const userBill of fiveDayReminders) {
+      await createNotification({
+        user_id: userBill.user_id,
+        type: 'payment_reminder',
+        title: 'Payment Due Soon',
+        message: `Your ${userBill.bills.bill_type} payment of ₹${userBill.amount_due} is due in 5 days`,
+        link: `/bills/${userBill.bill_id}`
+      })
+    }
+    
+    // Update overdue bills
+    await supabase
+      .from('user_bills')
+      .update({ payment_status: 'overdue' })
+      .eq('payment_status', 'pending')
+      .lt('bills.due_date', today)
+    ```
+
+□ Create notifications service (src/services/notificationService.js)
+  - Functions:
+    * createNotification(userId, type, title, message, link)
+    * getUnreadNotifications(userId)
+    * markAsRead(notificationId)
+    * deleteNotification(notificationId)
+
+
+4.5 NOTIFICATIONS TABLE & UI
+----------------------------
+□ Database table
+
+  **notifications table**
+  CREATE TABLE public.notifications (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    user_id UUID REFERENCES public.users(id) ON DELETE CASCADE NOT NULL,
+    notification_type TEXT NOT NULL,
+    title TEXT NOT NULL,
+    message TEXT NOT NULL,
+    link_url TEXT,
+    is_read BOOLEAN DEFAULT false,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+  );
+
+  CREATE INDEX idx_notifications_user ON notifications(user_id);
+  CREATE INDEX idx_notifications_unread ON notifications(user_id, is_read);
+
+□ Notification Bell Component (src/components/layout/NotificationBell.jsx)
+  - Bell icon in header
+  - Unread count badge (red circle with number)
+  - Click to open dropdown
+  - Dropdown shows:
+    * Last 5 notifications
+    * Each notification:
+      - Icon (based on type)
+      - Title
+      - Message (truncated)
+      - Time ago (e.g., "2 hours ago")
+      - Unread indicator (blue dot)
+    * "View All" link at bottom
+  - Click notification to:
+    * Mark as read
+    * Navigate to link_url
+    * Close dropdown
+
+□ Notifications Page (src/pages/notifications/NotificationsPage.jsx)
+  - Full list of notifications
+  - Tabs:
+    * All
+    * Unread
+    * Payments
+    * Tasks
+    * System
+  - Each notification card shows:
+    * Icon and type
+    * Title (bold if unread)
+    * Full message
+    * Timestamp
+    * Link button
+  - Actions:
+    * Mark as read/unread
+    * Delete notification
+    * Mark all as read
+  - Pagination (20 per page)
+
+
+4.6 PAYMENT ANALYTICS (ADMIN)
+-----------------------------
+□ Payment Reports Page (src/pages/admin/PaymentReportsPage.jsx)
+  - Date Range Selector (default: current month)
+  
+  - Summary Cards:
+    * Total Bills Created
+    * Total Amount to Collect
+    * Total Collected (green)
+    * Collection Rate (% with progress bar)
+    * Average Days to Payment
+    * Outstanding Amount (red)
+  
+  - Charts:
+    * Payment Status Pie Chart (Paid, Pending, Overdue)
+    * Collection Timeline (line chart showing cumulative collection)
+    * Bill Type Breakdown (bar chart)
+  
+  - Top Performers:
+    * Users with 100% on-time payment rate
+    * Users with highest loyalty points from payments
+  
+  - Defaulters Section:
+    * List users with overdue payments
+    * Sort by amount overdue
+    * Days overdue
+    * Send reminder action
+
+□ User Payment History (Admin View)
+  - Click any user to see their full payment history
+  - Show:
+    * Total paid to date
+    * Average monthly payment
+    * On-time payment percentage
+    * Late payment count
+    * Current outstanding amount
+    * Payment method preferences
+    * Timeline of all payments
+
+
+4.7 PAYMENT DISPUTE SYSTEM (BASIC)
+----------------------------------
+□ Dispute Button in Bill Detail
+  - "Dispute This Amount" button on bill detail page
+  - Opens Dispute Form Modal
+
+□ Create Dispute Modal (src/components/bills/CreateDisputeModal.jsx)
+  - Bill information (read-only)
+  - Dispute reason (required text area):
+    "Explain why you believe this amount is incorrect"
+  - Expected amount (number input):
+    "What amount do you believe you should pay?"
+  - Evidence upload (optional):
+    - Upload supporting documents via Cloudinary
+    - Max 3 files
+  - Submit dispute
+  - On submit:
+    1. Update user_bills.payment_status = 'disputed'
+    2. Create notification for admin
+    3. Show message: "Dispute submitted. Admin will review shortly."
+
+□ Admin Dispute Review (Basic - Full system in Phase 3)
+  - Show disputed bills in admin dashboard
+  - Admin can:
+    * View dispute reason and evidence
+    * Adjust amount_due
+    * Add resolution notes
+    * Approve adjusted amount
+    * Reject dispute
+  - Notify user of resolution
+
+
+================================================================================
+TESTING & DEPLOYMENT (End of Week 4)
+================================================================================
+
+5.1 TESTING CHECKLIST
+---------------------
+□ Authentication Testing
+  - Register new user with all document uploads
+  - Login with correct credentials
+  - Login with incorrect credentials (error handling)
+  - Logout and session cleanup
+  - Password validation (weak password rejection)
+  - Protected routes (redirect to login when not authenticated)
+  - Pending approval state (cannot access app until approved)
+  - Admin approval workflow
+
+□ Apartment Management Testing
+  - Create apartment (admin)
+  - Create room in apartment
+  - Add beds of different types
+  - Assign user to bed
+  - Unassign user from bed
+  - View apartment hierarchy
+  - User view of their apartment
+  - Occupancy calculations
+  - Vacancy indicators
+
+□ Billing System Testing
+  - Create bill (all types: rent, electricity, etc.)
+  - Create custom bill
+  - Test equal split calculation
+  - Test with excluded users
+  - Verify user_bills created for all eligible users
+  - User views their bills
+  - User submits payment with proof
+  - Admin verifies payment
+  - Admin rejects payment
+  - Payment reminders (5 days, 1 day, overdue)
+  - Overdue status update
+  - Dispute creation and review
+  - Payment history accuracy
+  - Analytics and reports accuracy
+
+□ Cloudinary Testing
+  - Profile photo upload and transformation
+  - ID card upload
+  - Payment proof upload
+  - File size limits
+  - Unsupported file type handling
+  - Image preview before upload
+  - Secure signed URLs
+
+□ Notifications Testing
+  - New bill notification
+  - Payment reminder notifications
+  - Payment verified notification
+  - Dispute notifications
+  - Unread count accuracy
+  - Mark as read functionality
+  - Real-time notification updates (Supabase Realtime)
+
+□ Responsive Design Testing
+  - Mobile view (iPhone, Android)
+  - Tablet view (iPad)
+  - Desktop view (various screen sizes)
+  - Touch interactions on mobile
+  - Bottom navigation on mobile
+  - Sidebar on desktop
+  - Forms usability on all devices
+
+
+5.2 PERFORMANCE OPTIMIZATION
+----------------------------
+□ Frontend Optimization
+  - Code splitting by route (React.lazy)
+  - Image lazy loading
+  - Debounce search inputs
+  - React Query caching (5-min stale time)
+  - Minimize re-renders (React.memo, useMemo, useCallback)
+  - Bundle size analysis (npm run build --report)
+
+□ Backend Optimization
+  - Database indexes verified
+  - Query performance testing (EXPLAIN ANALYZE)
+  - Connection pooling configured
+  - RLS policies optimized
+  - Edge Functions tested for performance
+
+
+5.3 DEPLOYMENT
+--------------
+□ Environment Setup
+  - Production environment variables
+  - Supabase production project
+  - Cloudinary production account
+  - Update CORS settings
+
+□ Frontend Deployment (Vercel)
+  - Connect GitHub repository
+  - Configure build settings:
+    * Build command: npm run build
+    * Output directory: dist
+  - Add environment variables
+  - Deploy
+  - Configure custom domain (optional)
+  - Enable HTTPS
+
+□ Database Migration
+  - Export schema from development
+  - Run migrations on production Supabase
+  - Seed initial admin user
+  - Verify RLS policies active
+  - Test database connection
+
+□ Edge Functions Deployment
+  - Deploy send-payment-reminders function
+  - Deploy generate-user-bills function
+  - Test function invocations
+  - Set up cron job for reminders (daily 9 AM)
+
+□ Post-Deployment Testing
+  - Full regression test on production
+  - Create test apartment with real data
+  - Invite test users
+  - Complete full payment flow
+  - Monitor error logs
+  - Performance monitoring
+
+
+================================================================================
+PHASE 1 DELIVERABLES
+================================================================================
+
+✅ User authentication (registration, login, logout)
+✅ User profile with document uploads (Cloudinary)
+✅ Admin approval workflow for new users
+✅ Apartment hierarchy (Apartment > Room > Bed)
+✅ Bed type pricing (Flat, Lower, Upper)
+✅ User-bed assignment by admin
+✅ Occupancy tracking and vacancy indicators
+✅ Bill creation (all types + custom bills)
+✅ Automatic bill splitting (equal split)
+✅ User bill dashboard
+✅ Manual payment submission with proof upload
+✅ Admin payment verification workflow
+✅ Payment reminders (5 days, 1 day, overdue)
+✅ Overdue status management
+✅ Basic payment dispute system
+✅ In-app notifications system
+✅ Real-time updates (Supabase Realtime)
+✅ Responsive design (mobile, tablet, desktop)
+✅ Basic admin dashboard
+✅ Payment reports and analytics
+
+================================================================================
+READY FOR PHASE 2
+================================================================================
+
+Next Phase: Community Meals & Tasks Management
+Timeline: Week 5-8
+
+Phase 1 establishes the foundation. Users can now:
+- Register and get approved
+- Be assigned to apartments/rooms/beds
+- Receive bills and make payments
+- Track payment history
+- Get notifications
+
+Admins can now:
+- Manage apartments, rooms, beds
+- Assign users to beds
+- Create and manage bills
+- Verify payments
+- View reports and analytics
+
+All core infrastructure (auth, database, Cloudinary, notifications) is ready 
+for Phase 2 features.
+
+================================================================================
+

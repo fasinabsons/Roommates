@@ -1,0 +1,576 @@
+================================================================================
+PHASE 3 - RESOURCES, VOTING & DISPUTES (WEEK 9-12)
+RoomMate Manager - Shared Resources & Conflict Resolution
+================================================================================
+
+PHASE GOAL: Implement resource booking system, voting/polls for decision making,
+and comprehensive dispute handling with chat-based resolution.
+
+TIMELINE: 4 Weeks
+PRIORITY: Enhanced Features
+
+================================================================================
+WEEK 9: RESOURCE SCHEDULING SYSTEM
+================================================================================
+
+9.1 DATABASE TABLES
+-------------------
+**resources table**
+- id, apartment_id, resource_name, photo_url
+- slot_duration (minutes), operating_start_time, operating_end_time
+- max_bookings_per_user_per_week, created_at
+
+**resource_bookings table**
+- id, resource_id, user_id, booking_date
+- start_time, end_time, status (booked/checked_in/checked_out/no_show/cancelled)
+- checked_in_at, checked_out_at, notes, created_at
+
+9.2 RESOURCE MANAGEMENT (ADMIN)
+--------------------------------
+□ Resources Page
+  - List all resources per apartment
+  - Default resources: Washing Machine, Dryer, Iron Box, Drying Area, Printer
+  - Each resource card: Name, Photo, Slots per day, Utilization %
+  - "Add Resource" button
+
+□ Create Resource Modal
+  - Resource name
+  - Upload photo (Cloudinary)
+  - Slot duration (15/30/60 minutes)
+  - Operating hours (start time - end time)
+  - Max bookings per user per week
+  - Advance booking window (days)
+  - Save creates resource
+
+9.3 BOOKING INTERFACE (USER)
+-----------------------------
+□ Resources Page (User View)
+  - Grid of available resources with photos
+  - Click resource to view availability
+
+□ Resource Booking Page
+  - Resource header (name, photo, rules)
+  - Week view calendar (Mon-Sun)
+  - Time slots in rows (based on operating hours)
+  - Color coding:
+    * Green: Available
+    * Yellow: Your bookings
+    * Red: Booked by others
+    * Gray: Outside operating hours
+  - Click available slot to book
+
+□ Create Booking Modal
+  - Show selected resource, date, time
+  - Duration (default or custom if multiple slots available)
+  - Add notes (optional)
+  - Confirm booking
+  - Check if user hasn't exceeded weekly limit
+  - Create booking record
+  - Send confirmation notification
+
+9.4 CHECK-IN/OUT SYSTEM
+-----------------------
+□ Active Booking Alert
+  - 15 min before slot: "Your washing machine slot starts in 15 min"
+  - At slot start: "Your slot has started - Check in now"
+  - Show "Check In" button in notification and booking page
+
+□ Check In
+  - User clicks "Check In" when starting to use resource
+  - Records checked_in_at timestamp
+  - Updates status to 'checked_in'
+  - Starts usage timer
+
+□ Check Out
+  - 5 min before slot end: "5 minutes remaining"
+  - User clicks "Check Out" when done
+  - Records checked_out_at timestamp
+  - Updates status to 'checked_out'
+  - Awards attendance points (+10)
+
+□ No-Show & Overstay Detection (Edge Function)
+  - Runs every 15 minutes
+  - No-show: Slot started >15 min ago, status still 'booked'
+    * Update status to 'no_show'
+    * Deduct points (-15)
+    * Log event
+  - Overstay: Slot ended + 10 min grace, still 'checked_in'
+    * Auto check-out
+    * Deduct points (-10)
+    * Send warning notification
+
+9.5 BOOKING MANAGEMENT
+----------------------
+□ My Bookings Page (User)
+  - Upcoming bookings (next 7 days)
+  - Active booking (if any) with timer
+  - Past bookings
+  - Actions: Cancel (min 1 hour before), Reschedule
+
+□ Cancel Booking Modal
+  - Reason (optional)
+  - Confirm cancellation
+  - Free up slot for others
+  - Notify if late cancellation (<1 hour before)
+
+□ Admin Resource Dashboard
+  - Utilization statistics per resource
+  - Most/least used time slots
+  - Top users by bookings
+  - No-show rates per user
+  - Overstay incidents
+
+
+================================================================================
+WEEK 10: VOTING & POLLS SYSTEM
+================================================================================
+
+10.1 DATABASE TABLES
+--------------------
+**polls table**
+- id, apartment_id, created_by, poll_type
+- question, description, end_date
+- is_anonymous, show_live_results, voter_restriction
+- status (active/closed), created_at
+
+**poll_options table**
+- id, poll_id, option_text, votes_count
+
+**poll_votes table**
+- id, poll_id, poll_option_id, user_id
+- vote_text (for open-ended), rating (for rating type)
+- voted_at
+
+10.2 POLL CREATION (ADMIN)
+---------------------------
+□ Polls Dashboard Page
+  - Active polls
+  - Closed polls (archive)
+  - Poll analytics (participation rate)
+  - "Create New Poll" button
+
+□ Create Poll Modal
+  - Step 1: Basic Info
+    * Poll question (required)
+    * Description (optional)
+    * Poll type (dropdown):
+      - Yes/No
+      - Multiple Choice (single)
+      - Multiple Choice (multi)
+      - Rating (1-5 stars)
+      - Open-ended feedback
+  
+  - Step 2: Options (if multiple choice)
+    * Add options (min 2, max 10)
+    * Option text fields
+    * Add/Remove option buttons
+  
+  - Step 3: Settings
+    * End date/time (required)
+    * Voter restrictions:
+      - All users
+      - Roommates only
+      - Meal participants only
+      - Custom selection
+    * Anonymous voting? (checkbox)
+    * Show live results? (checkbox)
+  
+  - Step 4: Review & Create
+    * Preview poll as users will see it
+    * Submit creates poll
+    * Sends notification to eligible voters
+
+10.3 VOTING INTERFACE (USER)
+-----------------------------
+□ Active Polls Page
+  - Banner notification for new polls
+  - List of active polls
+  - Status indicators: New, Voted, Ending Soon
+  - Click to vote
+
+□ Poll Voting Modal
+  - Poll question and description
+  - Voting options based on type:
+    * Yes/No: Radio buttons
+    * Multiple choice single: Radio buttons
+    * Multiple choice multi: Checkboxes
+    * Rating: Star rating widget (1-5)
+    * Open-ended: Text area
+  - Submit vote button
+  - Cannot change vote after submission (configurable)
+  - Confirmation: "Your vote has been recorded"
+  - Award +2 loyalty points for voting
+
+10.4 POLL RESULTS
+-----------------
+□ Results Display
+  - If live results enabled: Show during poll
+  - If not: Show after poll closes
+  - Result types:
+    * Yes/No: Pie chart with percentages
+    * Multiple choice: Bar chart
+    * Rating: Average rating with star display
+    * Open-ended: List all responses (if not anonymous)
+  - Stats:
+    * Total voters / Eligible voters
+    * Participation rate (%)
+    * Voting timeline (when votes came in)
+
+□ Admin Poll Management
+  - Close poll early (if needed)
+  - Edit poll (only before votes received)
+  - Delete poll
+  - Export results (CSV)
+  - View who voted (if not anonymous)
+
+10.5 POLL USE CASES
+-------------------
+□ Menu Voting
+  - "What dishes should we add next week?"
+  - Multiple choice with food options
+  - Top voted items added to menu
+
+□ Rule Changes
+  - "Should we change quiet hours to 10 PM?"
+  - Yes/No poll
+  - If majority yes, admin updates rule
+
+□ Chef Performance
+  - "Rate this month's chef performance"
+  - Star rating poll
+  - Results used for chef review
+
+
+================================================================================
+WEEK 11: DISPUTE HANDLING SYSTEM
+================================================================================
+
+11.1 DATABASE TABLES
+--------------------
+**disputes table**
+- id, apartment_id, created_by, dispute_type
+- title, description, evidence_urls (array)
+- involved_parties (array of user_ids)
+- status, resolution, resolved_by, resolved_at
+- created_at, updated_at
+
+**dispute_messages table**
+- id, dispute_id, user_id, message_text
+- attachment_urls (array), is_read
+- created_at
+
+11.2 DISPUTE CREATION
+---------------------
+□ Create Dispute Flow
+  - Available from multiple places:
+    * Bill detail page: "Dispute This Amount"
+    * Task page: "Dispute Assignment"
+    * General: "Report Issue" button
+  - Dispute types:
+    * Payment Dispute
+    * Task Assignment Dispute
+    * Community Meal Dispute
+    * Resource Booking Conflict
+    * Noise/Behavior Complaint
+    * Property Damage
+    * Chef Performance Issue
+    * General Grievance
+
+□ Create Dispute Modal
+  - Step 1: Dispute Type (select from above)
+  
+  - Step 2: Details
+    * Dispute title (brief summary)
+    * Detailed description (rich text)
+    * Tag involved parties (select users)
+    * Priority (Low/Medium/High)
+  
+  - Step 3: Evidence
+    * Upload supporting documents/photos (Cloudinary)
+    * Max 5 files
+    * File preview
+  
+  - Step 4: Submit
+    * Creates dispute record
+    * Notifies admin(s)
+    * Notifies involved parties
+    * Creates dispute thread
+    * Confirmation: "Dispute #123 created"
+
+11.3 DISPUTE CHAT SYSTEM
+------------------------
+□ Dispute Thread Page
+  - Header:
+    * Dispute #ID and title
+    * Status badge
+    * Created by and date
+    * Involved parties avatars
+    * Close dispute button (admin only)
+  
+  - Chat interface:
+    * Threaded messages (like Slack)
+    * Each message shows:
+      - User avatar and name
+      - Message text
+      - Attachments (if any)
+      - Timestamp
+      - Read receipts
+    * Scroll to load older messages
+    * Real-time updates (Supabase Realtime)
+  
+  - Message input:
+    * Text area with formatting
+    * Attach file button (Cloudinary)
+    * Send button
+    * Enter to send, Shift+Enter for new line
+
+□ Admin Panel in Dispute Thread
+  - Admin-only section (collapsed by default)
+  - Admin notes (internal, not visible to users)
+  - Actions:
+    * Create poll for community vote
+    * Adjust related bills/tasks
+    * Assign to specific admin
+    * Escalate dispute
+    * Close as resolved
+    * Close as invalid
+
+11.4 DISPUTE RESOLUTION WORKFLOW
+---------------------------------
+□ Admin Review Process
+  1. Admin receives dispute notification
+  2. Admin opens dispute thread
+  3. Admin reviews evidence and reads all messages
+  4. Admin has options:
+     a) Resolve directly (if clear solution)
+     b) Request more info from parties
+     c) Create poll for community vote
+     d) Adjust system records (e.g., fix bill amount)
+     e) Issue warning to user
+  
+□ Resolve Dispute Modal
+  - Resolution summary (required text)
+  - Actions taken (checklist):
+    * Adjusted bill amount
+    * Reassigned task
+    * Issued warning
+    * No action needed
+    * Other (specify)
+  - Notify all parties? (checkbox)
+  - Close dispute button
+  - Updates dispute status to 'resolved'
+  - Records resolved_by and resolved_at
+  - Sends resolution notification to all participants
+
+□ Dispute-Related Polls
+  - If admin needs community input:
+    * Click "Create Poll" in dispute thread
+    * Auto-populate question from dispute
+    * Set voters (usually all apartment members)
+    * Poll results feed into resolution
+
+11.5 DISPUTE TRACKING & ANALYTICS
+----------------------------------
+□ Disputes Dashboard (Admin)
+  - Open disputes (prioritized by urgency)
+  - Disputes under review
+  - Resolved disputes
+  - Stats:
+    * Total disputes this month
+    * Average resolution time
+    * Most common dispute types (pie chart)
+    * Recurring issues (identify patterns)
+    * Users with multiple disputes (flag)
+
+□ User Dispute History
+  - In user profile, show:
+    * Disputes initiated
+    * Disputes involved in
+    * Disputes won/lost
+    * False dispute count (penalty)
+  - Warning if user has >5 false disputes
+
+
+================================================================================
+WEEK 12: VACANCY MANAGEMENT & INVITATIONS
+================================================================================
+
+12.1 VACANCY TRACKING
+---------------------
+□ Vacancy Detection (Automated)
+  - When user exits/leaves apartment:
+    * Bed.is_occupied → false
+    * Bed.occupied_by → null
+  - Trigger: Notify all apartment members
+  - Red indicator on apartment/room view
+
+□ Vacancy Alert System
+  - Notification: "A bed is now available in Room 305"
+  - Email to all members (if enabled)
+  - Display vacancy banner on dashboard
+  - Vacancy impacts bill splitting:
+    * Recalculate shared bills
+    * Spread cost among remaining users
+    * Send updated bill notifications
+
+12.2 INVITE SYSTEM
+------------------
+□ Generate Invite Link (Admin)
+  - From apartment page: "Invite New Roommate"
+  - Modal:
+    * Select available bed (dropdown)
+    * Expiry date (default: 7 days)
+    * Max uses (default: 1)
+    * Custom message (optional)
+    * Generate link button
+  - Creates invite record with unique token
+  - Copy link to clipboard
+  - Share via WhatsApp, email, etc.
+
+□ Invite Link Structure
+  - URL: https://app.com/invite/{token}
+  - Token is UUID, stored in invites table
+
+**invites table**
+- id, apartment_id, bed_id, invited_by
+- token, max_uses, used_count, expires_at
+- custom_message, is_active
+
+□ Join via Invite Flow
+  1. User clicks invite link
+  2. If not logged in: Redirect to register with token param
+  3. If logged in: Show invite details:
+     - Apartment name and address
+     - Available bed type and price
+     - Inviting admin name
+     - Custom message
+     - "Accept Invitation" button
+  4. User accepts:
+     - Creates user application (pending approval)
+     - Pre-fills bed assignment
+     - Admin reviews as normal
+  5. Invite marked as used
+
+12.3 QR CODE INVITATIONS
+-------------------------
+□ Generate QR Code
+  - In invite modal: "Generate QR Code" option
+  - Uses QR code library (npm install qrcode.react)
+  - Encodes invite URL
+  - Display QR code modal:
+    * Large QR code image
+    * Download QR code (PNG)
+    * Print QR code
+    * Share QR code
+  - Users scan with phone camera → Opens invite link
+
+□ QR Code Component
+  ```jsx
+  import QRCode from 'qrcode.react'
+  
+  <QRCode 
+    value={inviteUrl} 
+    size={256}
+    level="H"
+    includeMargin={true}
+  />
+  ```
+
+12.4 EXTERNAL COMMUNICATION LINKS
+----------------------------------
+□ Admin Contact Settings (Admin Panel)
+  - Section: "External Communication"
+  - Add contact methods:
+    * WhatsApp group link
+    * WhatsApp admin number (auto-opens chat)
+    * Telegram group link
+    * Discord server link
+    * Phone number
+    * Email address
+  - Displayed in "Contact Admin" page for all users
+
+□ Contact Admin Page (User View)
+  - List all admin contact methods
+  - Each with icon and click-to-open
+  - "For urgent issues, use these contacts"
+  - Links open in new tab
+  - In-app dispute for formal issues
+
+
+================================================================================
+TESTING & INTEGRATION
+================================================================================
+
+□ Resource Booking Testing
+  - Create multiple resources
+  - Book overlapping slots (should fail)
+  - Check-in and check-out flow
+  - No-show detection
+  - Overstay detection
+  - Cancel and reschedule
+  - Weekly limit enforcement
+  - Booking history accuracy
+
+□ Polls & Voting Testing
+  - Create polls of each type
+  - Vote as multiple users
+  - Anonymous vs. non-anonymous
+  - Live results display
+  - Poll closing at end date
+  - Results accuracy
+  - Loyalty points for voting
+
+□ Dispute System Testing
+  - Create disputes from different contexts
+  - Chat functionality
+  - File uploads in chat
+  - Real-time message updates
+  - Admin resolution actions
+  - Dispute-related polls
+  - Resolution notifications
+  - Dispute history tracking
+
+□ Vacancy & Invites Testing
+  - Trigger vacancy (user exits)
+  - Vacancy notifications sent
+  - Generate invite link
+  - Share and use invite link
+  - Invite expiry
+  - Max uses limit
+  - QR code generation and scanning
+  - External contact links
+
+================================================================================
+PHASE 3 DELIVERABLES
+================================================================================
+
+✅ Resource management (create/edit resources)
+✅ Resource booking calendar interface
+✅ Check-in/check-out system
+✅ No-show and overstay detection
+✅ Booking notifications and reminders
+✅ Resource utilization analytics
+✅ Poll creation with multiple types
+✅ Voting interface with various formats
+✅ Anonymous and non-anonymous voting
+✅ Live results and final results display
+✅ Poll participation tracking
+✅ Comprehensive dispute system
+✅ Multi-type dispute categories
+✅ Dispute chat with file sharing
+✅ Admin resolution workflow
+✅ Dispute-related polls
+✅ Dispute analytics and tracking
+✅ Vacancy detection and alerts
+✅ Invite link generation with expiry
+✅ QR code invitations
+✅ External communication links
+✅ Bill recalculation on vacancy
+
+================================================================================
+READY FOR PHASE 4
+================================================================================
+
+Next Phase: Gamification & Monetization
+Timeline: Week 13-16
+

@@ -1,0 +1,126 @@
+requirements to the users and situations 
+the users are room mates who live together and share various types of resources like the apartment rent, Electricity, Internet, Gas bills , Grocery Bills and several shared bills.
+They also have the schedules and tasks too like for washing clothes on washing machine so user has slots to utilize at various times so everyone can use.
+schedules include Washing machine, Iron box, laying washed clothes to dry, printer(If there), similar custom ones users can utilize.
+
+tasks include cleaning bathroom,Cooking (if No chef), cleaning Kitchen etc. tasks can be person wise or team wise and it will keep on rotating once set.
+
+the team creation for community meals, here the people who doesn't stay can be part of the community meal as well.
+Community meal can be with or without chef by default we add the chef.
+we have the chef profile with his photo, phone number, email and his Identity card, salary(shared by all community meal users) so we have control if there is anything as issue.
+the meal menu can be there for all 7 days and there can be off days or off meals and there can be only dinner, lunch available.
+and admin room mates can update menu and take voting what food to add, dinner can have different set like rice, curry, roti, curry so we have 2 or 3 different items to keep like dessert, curry1, curry 2, meal: rice, roti, porotta.
+
+there is votings and polls so that the room mates can vote on selection of meals, selection of teams can be posted and users can say yes or no so to find agree or not.
+
+room vacancy management like  Apartment > Room > Bed > Upper Bed
+so user 1 stays in the apartment 2 or B > then room number > Lower bed
+
+there are 3 types of bed, flat bed, Lower bed, Upper bed and each price is different will be set by the admin.
+
+so user profile can be there and this is private and no people can view other's data outside apartment should be able to view it.
+
+so this is like a close circle and admins can provide invite links and also be able to share Qr code to join the private apartment or apartments network of 2,3 apartments.
+
+we take payments to add more than 2 apartments, then community meal can have the grocery system where users who utilize the community meal forms a team together so each week a team purchases all the grocery for that particular week's requirements
+let's say there are 24 room mates, then 17 people will be in the community meal then it is split as 7 teams with 2 members and 1 team with 3 members. if it is 18 people we have option to split equally anyway for 4 weeks first 4 teams buy grocery.
+
+then the overall cost will be split amoung all 17 users. 
+also there is an option to keep a fixed amount regardless whatever like 400 every users and whoever had paid more will recieve a  payback if spend more since the budget over ridden.
+
+let's say all users where assigned that the fixed amount is this much and split among all, then teams buy the grocery, gas and drinking water(drinking water can be opted or not too.)
+
+so community meal itself there will be different set of users
+
+user 1 who is room mate, so all bills are there.
+user 2 who is room mate, all bills except drinking water.
+user 3 non room mate or outsider only participates in the community meal so no electricity, internet, room rent for this user.
+user 4 only dinner opted so the community meal price is different
+user 5 only lunch, no water.
+
+so we have different scenarios here.
+
+also room rent can be different too
+
+user 1 has apartment 1 which is expensive and also flat bed so most price there.
+user 2 flat bed in less expensive apartment.
+user 3 lower bed
+user 4 upper bed.
+
+so we should folder like structure to spot the users we can also take name,age, identity card, photo, phone number, email, resume/cv and profile/Labour card so that we know the person and relation to any other room mate too is given.
+also user Grocery team whoever he is paired with , there can be team of 2,3,4,5,6 etc. then also the location of his bed added like location: Apartment 3 > Room 305 > Lower Bed 3.
+
+so the admin will see Apartments like a folder
+
+			Apartment 1					Greg's Apartment (admins can name anything)
+			
+			
+			
+			when Admins click any apartment which is the parent folder then they will see Rooms
+			
+			Hailey's Room 			Room 2 				Room 3
+			
+			when admins selects any room the beds are shown
+			
+			Upper Bed 1 				Upperbed 2			Flatbed
+			Lower Bed 1					Lower bed 2
+			
+			
+			the double deck bed is less premium price than the flatbed and upper is the cheapest price.
+			
+			
+			
+			so we have the app to completely manage the room mates and shared expenses also there is option to add guests when the room mate is leaving he can bring his relative to use his or her bed.
+			the vacant apartment will be shown red when there is a single bed vacant itself since the price will be split amoung all members all will be shown the bed is vacant and then all users can start to find new room mate.
+			
+			we should also have a dispute handling through chat that is only having votes, polls etc to be created by admins to make decisions and the admins can also add their whatsapp so users can directly chat there or any similar apps or links can be added too.
+			so we can rely lesser on the database and save. 
+			
+			then there is option to collaborate too that is coming in the future. create a complete web application structure to enable the complete utilization of the app to make everyone's life easier the pain point is hard to manage the community meal and there can be way more outside people who can take meals and even escape after sometime without paying too.
+			
+			also room mates who join and leave the room without paying leaving everyone else to be having the burden. there can also be room mates who are not doing the tasks and we don't have proper notifications to remind the assigned tasks per person.
+			
+			there should be loyalty points for the room mates so that everone can work together, we get negative points for not doing the tasks, delaying payments of any bills, Escaping from the room before payments to avoid payments and also the payment will be gone forever so we have the identity card and details and also approal of admins to make sure the user is credible and safe to capture if gone without payment too.
+			
+so we require safe environment ensuring everyone is paid on time and there is also an option for admin room mates to add fine for late payment and also task can be given to anyone else too, so we can even exchange tasks with each other on times of emergencies and admins can keep approval for it or not too.
+
+so user 1 supposed to clean kitchen today can give his or her task to user 5 and user 5's task day will be done by user 1.
+
+
+create a plan and if ethere is any doubts just create a questionnaire so i will answer how to manage and there can be room rental payments paid monthly, quarterly, annually. we also provide suggestions that annual payments are cheaper.
+and can save around 15 to 20% of your hard earned money and there is also common fund page where users create a money pool where participant room mates or users pay certain amounts like 500 and 600 etc. and then certain months all amount will be taken by users in turns.
+
+so let's say 9 users pool in certain amount 100 for example so 900 it is in total, then user 2 will take 900 as whole that month and he will keep on paying 100 every month. so every person will pay 800 actually since his month he will not pay he take all money.
+so first person is one of the random person or assigned by the admin and all others are added automatically or admin can set the whole manually. 
+
+and they can also collaborate to invest but this is manual entry of amounts right now to just view. also there is watching ads tab too to get donations to developer.
+
+
+
+
+
+
+Great project! I can see you've put a lot of thought into this comprehensive roommate management system. Before I dive deep into researching competitors and creating a detailed plan, let me clarify a few key things:
+
+1. **Target Users & Geography**: Are you building this primarily for students, working professionals, or a general audience? And in which country/region will you launch first? (This affects payment integrations, identity verification needs, and competitive landscape)
+
+2. **Development Stage**: Are you at the ideation stage looking for technical guidance, or do you already have a development team and specific tech stack preferences?
+
+3. **MVP Timeline & Priority**: What's your ideal timeline for launching the MVP? And among the three core features (room rents, community meals, tasks) - is there one you'd like to prioritize first, or should they all launch together?
+
+Once you answer these, I'll launch comprehensive research to analyze competitors like Splitwise, Roomie, and other roommate management apps, identify gaps your app can fill, and create a detailed technical plan with architecture, feature prioritization, and development roadmap!
+
+
+students in india, Nigeria, uae, Kuwait, Global we can say since it is best to reach most amount of users possible like Employees and Bachelors living together as shared . 2. development i plan to use lovable, claude code myself only developer no team. 3. Mvp as soon as possible since we need to use this and start using to be stress free in our room mates setting itself and also promote to more room mates as possible. room rents, and community meals are the most priority first. that is most complex one. plan the app, we need to use database very efficiently as possible. make sure you create very good flow of the users and several types of bed, users, loyalty points we should differentiate well in the market to create the usage and also make the room mates having a stress free management during the rush environments like work life.
+
+Perfect! I can see this is a comprehensive system with huge potential. Before I dive into deep research on competitors and create a detailed technical plan, let me clarify a few critical MVP decisions:
+
+1. **Payment Integration Scope (MVP)**: For the MVP launch, should I focus on *tracking and calculating* who owes what (like Splitwise), or do you also need *actual payment gateway integration* (UPI for India, bank transfers for UAE, etc.)? Integrated payments add significant complexity but might be essential for your trust/safety model.
+
+2. **Community Meal MVP Complexity**: Should the MVP include the full grocery team rotation system (teams buying weekly groceries, cost splitting, water/gas tracking), or start simpler with just meal signup, menu display, and final cost splitting? The rotating grocery team system is brilliant but complex for v1.
+
+3. **Database Choice**: Are you planning to use Supabase (which integrates well with Lovable) or another database like Firebase/PostgreSQL? This affects the schema design significantly.
+
+Once you clarify these, I'll launch comprehensive research to analyze all major competitors (Splitwise, Roomie, Acasa, Cozy, etc.), identify technical architecture patterns, payment solutions for your target countries, and create a complete MVP plan with database schema, user flows, and feature prioritization!
+we can now keep the payments and all manual for now and add the stripe payments later so admins can utilize much more effective way to collect the payments right now admin should say he got the room payments else the user is still shown the payment should be done and there should be reminder before 5 days itself that room rent should be paid, so the user will see pay this particular total and he can say details of his payment and raise a negotiation to the admin like that is incorrect and if the admin feels the user is paying for something he or she didn't used then admins can evaluate and make necessary changes also. then we need to track payments and also calculate like splitwise but this is continuous tracking according to vacancy, admin will set the total for apartment 1, 2 and rooms wise he will also mention the bed prices etc. too. so, we have different bills to track too, grocery will only be shared with the community meal opted users, users can opt in and out. we also require proper approval to become a roommate and exit as a roommate too, since we need a proper way to handle room mates who are new. 2. we need complete rotation since this is very crucial and most stressful to roommates to handle this, and users should be able to enter the grocery bills manually and add bills as ocr and then edit before uploading and the admins can see the purchases of each teammate and the weekly rotation of team mates and users can also review or add feedback to the team to improve also add stars too. 3. supabase itself so it is easier to manage. we need very unique and easiest ways to handle all those pain points of living in a shared environment.
+

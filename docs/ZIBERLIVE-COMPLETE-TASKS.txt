@@ -1,0 +1,2429 @@
+================================================================================
+ZIBERLIVE - COMPLETE IMPLEMENTATION ROADMAP
+All Features from Page Specifications + New Requirements
+================================================================================
+
+VERSION: 2.0 - Complete Feature Set
+LAST UPDATED: November 5, 2025
+TOTAL PAGES: 50+ pages across 8 modules
+ESTIMATED TIME: 20-24 weeks (solo developer)
+
+================================================================================
+MISSING FEATURES IDENTIFIED & ADDED
+================================================================================
+
+NEW FEATURES TO IMPLEMENT:
+✓ Invite System: Link, Code, QR Code generation
+✓ Admin Invite Verification
+✓ Data Export & Deletion (Admin can delete all data)
+✓ Data Archival System (after 3 months)
+✓ Storage Management & Payment Options
+✓ Ad-Watching to Keep App Running (monetization)
+✓ Subscription Model (pay or watch ads)
+✓ Database Compression/Archival
+
+================================================================================
+IMPLEMENTATION STRATEGY - NO RLS UNTIL ALL FEATURES COMPLETE
+================================================================================
+
+PHASE 1-7: Build ALL features WITHOUT RLS policies
+PHASE 8: Implement RLS policies for production security
+
+This allows faster development and easier testing!
+
+================================================================================
+PHASE 1: FOUNDATION & AUTHENTICATION (Weeks 1-3)
+================================================================================
+
+TASK 1.1: Project Setup & Configuration
+---------------------------------------
+Duration: 4 hours
+Priority: CRITICAL
+
+Actions:
+1. React + TypeScript + Vite project
+2. Install dependencies:
+   - @supabase/supabase-js
+   - @cloudinary/url-gen @cloudinary/react
+   - react-router-dom
+   - @tanstack/react-query
+   - zustand
+   - react-hook-form zod @hookform/resolvers
+   - lucide-react date-fns recharts
+   - tailwindcss postcss autoprefixer
+   - tesseract.js (for OCR)
+
+3. Configure Tailwind with ZiberLive theme:
+   Colors: ziber-blue, ziber-purple, ziber-green, ziber-orange, ziber-teal
+   Font: Inter
+
+4. Folder structure:
+   ```
+   src/
+   ├── components/
+   │   ├── ui/          (buttons, cards, inputs)
+   │   ├── layout/      (nav, sidebar, footer)
+   │   ├── bills/       (bill-specific components)
+   │   ├── meals/       (meal-specific components)
+   │   ├── polls/       (poll-specific components)
+   │   └── shared/      (reusable across modules)
+   ├── pages/
+   │   ├── auth/
+   │   ├── dashboard/
+   │   ├── bills/
+   │   ├── meals/
+   │   ├── tasks/
+   │   ├── polls/
+   │   ├── money-pools/
+   │   ├── admin/
+   │   └── guest/
+   ├── lib/
+   │   ├── supabase.ts
+   │   ├── cloudinary.ts
+   │   ├── ocr.ts
+   │   └── utils.ts
+   ├── hooks/
+   ├── stores/        (zustand stores)
+   ├── types/         (TypeScript types)
+   └── styles/
+   ```
+
+Files to Create:
+- src/lib/supabase.ts
+- src/lib/cloudinary.ts
+- src/styles/globals.css
+- tailwind.config.js
+- env.template
+
+
+TASK 1.2: Database Schema WITHOUT RLS
+--------------------------------------
+Duration: 3 hours
+Priority: CRITICAL
+
+→ Reference: DATABASE-SCHEMA-COMPLETE.sql
+
+Actions:
+1. Run COMPLETE schema in Supabase SQL Editor
+2. **SKIP ALL RLS POLICIES FOR NOW**
+3. Verify all tables created:
+   - apartments
+   - locations (with ltree)
+   - apartment_members
+   - bill_types
+   - bills
+   - bill_splits
+   - payments
+   - chefs
+   - menus
+   - menu_items
+   - grocery_teams
+   - team_members
+   - grocery_purchases
+   - grocery_items
+   - tasks
+   - task_assignments
+   - resources
+   - resource_bookings
+   - polls
+   - poll_options
+   - poll_votes
+   - money_pools
+   - money_pool_participants
+   - money_pool_contributions
+   - money_pool_payouts
+   - investment_pools
+   - investment_participants
+   - disputes
+   - dispute_messages
+   - notifications
+   - activity_logs
+   - point_actions
+   - member_points_ledger
+   - ad_views
+   - developer_donations
+   - guests
+   - **apartment_invites** (NEW)
+   - **data_archives** (NEW)
+   - **subscription_status** (NEW)
+
+4. Create additional tables for new features:
+
+```sql
+-- Apartment Invites (for link/code/QR invitation)
+CREATE TABLE apartment_invites (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    apartment_id UUID REFERENCES apartments(id) ON DELETE CASCADE NOT NULL,
+    invite_code VARCHAR(20) UNIQUE NOT NULL,
+    invite_type VARCHAR(20) CHECK (invite_type IN ('general', 'single_use', 'limited')),
+    max_uses INTEGER DEFAULT 1,
+    current_uses INTEGER DEFAULT 0,
+    location_id UUID REFERENCES locations(id), -- Pre-assign bed
+    created_by UUID REFERENCES auth.users(id) NOT NULL,
+    expires_at TIMESTAMPTZ,
+    is_active BOOLEAN DEFAULT true,
+    created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Data Archives (for 3-month+ archival)
+CREATE TABLE data_archives (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    apartment_id UUID REFERENCES apartments(id) ON DELETE CASCADE NOT NULL,
+    archive_date DATE NOT NULL,
+    archive_type VARCHAR(50) CHECK (archive_type IN ('monthly', 'full_cleanup')),
+    data_json JSONB NOT NULL, -- Compressed archived data
+    file_size_mb DECIMAL(10,2),
+    created_by UUID REFERENCES auth.users(id) NOT NULL,
+    created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Subscription Status (pay vs watch ads)
+CREATE TABLE subscription_status (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    apartment_id UUID REFERENCES apartments(id) ON DELETE CASCADE NOT NULL,
+    plan_type VARCHAR(20) CHECK (plan_type IN ('paid', 'ad_supported', 'trial')),
+    storage_used_mb DECIMAL(10,2) DEFAULT 0,
+    storage_limit_mb DECIMAL(10,2) DEFAULT 500, -- 500MB free
+    payment_due_date DATE,
+    last_payment_date DATE,
+    last_payment_amount DECIMAL(10,2),
+    ads_watched_this_month INTEGER DEFAULT 0,
+    ads_required_this_month INTEGER DEFAULT 300, -- 10 ads/day × 30 days
+    status VARCHAR(20) CHECK (status IN ('active', 'payment_due', 'suspended')),
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+```
+
+Test: All tables visible in Supabase dashboard
+
+
+TASK 1.3: Authentication Context & Routes
+-----------------------------------------
+Duration: 4 hours
+Priority: HIGH
+
+→ Reference: authentication.txt (lines 1-100)
+
+Files to Create:
+- src/contexts/AuthContext.tsx
+- src/pages/auth/LoginPage.tsx
+- src/pages/auth/RegisterPage.tsx
+- src/pages/auth/ForgotPasswordPage.tsx
+- src/pages/auth/ResetPasswordPage.tsx
+- src/pages/auth/ApprovalPendingPage.tsx
+- src/App.tsx (with React Router)
+
+Key Features:
+1. Email/Password login
+2. Phone OTP login (Supabase Auth)
+3. 4-step registration:
+   - Basic info
+   - Document upload (Cloudinary)
+   - Emergency contact
+   - Join with invite code/link
+4. Password reset flow
+5. Pending approval page
+
+Components:
+- PhoneOTPModal
+- MultiStepForm (for registration)
+- DocumentUpload (Cloudinary widget)
+
+Test:
+- Can register new user
+- Can login
+- Documents upload to Cloudinary
+- User lands on "Approval Pending" page
+
+
+TASK 1.4: Layout Components
+---------------------------
+Duration: 4 hours
+Priority: HIGH
+
+→ Reference: dashboard.txt (lines 1-100)
+
+Files to Create:
+- src/components/layout/AppLayout.tsx
+- src/components/layout/TopNavigation.tsx
+- src/components/layout/Sidebar.tsx
+- src/components/layout/BottomNavigation.tsx
+- src/components/layout/NotificationBell.tsx
+
+Features:
+- Responsive layout (desktop sidebar, mobile bottom nav)
+- User menu with profile dropdown
+- Notification bell with badge
+- Logo and branding
+- Navigation items based on user role
+
+Test:
+- Layout responsive on mobile/tablet/desktop
+- Navigation works
+- User menu functional
+
+
+TASK 1.5: Onboarding Tour
+-------------------------
+Duration: 3 hours
+Priority: MEDIUM
+
+→ Reference: authentication.txt (lines 360-420)
+
+Files to Create:
+- src/components/onboarding/OnboardingTour.tsx
+- src/hooks/useOnboarding.ts
+
+Features:
+- 6-step guided tour for first-time users
+- Highlight key features
+- Skippable
+- Mark as completed in user profile
+
+Test:
+- Tour appears on first login
+- All steps work
+- Can skip tour
+
+
+================================================================================
+PHASE 2: INVITE SYSTEM (NEW REQUIREMENT) (Week 4)
+================================================================================
+
+TASK 2.1: Invite Link Generation (Admin)
+----------------------------------------
+Duration: 5 hours
+Priority: CRITICAL (NEW FEATURE)
+
+→ Reference: admin-management.txt (lines 300-360)
+
+Files to Create:
+- src/pages/admin/InviteManagementPage.tsx
+- src/components/invites/CreateInviteModal.tsx
+- src/components/invites/InviteCard.tsx
+- src/lib/qr-generator.ts (use qrcode.react library)
+
+Features:
+1. **Generate Invite Link**:
+   - Unique code generation (e.g., "ZIBER-APT-2025-ABC")
+   - Link format: `https://ziberlive.com/join/{inviteCode}`
+   - Set expiration date
+   - Set max uses (single/limited/unlimited)
+   - Pre-assign bed (optional)
+
+2. **Generate QR Code**:
+   - QR code contains invite link
+   - Downloadable as PNG
+   - Printable format
+
+3. **Invite Tracking**:
+   - View all active invites
+   - See usage count
+   - Disable/revoke invites
+   - Track who used each invite
+
+API Endpoints:
+```typescript
+// Create invite
+POST /rest/v1/apartment_invites
+Body: {
+  apartment_id: string,
+  invite_type: 'general' | 'single_use' | 'limited',
+  max_uses: number,
+  location_id?: string,
+  expires_at: timestamp
+}
+
+// Get apartment invites
+GET /rest/v1/apartment_invites?apartment_id=eq.{id}
+
+// Validate invite code
+GET /rest/v1/apartment_invites?invite_code=eq.{code}&is_active=eq.true
+```
+
+Dependencies to Install:
+```bash
+npm install qrcode.react
+npm install uuid
+```
+
+Test:
+- Admin can create invite link
+- QR code generates correctly
+- Link is shareable via WhatsApp/Email/Copy
+- Invite tracking works
+
+
+TASK 2.2: Join with Invite (Public)
+-----------------------------------
+Duration: 4 hours
+Priority: CRITICAL (NEW FEATURE)
+
+Files to Create:
+- src/pages/auth/JoinWithInvitePage.tsx
+- src/hooks/useInviteValidation.ts
+
+Features:
+1. **Join Routes**:
+   - `/join/:inviteCode` - Direct link
+   - Manual code entry on registration page
+   - QR code scanner (use html5-qrcode library)
+
+2. **Validation**:
+   - Check invite code validity
+   - Check expiration
+   - Check usage limit
+   - Show apartment details before joining
+
+3. **Registration Flow**:
+   - Pre-fill apartment_id from invite
+   - Complete 4-step registration
+   - Auto-assign bed if specified in invite
+   - Send to "Approval Pending" page
+
+Dependencies:
+```bash
+npm install html5-qrcode
+```
+
+Test:
+- Can join via link
+- Can scan QR code
+- Invalid codes show error
+- Expired invites rejected
+
+
+TASK 2.3: Admin Invite Verification
+-----------------------------------
+Duration: 3 hours
+Priority: HIGH (NEW FEATURE)
+
+→ Reference: authentication.txt (lines 312-360)
+
+Files to Update:
+- src/pages/admin/MemberApprovalsPage.tsx
+
+Features:
+1. Show which invite code user used
+2. Show who created the invite
+3. View user's uploaded documents
+4. Approve/Reject with reason
+5. On approval:
+   - Change status to 'active'
+   - Assign loyalty points (+500 for complete profile)
+   - Send welcome email
+6. On rejection:
+   - Send rejection email with reason
+   - Delete user or mark as rejected
+
+Test:
+- Admin can see pending applications
+- Invite code shown in application
+- Approve/reject works
+- Notifications sent
+
+
+================================================================================
+PHASE 3: DASHBOARD & PROFILE (Week 5)
+================================================================================
+
+TASK 3.1: Member Dashboard
+--------------------------
+Duration: 6 hours
+Priority: HIGH
+
+→ Reference: dashboard.txt (lines 1-150)
+
+Files to Create:
+- src/pages/dashboard/MemberDashboardPage.tsx
+- src/components/dashboard/QuickStatsGrid.tsx
+- src/components/dashboard/UrgentActionsSection.tsx
+- src/components/dashboard/WeeklyMenuWidget.tsx
+- src/components/dashboard/GroceryDutyCard.tsx
+- src/components/dashboard/ActivePollsWidget.tsx
+- src/components/dashboard/RecentActivityFeed.tsx
+
+Features:
+- Quick stats (bills due, tasks pending, ads available)
+- Urgent actions (overdue items)
+- This week's menu
+- Grocery duty status
+- Active polls
+- Recent activity feed
+- Quick action buttons
+
+API:
+```typescript
+GET /functions/v1/dashboard-summary?user_id={userId}
+```
+
+Test:
+- All widgets load
+- Real-time updates work
+- Quick actions functional
+
+
+TASK 3.2: Admin Dashboard
+-------------------------
+Duration: 6 hours
+Priority: HIGH
+
+→ Reference: dashboard.txt (lines 152-290)
+
+Files to Create:
+- src/pages/admin/AdminDashboardPage.tsx
+- src/components/admin/OverviewMetricsGrid.tsx
+- src/components/admin/PendingActionsSection.tsx
+- src/components/admin/FinancialOverviewCard.tsx
+- src/components/admin/MemberPaymentStatusTable.tsx
+- src/components/admin/ApartmentHealthCard.tsx
+
+Features:
+- Overview metrics (members, occupancy, collection rate)
+- Pending actions (payments, receipts, approvals)
+- Financial overview
+- Member payment status table
+- Apartment health score
+- Quick admin actions
+
+Test:
+- All metrics accurate
+- Pending actions clickable
+- Financial data correct
+
+
+TASK 3.3: User Profile Page
+---------------------------
+Duration: 4 hours
+Priority: MEDIUM
+
+→ Reference: dashboard.txt (lines 368-445)
+
+Files to Create:
+- src/pages/profile/UserProfilePage.tsx
+- src/components/profile/PersonalInfoSection.tsx
+- src/components/profile/DocumentsSection.tsx
+- src/components/profile/LocationSection.tsx
+- src/components/profile/MealPreferencesSection.tsx
+- src/components/profile/NotificationSettings.tsx
+
+Features:
+- View/edit personal information
+- Upload/view documents
+- View assigned location
+- Manage meal preferences
+- Configure notifications
+
+Test:
+- Can edit profile
+- Documents viewable
+- Settings save correctly
+
+
+================================================================================
+PHASE 4: BILLS & PAYMENTS MODULE (Weeks 6-7)
+================================================================================
+
+TASK 4.1: My Bills Dashboard (Member)
+-------------------------------------
+Duration: 6 hours
+Priority: CRITICAL
+
+→ Reference: bills.txt (lines 78-210)
+
+Files to Create:
+- src/pages/bills/MyBillsPage.tsx
+- src/components/bills/SummaryCardsGrid.tsx
+- src/components/bills/BillCard.tsx
+- src/components/bills/FilterBar.tsx
+- src/components/bills/TabNavigation.tsx
+
+Features:
+- Summary cards (total due, paid this month, overdue)
+- Bill list with filters (pending/paid/overdue/all)
+- Search and sort
+- Click to view details
+- Pay now buttons
+
+Test:
+- Bills load correctly
+- Filters work
+- Real-time updates
+
+
+TASK 4.2: Bill Detail Page
+--------------------------
+Duration: 4 hours
+Priority: HIGH
+
+→ Reference: bills.txt (lines 212-340)
+
+Files to Create:
+- src/pages/bills/BillDetailPage.tsx
+- src/components/bills/BillHeader.tsx
+- src/components/bills/BillSummaryCard.tsx
+- src/components/bills/BreakdownSection.tsx
+- src/components/bills/PaymentStatusCard.tsx
+- src/components/bills/SplitDetailsTable.tsx
+
+Features:
+- Full bill breakdown
+- YOUR SHARE prominently displayed
+- How bill was calculated
+- Other members' shares (transparency)
+- Payment status
+- Action buttons
+
+Test:
+- Calculation clear
+- Split details accurate
+- Status updates real-time
+
+
+TASK 4.3: Payment Submission Modal
+----------------------------------
+Duration: 5 hours
+Priority: CRITICAL
+
+→ Reference: bills.txt (lines 343-500)
+
+Files to Create:
+- src/components/bills/MarkAsPaidModal.tsx
+- src/components/bills/CloudinaryUploadWidget.tsx
+- src/hooks/useCloudinaryUpload.ts
+
+Features:
+1. **Payment Form**:
+   - Payment method dropdown
+   - Transaction reference input
+   - Payment date picker
+   - Receipt upload (Cloudinary)
+   - Notes textarea
+
+2. **Cloudinary Upload**:
+   - Click to upload or take photo
+   - Preview uploaded receipt
+   - Max 5MB, JPG/PNG/PDF
+   - Upload to: `/roommate-manager/payments/{user_id}/{bill_id}/`
+
+3. **Submission**:
+   - Create payment record (status: pending_verification)
+   - Update bill_split status
+   - Notify admin
+   - Show success message
+
+API:
+```typescript
+POST /rest/v1/payments
+Body: {
+  apartment_id: string,
+  payer_member_id: string,
+  bill_split_id: string,
+  amount: number,
+  payment_method: string,
+  transaction_reference: string,
+  receipt_url: string,
+  payment_date: date,
+  status: 'pending_verification',
+  notes: string
+}
+```
+
+Test:
+- Form validation works
+- Receipt uploads to Cloudinary
+- Payment submits successfully
+- Admin receives notification
+
+
+TASK 4.4: Payment History
+-------------------------
+Duration: 3 hours
+Priority: MEDIUM
+
+→ Reference: bills.txt (lines 501-580)
+
+Files to Create:
+- src/pages/bills/PaymentHistoryPage.tsx
+- src/components/bills/StatsCards.tsx
+- src/components/bills/PaymentHistoryTable.tsx
+
+Features:
+- Summary stats (total paid, average, on-time rate)
+- Filterable payment history table
+- Download CSV/PDF
+- View receipts
+
+Test:
+- History loads
+- Filters work
+- Export functions
+
+
+TASK 4.5: Admin Bill Management
+-------------------------------
+Duration: 8 hours
+Priority: CRITICAL
+
+Files to Create:
+- src/pages/admin/BillsDashboardPage.tsx
+- src/pages/admin/CreateBillPage.tsx
+- src/pages/admin/PaymentVerificationPage.tsx
+- src/components/admin/BillTypeManager.tsx
+- src/components/admin/PaymentVerificationCard.tsx
+
+Features:
+1. **Create Bill Types** (templates):
+   - Name, calculation method
+   - Recurrence pattern
+   - Due date, grace period
+   - Is opt-in (for meals)
+
+2. **Create Bills**:
+   - Select bill type
+   - Enter total amount
+   - Set period and due date
+   - Auto-calculate splits
+   - Publish to members
+
+3. **Payment Verification**:
+   - View pending payments
+   - See receipt images
+   - Verify/Reject with reason
+   - Award loyalty points on verification
+
+4. **Bulk Actions**:
+   - Generate monthly bills for all types
+   - Send payment reminders
+   - Apply late fees
+
+Test:
+- Can create bill types
+- Bills generate correctly
+- Split calculation accurate
+- Verification workflow works
+
+
+TASK 4.6: Dispute Management
+----------------------------
+Duration: 4 hours
+Priority: MEDIUM
+
+Files to Create:
+- src/pages/bills/DisputeBillPage.tsx
+- src/components/bills/CreateDisputeModal.tsx
+- src/pages/admin/DisputesPage.tsx
+- src/components/disputes/DisputeChatThread.tsx
+
+Features:
+- Member can dispute bill amount
+- Chat-style conversation
+- Upload evidence
+- Admin can resolve or escalate to voting
+- Auto-escalate after 48 hours
+
+Test:
+- Can create dispute
+- Chat works
+- Admin can resolve
+
+
+================================================================================
+PHASE 5: COMMUNITY MEALS MODULE (Weeks 8-10)
+================================================================================
+
+TASK 5.1: Community Meal Dashboard
+----------------------------------
+Duration: 5 hours
+Priority: HIGH
+
+→ Reference: communitymeal.txt (lines 26-132)
+
+Files to Create:
+- src/pages/meals/CommunityMealDashboardPage.tsx
+- src/components/meals/MealPlanBanner.tsx
+- src/components/meals/WeeklyMenuGrid.tsx
+- src/components/meals/GroceryDutyCard.tsx
+- src/components/meals/ChefInfoCard.tsx
+
+Features:
+- User's meal plan display
+- This week's menu (7 days × 3 meals = 21 cards)
+- Grocery duty status
+- Chef information
+- Change preferences button
+
+Test:
+- Menu loads
+- Duty status correct
+- Chef info displays
+
+
+TASK 5.2: Weekly Menu Planner (Admin)
+-------------------------------------
+Duration: 6 hours
+Priority: HIGH
+
+→ Reference: communitymeal.txt (lines 134-225)
+
+Files to Create:
+- src/pages/admin/MenuPlannerPage.tsx
+- src/components/meals/MenuEditModal.tsx
+- src/components/meals/MenuGrid.tsx
+
+Features:
+1. **Menu Planning**:
+   - 7 days × 3 meals grid
+   - Edit each meal individually
+   - Main course, curries, sides, dessert, beverage
+   - Upload food photo (Cloudinary)
+
+2. **Bulk Actions**:
+   - Copy last week's menu
+   - Save as template
+   - Load template
+   - Publish to members
+
+3. **Cloudinary Upload**:
+   - Food photos: `/roommate-manager/meals/{meal_id}/photos/`
+   - Transform: w_800,h_600,c_fill,q_auto
+
+Test:
+- Can edit meals
+- Photos upload
+- Menu publishes
+- Members see updated menu
+
+
+TASK 5.3: Grocery Team Management
+---------------------------------
+Duration: 6 hours
+Priority: CRITICAL
+
+→ Reference: communitymeal.txt (lines 227-320)
+
+Files to Create:
+- src/pages/meals/GroceryTeamsPage.tsx
+- src/pages/admin/GroceryTeamManagementPage.tsx
+- src/components/meals/TeamRotationView.tsx
+- src/components/meals/TeamGenerationModal.tsx
+
+Features:
+1. **Team Generation** (Admin):
+   - Get all meal participants
+   - Auto-generate teams of 2 (last team can be 3 if odd)
+   - Shuffle for fairness
+   - Create 4-week rotation
+   - Assign team numbers and weeks
+
+2. **Team View** (Members):
+   - See 4-week rotation
+   - Know when your turn is
+   - View teammate
+   - Set reminders
+
+Algorithm:
+```typescript
+function generateGroceryTeams(participants: User[]): Team[] {
+  const teamSize = 2
+  const shuffled = shuffle(participants)
+  const teams: Team[] = []
+  
+  for (let i = 0; i < shuffled.length; i += teamSize) {
+    const members = shuffled.slice(i, i + teamSize)
+    teams.push({
+      number: teams.length + 1,
+      members,
+      weekNumber: (teams.length % 4) + 1
+    })
+  }
+  
+  return teams
+}
+```
+
+Test:
+- Teams generate correctly
+- Rotation clear
+- Notifications sent
+
+
+TASK 5.4: Receipt Upload with OCR
+---------------------------------
+Duration: 10 hours
+Priority: CRITICAL (COMPLEX FEATURE)
+
+→ Reference: communitymeal.txt (lines 326-501)
+
+Files to Create:
+- src/components/meals/UploadReceiptModal.tsx (4-step wizard)
+- src/lib/ocr.ts (Tesseract.js integration)
+- src/hooks/useOCR.ts
+
+Dependencies:
+```bash
+npm install tesseract.js
+```
+
+Features:
+1. **Step 1: Upload**:
+   - Take photo or upload from gallery
+   - Multiple receipts allowed
+   - Upload to Cloudinary first
+
+2. **Step 2: OCR Processing**:
+   - Use Tesseract.js to extract text
+   - Show progress bar
+   - Parse items and prices
+
+3. **Step 3: Review & Edit**:
+   - Show extracted items in table
+   - Item name, quantity, price, total
+   - Click to edit any item
+   - Add/remove items
+   - Confidence score display
+
+4. **Step 4: Submit**:
+   - Store name, date, total
+   - Submit for admin approval
+   - Check budget status
+
+OCR Implementation:
+```typescript
+// src/lib/ocr.ts
+import Tesseract from 'tesseract.js'
+
+export async function processReceiptOCR(imageUrl: string) {
+  const worker = await Tesseract.createWorker()
+  await worker.loadLanguage('eng')
+  await worker.initialize('eng')
+  
+  const { data: { text } } = await worker.recognize(imageUrl)
+  await worker.terminate()
+  
+  // Parse text into items
+  const items = parseReceiptText(text)
+  
+  return {
+    storeName: extractStoreName(text),
+    date: extractDate(text),
+    items: items,
+    total: extractTotal(text)
+  }
+}
+
+function parseReceiptText(text: string): GroceryItem[] {
+  const linePattern = /(.+?)\s+(\d+\.?\d*)\s*kg?\s*₹?(\d+\.?\d*)/gi
+  const items: GroceryItem[] = []
+  
+  let match
+  while ((match = linePattern.exec(text)) !== null) {
+    items.push({
+      name: match[1].trim(),
+      quantity: parseFloat(match[2]),
+      price: parseFloat(match[3]),
+      confidence: 0.85
+    })
+  }
+  
+  return items
+}
+```
+
+Test:
+- Can upload receipt
+- OCR extracts items (even if not perfect)
+- Can manually edit extracted data
+- Submission works
+
+
+TASK 5.5: Admin Purchase Review
+-------------------------------
+Duration: 5 hours
+Priority: HIGH
+
+→ Reference: communitymeal.txt (lines 502-605)
+
+Files to Create:
+- src/pages/admin/PurchaseReviewPage.tsx
+- src/components/meals/PurchaseReviewCard.tsx
+
+Features:
+1. **Review Purchase**:
+   - View uploaded receipts
+   - See extracted items
+   - Check budget variance
+   - View team notes
+
+2. **Approval**:
+   - Approve → Trigger cost calculation
+   - Create bills for all participants
+   - Award loyalty points to team
+   - Unlock rating for other members
+
+3. **Rejection**:
+   - Reject with reason
+   - Request more info
+   - Team must resubmit
+
+4. **Cost Calculation** (Edge Function):
+```typescript
+// Supabase Edge Function
+export async function calculateMealCosts({
+  groceryPurchaseId
+}: {
+  groceryPurchaseId: string
+}) {
+  const purchase = await getPurchase(groceryPurchaseId)
+  const participants = await getMealParticipants(purchase.community_meal_id)
+  
+  const totalCost = purchase.total_amount
+  
+  // Calculate shares based on meal types
+  const shares = participants.map(p => {
+    let multiplier = 0
+    
+    if (p.meal_types.includes('breakfast')) multiplier += 0.3
+    if (p.meal_types.includes('lunch')) multiplier += 0.4
+    if (p.meal_types.includes('dinner')) multiplier += 0.5
+    
+    const normalizedMultiplier = multiplier / 1.2 // Full = 1.2
+    let share = totalCost * normalizedMultiplier
+    
+    if (p.include_water) share += 50 // ₹50/week water
+    
+    return {
+      user_id: p.user_id,
+      amount: Math.round(share)
+    }
+  })
+  
+  // Create bill splits
+  for (const share of shares) {
+    await createBillSplit({
+      member_id: share.user_id,
+      amount: share.amount
+    })
+  }
+}
+```
+
+Test:
+- Can approve purchases
+- Bills created correctly
+- Cost calculation accurate
+
+
+TASK 5.6: Team Rating System
+----------------------------
+Duration: 4 hours
+Priority: MEDIUM
+
+→ Reference: communitymeal.txt (lines 606-667)
+
+Files to Create:
+- src/components/meals/RateTeamModal.tsx
+- src/hooks/useTeamRating.ts
+
+Features:
+- Rate 4 categories (budget, quality, timeliness, communication)
+- Star rating 1-5
+- Optional feedback
+- Auto-calculate overall rating
+- Award/deduct loyalty points based on rating
+
+Test:
+- Can submit rating
+- Points awarded correctly
+- Team sees ratings
+
+
+================================================================================
+PHASE 6: TASKS, RESOURCES & CALENDAR (Weeks 11-12)
+================================================================================
+
+TASK 6.1: Tasks Dashboard
+-------------------------
+Duration: 5 hours
+Priority: MEDIUM
+
+→ Reference: dashboard.txt (lines 447-490)
+
+Files to Create:
+- src/pages/tasks/TasksPage.tsx
+- src/components/tasks/TaskCard.tsx
+- src/components/tasks/TaskCalendarView.tsx
+
+Features:
+- View assigned tasks
+- Mark as started/completed
+- Upload completion proof (Cloudinary)
+- Earn loyalty points
+- Task rotation system
+
+Test:
+- Tasks load
+- Can complete tasks
+- Points awarded
+
+
+TASK 6.2: Resource Booking
+--------------------------
+Duration: 4 hours
+Priority: MEDIUM
+
+→ Reference: dashboard.txt (lines 492-520)
+
+Files to Create:
+- src/pages/resources/ResourcesPage.tsx
+- src/components/resources/ResourceCard.tsx
+- src/components/resources/BookingModal.tsx
+
+Features:
+- View available resources (washing machine, iron, printer)
+- Book time slots
+- Check-in/check-out system
+- No-show tracking (loyalty penalty)
+- Calendar view
+
+Test:
+- Can book resources
+- Conflicts prevented
+- Check-in works
+
+
+TASK 6.3: Calendar View (FullCalendar)
+--------------------------------------
+Duration: 6 hours
+Priority: MEDIUM
+
+Dependencies:
+```bash
+npm install @fullcalendar/react @fullcalendar/daygrid @fullcalendar/timegrid
+```
+
+Files to Create:
+- src/pages/calendar/CalendarPage.tsx
+- src/components/calendar/EventDetailModal.tsx
+
+Features:
+- Show all events (bills due, tasks, grocery duty, resource bookings, polls, events)
+- Color-coded by type
+- Click event for details
+- Month/week/day views
+
+Test:
+- All events display
+- Color coding correct
+- Details show on click
+
+
+================================================================================
+PHASE 7: VOTING, POLLS & DISPUTES (Week 13)
+================================================================================
+
+TASK 7.1: Polls Dashboard
+-------------------------
+Duration: 5 hours
+Priority: HIGH
+
+→ Reference: voting.txt (lines 24-170)
+
+Files to Create:
+- src/pages/polls/PollsDashboardPage.tsx
+- src/components/polls/PollCard.tsx
+- src/components/polls/QuorumIndicator.tsx
+
+Features:
+- View active polls
+- See what you've voted on
+- Voting stats (participation rate, points earned)
+- Urgent poll banner (ending soon + not voted)
+
+Test:
+- Polls load
+- Status indicators correct
+- Real-time vote counts
+
+
+TASK 7.2: Voting Page
+---------------------
+Duration: 6 hours
+Priority: HIGH
+
+→ Reference: voting.txt (lines 172-342)
+
+Files to Create:
+- src/pages/polls/VotingPage.tsx
+- src/components/polls/YesNoPoll.tsx
+- src/components/polls/MultipleChoicePoll.tsx
+- src/components/polls/RatingPoll.tsx
+
+Features:
+1. **Multiple Poll Types**:
+   - Yes/No (binary)
+   - Multiple choice (single selection)
+   - Multiple choice (multi-selection)
+   - Rating (1-5 stars for multiple categories)
+   - Open-ended (text feedback)
+
+2. **Voting**:
+   - Anonymous option
+   - Live results (if enabled)
+   - Confirmation modal
+   - Award loyalty points (+2)
+
+3. **Real-time Updates**:
+   - Vote count updates live
+   - Quorum status updates
+
+Test:
+- Can vote in all poll types
+- Anonymous voting works
+- Live results update
+
+
+TASK 7.3: Poll Results
+----------------------
+Duration: 3 hours
+Priority: MEDIUM
+
+→ Reference: voting.txt (lines 344-447)
+
+Files to Create:
+- src/pages/polls/PollResultsPage.tsx
+- src/components/polls/ResultsChart.tsx
+- src/components/polls/ParticipationStats.tsx
+
+Features:
+- Final vote breakdown
+- Winner/outcome
+- Quorum/majority indicators
+- Implementation status
+- Participation leaderboard
+
+Test:
+- Results accurate
+- Charts display correctly
+- Implementation status shows
+
+
+TASK 7.4: Create Poll (Admin)
+-----------------------------
+Duration: 5 hours
+Priority: HIGH
+
+→ Reference: voting.txt (lines 449-588)
+
+Files to Create:
+- src/pages/admin/CreatePollPage.tsx
+- src/components/polls/PollTypeSelector.tsx
+- src/components/polls/PollSettingsForm.tsx
+
+Features:
+1. **Poll Creation**:
+   - Select type
+   - Set title and description
+   - Add options (for multiple choice)
+   - Set duration
+   - Configure quorum/majority
+   - Choose eligible voters
+   - Anonymous/live results settings
+
+2. **Poll Templates**:
+   - Menu addition
+   - New member approval
+   - Rule change
+   - Team selection
+   - Dispute resolution (auto-created)
+
+Test:
+- Can create all poll types
+- Templates work
+- Notifications sent
+
+
+TASK 7.5: Automated Dispute Escalation
+--------------------------------------
+Duration: 4 hours
+Priority: MEDIUM
+
+→ Reference: voting.txt (lines 590-700)
+
+Files to Create:
+- Supabase Edge Function: `escalate-disputes`
+- Supabase Edge Function: `auto-close-polls`
+- Supabase Edge Function: `send-poll-reminders`
+
+Features:
+1. **Escalate Dispute to Poll** (after 48 hours):
+   - Create Yes/No poll automatically
+   - Notify all members
+   - Link poll to dispute
+
+2. **Auto-close Expired Polls** (hourly check):
+   - Find polls past end date
+   - Calculate results
+   - Update status to 'closed'
+   - Execute outcome if approved
+   - Notify participants
+
+3. **Poll Reminders** (daily):
+   - Find polls ending in 24 hours
+   - Identify non-voters
+   - Send reminders
+
+Test:
+- Dispute auto-escalates after 48 hours
+- Polls auto-close at end time
+- Reminders sent correctly
+
+
+================================================================================
+PHASE 8: MONEY POOLS & INVESTMENTS (Weeks 14-15)
+================================================================================
+
+TASK 8.1: Money Pools Dashboard
+-------------------------------
+Duration: 5 hours
+Priority: HIGH
+
+→ Reference: investments.txt (lines 37-162)
+
+Files to Create:
+- src/pages/money-pools/MoneyPoolsDashboardPage.tsx
+- src/components/money-pools/PoolCard.tsx
+- src/components/money-pools/SummaryCards.tsx
+
+Features:
+- View active pools
+- Your position in queue
+- Contribution status
+- Next payout info
+- Payout history
+
+Test:
+- Pools display correctly
+- Position clear
+- Contribution status accurate
+
+
+TASK 8.2: Money Pool Detail
+---------------------------
+Duration: 4 hours
+Priority: HIGH
+
+→ Reference: investments.txt (lines 164-303)
+
+Files to Create:
+- src/pages/money-pools/MoneyPoolDetailPage.tsx
+- src/components/money-pools/PayoutSchedule.tsx
+- src/components/money-pools/ContributionHistory.tsx
+
+Features:
+- Full pool overview
+- Your position and progress
+- 9-month payout schedule
+- This month's status
+- Your contribution history
+- Net benefit calculation
+
+Test:
+- Schedule clear
+- History accurate
+- Net benefit correct
+
+
+TASK 8.3: Create Money Pool (Admin)
+-----------------------------------
+Duration: 6 hours
+Priority: HIGH
+
+→ Reference: investments.txt (lines 305-458)
+
+Files to Create:
+- src/pages/admin/CreateMoneyPoolPage.tsx
+- src/components/money-pools/PayoutOrderModal.tsx
+
+Features:
+1. **Pool Setup**:
+   - Name and emoji
+   - Contribution amount
+   - Select participants
+   - Set payout order (manual/random)
+   - Start date and due date
+   - Rules and penalties
+
+2. **Payout Order**:
+   - Drag-and-drop reorder
+   - Randomize button
+   - Position affects net benefit
+
+3. **Creation**:
+   - Create money_pools record
+   - Create participants records
+   - Create first month contributions
+   - Notify all participants
+
+Test:
+- Can create pool
+- Participants assigned
+- Notifications sent
+
+
+TASK 8.4: Mark Contribution Paid
+--------------------------------
+Duration: 3 hours
+Priority: MEDIUM
+
+→ Reference: investments.txt (lines 460-521)
+
+Files to Create:
+- src/components/money-pools/MarkContributionPaidModal.tsx
+
+Features:
+- Payment method
+- Payment date
+- Transaction reference
+- Notes
+- Submit for admin verification
+
+Test:
+- Can submit contribution
+- Admin receives notification
+
+
+TASK 8.5: Process Payout (Admin)
+--------------------------------
+Duration: 5 hours
+Priority: HIGH
+
+→ Reference: investments.txt (lines 523-661)
+
+Files to Create:
+- src/pages/admin/ProcessPayoutPage.tsx
+- src/components/money-pools/PayoutOptionsForm.tsx
+
+Features:
+1. **Payout Options**:
+   - Wait for all contributions
+   - Pay now with deduction (from payout holder's share)
+   - Pay full from apartment fund
+
+2. **Processing**:
+   - Update participant record (has_received_payout)
+   - Move to next payout index
+   - Create payout record
+   - Notify recipient
+   - Award loyalty points
+   - Check if pool complete
+
+Test:
+- Payouts process correctly
+- Points awarded
+- Pool completes when all paid
+
+
+TASK 8.6: Investments Tracking (Manual)
+---------------------------------------
+Duration: 3 hours
+Priority: LOW
+
+→ Reference: investments.txt (lines 663-745)
+
+Files to Create:
+- src/pages/investments/InvestmentsPage.tsx
+- src/components/investments/InvestmentCard.tsx
+
+Features:
+- Manual tracking only (MVP)
+- Record investment details
+- Track participants and amounts
+- Add notes and updates
+- No automatic calculations
+
+Test:
+- Can add investments
+- Data displays correctly
+
+
+================================================================================
+PHASE 9: AD WATCHING & MONETIZATION (NEW) (Week 16)
+================================================================================
+
+TASK 9.1: Ad Watching System
+----------------------------
+Duration: 8 hours
+Priority: CRITICAL (NEW FEATURE)
+
+→ Reference: additional-features.txt (lines 335-512)
+
+Files to Create:
+- src/pages/ads/AdWatchingPage.tsx
+- src/components/ads/AdSessionCard.tsx
+- src/components/ads/AdPlayerModal.tsx
+- src/components/ads/EarningsSummary.tsx
+- src/components/ads/LeaderboardCard.tsx
+
+Dependencies:
+```bash
+npm install @google-analytics/data
+# Or use Google AdMob SDK for React
+```
+
+Features:
+1. **Dual Session System**:
+   - Morning: 6 AM - 12 PM (5 ads)
+   - Evening: 6 PM - 11 PM (5 ads)
+   - Max 10 ads per day per user
+
+2. **Ad Player**:
+   - 15-30 second video ads
+   - Must watch full ad to earn
+   - Progress bar
+   - Auto-advance when complete
+
+3. **Revenue Sharing**:
+   - 70% to user
+   - 30% to platform
+   - ₹1.60 per ad average
+
+4. **Tracking**:
+   - Daily/monthly earnings
+   - Ads watched vs possible
+   - Watch streaks (bonuses at 7, 30 days)
+   - Apartment leaderboard
+
+5. **Donation Option**:
+   - Donate from earnings
+   - Watch bonus ads for developer (100% to platform)
+
+API:
+```typescript
+// Record ad view
+POST /rest/v1/ad_views
+Body: {
+  user_id: string,
+  apartment_id: string,
+  view_date: date,
+  session_type: 'morning' | 'evening',
+  ad_count: number,
+  revenue_generated: number,
+  points_earned: number
+}
+
+// Get user earnings
+GET /rest/v1/ad_views?user_id=eq.{id}&view_date=gte.{startOfMonth}
+
+// Leaderboard
+GET /functions/v1/ad-leaderboard?apartment_id={id}&period=this_month
+```
+
+Test:
+- Can watch ads
+- Earnings tracked correctly
+- Leaderboard updates
+- Streaks calculated
+
+
+TASK 9.2: Subscription Management (NEW)
+---------------------------------------
+Duration: 6 hours
+Priority: CRITICAL (NEW FEATURE)
+
+Files to Create:
+- src/pages/admin/SubscriptionPage.tsx
+- src/components/subscription/StorageUsage.tsx
+- src/components/subscription/PaymentOptions.tsx
+- src/components/subscription/AdRequirements.tsx
+
+Features:
+1. **Storage Tracking**:
+   - Calculate total storage used
+   - Images (Cloudinary links)
+   - Receipts, documents, proofs
+   - Show usage vs limit (500MB free)
+
+2. **Payment Options**:
+   - **Option A: Pay**
+     - ₹500/month for 5GB storage
+     - ₹1000/month for 20GB storage
+     - ₹2000/month for unlimited
+
+   - **Option B: Watch Ads**
+     - All members watch 10 ads/day (300/month)
+     - Keep app free
+     - 500MB storage included
+
+3. **Status Tracking**:
+   - Active (paid or ad quota met)
+   - Payment Due (payment option, not paid)
+   - Suspended (over storage, no payment, ads not watched)
+
+4. **Grace Period**:
+   - 7 days to pay or watch ads
+   - Warning notifications
+   - Auto-suspend after grace period
+
+API:
+```typescript
+// Get subscription status
+GET /rest/v1/subscription_status?apartment_id=eq.{id}
+
+// Update subscription
+PATCH /rest/v1/subscription_status?apartment_id=eq.{id}
+Body: {
+  plan_type: 'paid' | 'ad_supported',
+  payment_due_date: date,
+  ads_watched_this_month: number
+}
+
+// Calculate storage usage
+GET /functions/v1/calculate-storage?apartment_id={id}
+```
+
+Test:
+- Storage calculation accurate
+- Payment processing works
+- Ad tracking updates subscription
+- Warnings sent correctly
+
+
+TASK 9.3: Data Archival System (NEW)
+------------------------------------
+Duration: 8 hours
+Priority: HIGH (NEW FEATURE)
+
+Files to Create:
+- src/pages/admin/DataManagementPage.tsx
+- src/components/data/ArchiveModal.tsx
+- src/components/data/DeleteConfirmationModal.tsx
+- Supabase Edge Function: `archive-old-data`
+- Supabase Edge Function: `delete-apartment-data`
+
+Features:
+1. **Auto-Archive** (after 3 months):
+   - Identify data older than 3 months
+   - Compress to JSON
+   - Store in data_archives table
+   - Delete original records
+   - Free up storage
+
+2. **Manual Archive** (Admin):
+   - Select date range
+   - Preview what will be archived
+   - Confirm and archive
+   - Download archive as JSON
+
+3. **Complete Data Deletion** (Admin):
+   - Delete ALL apartment data
+   - Cascade delete all related records
+   - Remove from Cloudinary
+   - Cannot be undone
+   - Require password confirmation
+
+4. **Data Export**:
+   - Export all data as JSON
+   - Export as CSV (bills, payments, etc.)
+   - Download before deletion
+
+Archival Logic:
+```typescript
+export async function archiveOldData(apartmentId: string) {
+  const threeMonthsAgo = new Date()
+  threeMonthsAgo.setMonth(threeMonthsAgo.getMonth() - 3)
+  
+  // Get old data
+  const { data: oldBills } = await supabase
+    .from('bills')
+    .select('*')
+    .eq('apartment_id', apartmentId)
+    .lt('created_at', threeMonthsAgo.toISOString())
+  
+  const { data: oldPayments } = await supabase
+    .from('payments')
+    .select('*')
+    .eq('apartment_id', apartmentId)
+    .lt('created_at', threeMonthsAgo.toISOString())
+  
+  // ... get other old data
+  
+  // Compress and archive
+  const archiveData = {
+    bills: oldBills,
+    payments: oldPayments,
+    // ... other data
+  }
+  
+  const compressed = JSON.stringify(archiveData)
+  const sizeMB = new Blob([compressed]).size / (1024 * 1024)
+  
+  await supabase.from('data_archives').insert({
+    apartment_id: apartmentId,
+    archive_date: new Date(),
+    archive_type: 'monthly',
+    data_json: archiveData,
+    file_size_mb: sizeMB,
+    created_by: adminId
+  })
+  
+  // Delete original records
+  await supabase.from('bills').delete()
+    .eq('apartment_id', apartmentId)
+    .lt('created_at', threeMonthsAgo.toISOString())
+  
+  await supabase.from('payments').delete()
+    .eq('apartment_id', apartmentId)
+    .lt('created_at', threeMonthsAgo.toISOString())
+  
+  // ... delete other old data
+}
+```
+
+Test:
+- Auto-archive runs correctly
+- Manual archive works
+- Data export functional
+- Complete deletion works (with confirmation)
+
+
+================================================================================
+PHASE 10: ADDITIONAL FEATURES (Week 17)
+================================================================================
+
+TASK 10.1: Vacancy Management
+-----------------------------
+Duration: 4 hours
+Priority: MEDIUM
+
+→ Reference: additional-features.txt (lines 15-129)
+
+Files to Create:
+- src/pages/vacancy/VacancyManagementPage.tsx
+- src/components/vacancy/VacantBedCard.tsx
+- src/components/vacancy/ShareOptionsModal.tsx
+
+Features:
+- Show vacant beds
+- Days vacant counter
+- Cost impact on other members
+- Share via WhatsApp/Email/Link
+- Generate invite for specific bed
+
+Test:
+- Vacant beds display
+- Cost impact accurate
+- Sharing works
+
+
+TASK 10.2: Guest Access System
+------------------------------
+Duration: 6 hours
+Priority: MEDIUM
+
+→ Reference: additional-features.txt (lines 514-590)
+
+Files to Create:
+- src/pages/guest/GuestRegistrationPage.tsx
+- src/pages/guest/GuestDashboardPage.tsx
+- src/components/guest/GuestInfoForm.tsx
+
+Features:
+1. **Guest Registration**:
+   - Sponsor code required
+   - Full name, relationship, phone
+   - Stay duration (1-30 days)
+   - ID proof upload
+   - Photo upload
+   - Sponsor is financially responsible
+
+2. **Guest Dashboard** (Limited Access):
+   - Entry code
+   - WiFi access
+   - Meal info (if opted in)
+   - Charges summary (billed to sponsor)
+   - Cannot vote, book resources, or view bills
+
+Test:
+- Guest can register with sponsor code
+- Limited dashboard works
+- Charges bill to sponsor
+
+
+TASK 10.3: Notifications System
+-------------------------------
+Duration: 6 hours
+Priority: HIGH
+
+Files to Create:
+- src/pages/notifications/NotificationsPage.tsx
+- src/components/notifications/NotificationCard.tsx
+- src/lib/notifications.ts
+- Supabase Edge Function: `send-notifications`
+
+Features:
+1. **Notification Types**:
+   - Payment reminders
+   - Bill published
+   - Task assigned
+   - Poll created
+   - Grocery duty reminder
+   - Payout received
+   - Dispute escalated
+
+2. **Channels**:
+   - In-app (real-time via Supabase Realtime)
+   - Email (Supabase Auth emails or SendGrid)
+   - SMS (Twilio - optional)
+   - Push (future)
+
+3. **Preferences**:
+   - Enable/disable per channel
+   - Quiet hours
+   - Notification types
+
+Test:
+- Notifications appear
+- Real-time updates work
+- Email sends (if configured)
+
+
+TASK 10.4: Activity Log
+-----------------------
+Duration: 3 hours
+Priority: LOW
+
+Files to Create:
+- src/pages/admin/ActivityLogPage.tsx
+- src/components/activity/ActivityTable.tsx
+- src/hooks/useActivityLog.ts
+
+Features:
+- Log all admin actions
+- Log all member actions
+- Filterable by user, action type, date
+- Search functionality
+- Export logs
+
+Test:
+- Actions logged
+- Filters work
+- Export functional
+
+
+TASK 10.5: Help & Support
+-------------------------
+Duration: 4 hours
+Priority: LOW
+
+Files to Create:
+- src/pages/help/HelpPage.tsx
+- src/components/help/FAQSection.tsx
+- src/components/help/ContactSupportForm.tsx
+
+Features:
+- FAQ section
+- User guide
+- Video tutorials (embed YouTube)
+- Contact support form
+- Report bug
+
+Test:
+- FAQs load
+- Support form sends
+
+
+================================================================================
+PHASE 11: ADMIN MANAGEMENT TOOLS (Week 18)
+================================================================================
+
+TASK 11.1: User Management
+--------------------------
+Duration: 5 hours
+Priority: HIGH
+
+→ Reference: admin-management.txt (lines 14-102)
+
+Files to Create:
+- src/pages/admin/UserManagementPage.tsx
+- src/components/admin/UserCard.tsx
+- src/components/admin/EditUserModal.tsx
+
+Features:
+- View all users
+- Filter by role, status, location
+- Search by name/email
+- Edit user details:
+  - Change role (member/admin)
+  - Change status (active/suspended/moved_out)
+  - Reassign bed
+  - Adjust loyalty points
+  - Override monthly rate
+- Remove user
+- Send notification
+
+Test:
+- User list loads
+- Filters work
+- Can edit users
+- Changes save
+
+
+TASK 11.2: Settings Page
+------------------------
+Duration: 6 hours
+Priority: HIGH
+
+→ Reference: admin-management.txt (lines 104-238)
+
+Files to Create:
+- src/pages/admin/SettingsPage.tsx
+- src/components/settings/GeneralSettings.tsx
+- src/components/settings/BillsSettings.tsx
+- src/components/settings/MealsSettings.tsx
+- src/components/settings/TasksSettings.tsx
+- src/components/settings/NotificationsSettings.tsx
+- src/components/settings/AdvancedSettings.tsx
+
+Features:
+6 tabs:
+1. **General**: Apartment info, currency, timezone, payment settings
+2. **Bills**: Bill types, default due dates, late fees
+3. **Meals**: Chef settings, grocery team size, rotation cycle
+4. **Tasks**: Task rotation, default points
+5. **Notifications**: Reminder schedules
+6. **Advanced**: Loyalty points system, quorum percentages
+
+Test:
+- All settings save
+- Changes apply immediately
+
+
+TASK 11.3: Reports & Analytics
+------------------------------
+Duration: 8 hours
+Priority: MEDIUM
+
+→ Reference: admin-management.txt (lines 240-298)
+
+Files to Create:
+- src/pages/admin/ReportsPage.tsx
+- src/components/reports/FinancialReport.tsx
+- src/components/reports/OccupancyReport.tsx
+- src/components/reports/MealsReport.tsx
+- src/components/reports/EngagementReport.tsx
+
+Dependencies:
+```bash
+npm install recharts
+```
+
+Features:
+1. **Financial Report**:
+   - Revenue breakdown (pie chart)
+   - Collection rate (gauge)
+   - Payment trends (line chart)
+   - Outstanding amounts
+   - Export PDF/CSV
+
+2. **Occupancy Report**:
+   - Occupancy rate over time
+   - Vacancy impact
+   - Tenant turnover
+
+3. **Meals Report**:
+   - Participation rate
+   - Grocery spending trends
+   - Team performance ratings
+
+4. **Engagement Report**:
+   - Poll participation
+   - Task completion rate
+   - Ad watching stats
+   - Loyalty points distribution
+
+Test:
+- Charts render
+- Data accurate
+- Export works
+
+
+TASK 11.4: Bulk Actions
+-----------------------
+Duration: 4 hours
+Priority: MEDIUM
+
+→ Reference: admin-management.txt (lines 472-530)
+
+Files to Create:
+- src/pages/admin/BulkActionsPage.tsx
+- src/components/bulk/GenerateBillsForm.tsx
+- src/components/bulk/SendNotificationsForm.tsx
+
+Features:
+1. **Generate Monthly Bills**:
+   - Select month
+   - Select bill types
+   - Preview what will be created
+   - Generate all bills at once
+
+2. **Send Bulk Notifications**:
+   - Select recipients (all/role/custom)
+   - Compose message
+   - Send via email/in-app/SMS
+
+Test:
+- Bulk bill generation works
+- Notifications sent to all
+
+
+TASK 11.5: Apartment Configuration
+----------------------------------
+Duration: 5 hours
+Priority: HIGH
+
+→ Reference: admin-management.txt (lines 403-470)
+
+Files to Create:
+- src/pages/admin/ApartmentConfigPage.tsx
+- src/components/config/RoomManager.tsx
+- src/components/config/AddRoomModal.tsx
+
+Features:
+- View apartment hierarchy (tree view)
+- Add/edit/delete rooms
+- Add/edit/delete beds
+- Set bed types and rates
+- Assign/unassign members
+- Mark beds vacant
+
+Test:
+- Can add rooms and beds
+- ltree path generated correctly
+- Assignments work
+
+
+================================================================================
+PHASE 12: POLISH, TESTING & OPTIMIZATION (Weeks 19-20)
+================================================================================
+
+TASK 12.1: Error Handling
+-------------------------
+Duration: 6 hours
+Priority: HIGH
+
+Files to Create:
+- src/components/error/ErrorBoundary.tsx
+- src/components/error/ErrorPage.tsx
+- src/hooks/useErrorHandler.ts
+- src/lib/error-logger.ts
+
+Features:
+1. **Global Error Boundary**:
+   - Catch React errors
+   - Show user-friendly error page
+   - Log errors to Supabase
+
+2. **API Error Handling**:
+   - Handle Supabase errors gracefully
+   - Show toast notifications
+   - Retry failed requests
+
+3. **Form Validation**:
+   - All forms use Zod validation
+   - Clear error messages
+   - Inline validation
+
+Test:
+- Errors caught and displayed
+- API errors handled
+- Forms validate correctly
+
+
+TASK 12.2: Loading States
+-------------------------
+Duration: 4 hours
+Priority: MEDIUM
+
+Files to Create:
+- src/components/loading/Skeleton.tsx
+- src/components/loading/Spinner.tsx
+- src/hooks/useLoading.ts
+
+Features:
+- Skeleton loaders for all pages
+- Spinners for async actions
+- Progress bars for uploads
+- Optimistic updates where possible
+
+Test:
+- Loading states smooth
+- No layout shift
+
+
+TASK 12.3: Empty States
+-----------------------
+Duration: 3 hours
+Priority: MEDIUM
+
+Files to Create:
+- src/components/empty/EmptyState.tsx
+
+Features:
+- Friendly empty states for all lists
+- Clear call-to-action
+- Illustrations or icons
+
+Test:
+- Empty states display correctly
+
+
+TASK 12.4: Responsive Design
+----------------------------
+Duration: 8 hours
+Priority: HIGH
+
+Actions:
+- Test all pages on mobile (320px, 375px, 414px)
+- Test on tablet (768px, 1024px)
+- Test on desktop (1280px, 1920px)
+- Fix any responsive issues
+- Ensure touch targets ≥44px on mobile
+
+Test:
+- All pages responsive
+- Touch-friendly on mobile
+- No horizontal scroll
+
+
+TASK 12.5: Performance Optimization
+-----------------------------------
+Duration: 6 hours
+Priority: MEDIUM
+
+Actions:
+1. **Code Splitting**:
+   - Lazy load routes
+   - Lazy load heavy components (charts, OCR)
+
+2. **Image Optimization**:
+   - All images via Cloudinary with transformations
+   - Lazy load images
+   - Use WebP format
+
+3. **Bundle Size**:
+   - Analyze bundle with `npm run build -- --analyze`
+   - Tree-shake unused code
+   - Target <500KB initial JS bundle
+
+4. **API Optimization**:
+   - Use React Query caching
+   - Paginate long lists
+   - Use Supabase `select()` to limit columns
+
+5. **Database Indexes**:
+   - Verify all foreign keys indexed
+   - Add composite indexes for common queries
+
+Test:
+- Lighthouse score >90
+- First Contentful Paint <1.5s
+- Time to Interactive <3.5s
+
+
+TASK 12.6: Accessibility (A11y)
+-------------------------------
+Duration: 5 hours
+Priority: MEDIUM
+
+Actions:
+1. **Keyboard Navigation**:
+   - All interactive elements keyboard accessible
+   - Focus indicators visible
+   - Logical tab order
+
+2. **Screen Reader Support**:
+   - Semantic HTML
+   - ARIA labels on icons and buttons
+   - Alt text on images
+   - Form labels
+
+3. **Color Contrast**:
+   - Text meets WCAG AA (4.5:1)
+   - UI components meet WCAG AA (3:1)
+
+4. **Reduced Motion**:
+   - Respect `prefers-reduced-motion`
+   - Option to disable animations
+
+Test:
+- Run axe DevTools
+- Test with keyboard only
+- Test with screen reader (NVDA/JAWS)
+
+
+TASK 12.7: Testing
+------------------
+Duration: 10 hours
+Priority: HIGH
+
+Dependencies:
+```bash
+npm install -D vitest @testing-library/react @testing-library/jest-dom @testing-library/user-event
+npm install -D @playwright/test
+```
+
+Files to Create:
+- Unit tests for utilities and hooks
+- Integration tests for components
+- E2E tests for critical flows
+
+Critical Flows to E2E Test:
+1. User registration → approval → first login
+2. Admin creates bill → member pays → admin verifies
+3. Team uploads receipt → OCR → admin approves → bills created
+4. Member votes in poll → poll closes → results display
+5. Create money pool → contributions → payout
+
+Test:
+- All tests pass
+- Coverage >70%
+
+
+TASK 12.8: Documentation
+------------------------
+Duration: 6 hours
+Priority: MEDIUM
+
+Files to Create:
+- README.md (updated with setup instructions)
+- CONTRIBUTING.md (for future contributors)
+- API-DOCUMENTATION.md (all endpoints)
+- USER-GUIDE.md (how to use the app)
+- ADMIN-GUIDE.md (admin features)
+
+Test:
+- Documentation clear and accurate
+
+
+================================================================================
+PHASE 13: ROW LEVEL SECURITY (FINAL PHASE) (Week 21)
+================================================================================
+
+TASK 13.1: Implement RLS Policies
+---------------------------------
+Duration: 8 hours
+Priority: CRITICAL (BEFORE PRODUCTION)
+
+→ Reference: DATABASE-SCHEMA-COMPLETE.sql (RLS sections)
+
+Actions:
+1. **Enable RLS on All Tables**:
+```sql
+ALTER TABLE apartments ENABLE ROW LEVEL SECURITY;
+ALTER TABLE locations ENABLE ROW LEVEL SECURITY;
+ALTER TABLE apartment_members ENABLE ROW LEVEL SECURITY;
+-- ... all tables
+```
+
+2. **Create Policies for apartments**:
+```sql
+-- Users can view apartments they're members of
+CREATE POLICY "Members can view their apartments"
+  ON apartments FOR SELECT
+  USING (
+    created_by = auth.uid() OR
+    id IN (
+      SELECT apartment_id FROM apartment_members
+      WHERE user_id = auth.uid()
+    )
+  );
+
+-- Only creators can update
+CREATE POLICY "Creators can update apartments"
+  ON apartments FOR UPDATE
+  USING (created_by = auth.uid());
+```
+
+3. **Create Policies for apartment_members**:
+```sql
+-- Members can view other members in their apartment
+CREATE POLICY "Members can view apartment members"
+  ON apartment_members FOR SELECT
+  USING (
+    apartment_id IN (
+      SELECT apartment_id FROM apartment_members
+      WHERE user_id = auth.uid()
+    )
+  );
+
+-- Members can update own profile
+CREATE POLICY "Members can update own profile"
+  ON apartment_members FOR UPDATE
+  USING (user_id = auth.uid());
+
+-- Admins can update any member
+CREATE POLICY "Admins can update apartment members"
+  ON apartment_members FOR UPDATE
+  USING (
+    apartment_id IN (
+      SELECT apartment_id FROM apartment_members
+      WHERE user_id = auth.uid() AND role = 'admin'
+    )
+  );
+```
+
+4. **Create Policies for All Tables**:
+   - bills, bill_splits, payments
+   - chefs, menus, grocery_teams, grocery_purchases
+   - tasks, resources, bookings
+   - polls, votes
+   - money_pools, contributions
+   - etc.
+
+Pattern for Most Tables:
+- SELECT: If member of apartment
+- INSERT: If admin of apartment
+- UPDATE: If admin of apartment (or own record)
+- DELETE: If admin of apartment
+
+Test:
+- Users can only see their apartment's data
+- Admins have full access to their apartment
+- Users cannot access other apartments
+
+
+TASK 13.2: Test RLS Thoroughly
+------------------------------
+Duration: 6 hours
+Priority: CRITICAL
+
+Actions:
+1. Create 2 test apartments
+2. Create users in each
+3. Verify users in Apartment A cannot see Apartment B data
+4. Verify admins can manage their apartment
+5. Verify members can only edit their own profile
+
+Test Cases:
+- User A tries to read Apartment B's bills → DENIED
+- User A tries to update User B's profile → DENIED
+- Admin A tries to create bill in Apartment B → DENIED
+- Member tries to delete apartment → DENIED
+- Guest tries to vote in poll → DENIED
+
+Test:
+- All RLS policies working correctly
+- No data leakage between apartments
+
+
+================================================================================
+PHASE 14: DEPLOYMENT (Week 22)
+================================================================================
+
+TASK 14.1: Environment Configuration
+------------------------------------
+Duration: 2 hours
+
+Actions:
+1. Create production .env
+2. Update Supabase URL to production
+3. Update Cloudinary settings
+4. Configure CORS and domains
+5. Set up Google AdMob (if using for ads)
+
+Test:
+- Production env works
+- All API keys valid
+
+
+TASK 14.2: Build & Deploy
+-------------------------
+Duration: 4 hours
+
+Actions:
+1. Build optimized production bundle:
+```bash
+npm run build
+```
+
+2. Test production build locally:
+```bash
+npm run preview
+```
+
+3. Deploy to Netlify:
+```bash
+netlify deploy --prod
+```
+
+4. Configure custom domain on Netlify
+5. Point Hostinger DNS to Netlify
+6. Enable HTTPS
+
+Test:
+- Production site loads
+- All features work
+- HTTPS enabled
+
+
+TASK 14.3: Post-Deployment Checks
+---------------------------------
+Duration: 3 hours
+
+Actions:
+1. Run Lighthouse audit
+2. Test critical flows end-to-end
+3. Monitor error logs
+4. Check Supabase usage
+5. Check Cloudinary usage
+6. Set up monitoring alerts
+
+Test:
+- Lighthouse scores good
+- All flows work in production
+- No critical errors
+
+
+================================================================================
+SUMMARY & PROGRESS TRACKING
+================================================================================
+
+TOTAL TASKS: 100+
+ESTIMATED TIME: 22 weeks (solo developer)
+
+PROGRESS CHECKLIST:
+□ Phase 1: Foundation & Authentication (Weeks 1-3)
+□ Phase 2: Invite System (Week 4)
+□ Phase 3: Dashboard & Profile (Week 5)
+□ Phase 4: Bills & Payments (Weeks 6-7)
+□ Phase 5: Community Meals (Weeks 8-10)
+□ Phase 6: Tasks, Resources & Calendar (Weeks 11-12)
+□ Phase 7: Voting, Polls & Disputes (Week 13)
+□ Phase 8: Money Pools & Investments (Weeks 14-15)
+□ Phase 9: Ad Watching & Monetization (Week 16)
+□ Phase 10: Additional Features (Week 17)
+□ Phase 11: Admin Management Tools (Week 18)
+□ Phase 12: Polish, Testing & Optimization (Weeks 19-20)
+□ Phase 13: Row Level Security (Week 21)
+□ Phase 14: Deployment (Week 22)
+
+PRIORITY LEGEND:
+- CRITICAL: Must have for MVP, blocks other work
+- HIGH: Important for MVP, but not blocking
+- MEDIUM: Nice to have for MVP, can be deferred
+- LOW: Post-MVP enhancement
+
+================================================================================
+END OF TASKS FILE
+================================================================================
+
+🎉 This is your complete roadmap to building ZiberLive!
+
+Follow each phase in order, test thoroughly, and you'll have a
+production-ready shared living management platform.
+
+Good luck! 🚀
+
+

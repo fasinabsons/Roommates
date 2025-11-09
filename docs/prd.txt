@@ -1,0 +1,1793 @@
+PRODUCT REQUIREMENTS DOCUMENT (PRD)
+RoomMate Manager - Comprehensive Shared Living Management Platform
+
+================================================================================
+PROJECT OVERVIEW
+================================================================================
+
+Product Name: RoomMate Manager
+Version: 1.0 MVP
+Target Users: Students, Working Professionals, Bachelors in shared living (India, Nigeria, UAE, Kuwait, Global)
+Tech Stack: React, Supabase (PostgreSQL), Cloudinary (Image Storage)
+Monetization: Ad Revenue Sharing (Google AdMob/AdSense)
+Primary Goal: Stress-free management of shared living expenses, meals, tasks, and resources
+
+================================================================================
+CORE FEATURES & SPECIFICATIONS
+================================================================================
+
+1. AUTHENTICATION & USER MANAGEMENT
+================================================================================
+
+1.1 User Registration & Onboarding
+- Email/Password authentication via Supabase Auth
+- Multi-step onboarding wizard:
+  * Personal Information: Name, Age, Phone, Email
+  * Identity Verification: Upload ID Card (Cloudinary), Resume/CV, Labour Card
+  * Profile Photo upload (Cloudinary with face detection validation)
+  * Emergency Contact Information
+- Admin approval required before account activation
+- Unique user ID generation with QR code for identification
+
+1.2 User Roles & Permissions
+- Super Admin: Full system access, apartment creation, billing configuration
+- Admin: Apartment/room management, user approval, payment verification
+- Roommate (Full): Access to all features (rent, bills, meals, tasks)
+- Roommate (Partial): Custom feature access (e.g., only community meals)
+- Guest: Temporary access with limited features
+- Outsider: Community meal only, no apartment access
+
+1.3 User Profile Management
+- Private profile visible only within apartment network
+- Profile fields:
+  * Basic info (name, age, contact)
+  * Documents (ID, resume, labour card)
+  * Current location: Apartment > Room > Bed Type
+  * Loyalty Points Score (visible to all in apartment)
+  * Payment history and status
+  * Task completion rate
+  * Community meal participation status
+  * Linked relationships (if related to other roommates)
+
+================================================================================
+2. APARTMENT & ROOM MANAGEMENT
+================================================================================
+
+2.1 Hierarchical Structure
+- Multi-level folder system: Apartment → Room → Bed
+- Apartment naming: Custom names (e.g., "Greg's Apartment")
+- Room naming: Custom or numbered (e.g., "Hailey's Room", "Room 305")
+- Bed types with pricing tiers:
+  * Flat Bed (Premium - Highest price)
+  * Lower Bed (Standard - Medium price)
+  * Upper Bed (Economy - Lowest price)
+
+2.2 Apartment Setup & Configuration
+- Create multiple apartments (Free: 2 apartments, Paid: Unlimited)
+- Per apartment configuration:
+  * Total monthly rent
+  * Room-wise rent allocation
+  * Bed-wise pricing
+  * Shared bills (Electricity, Internet, Gas, Water)
+  * Custom bill categories
+- Visual folder navigation with icons and colors
+- Apartment network creation (link 2-3 apartments)
+
+2.3 Room & Bed Allocation
+- Drag-and-drop bed assignment to users
+- Visual bed layout designer (arrange beds in room view)
+- Real-time vacancy tracking
+- Red indicator for vacant beds (visible to all members)
+- Bed swap functionality with admin approval
+- Guest bed booking (temporary allocation)
+
+2.4 Vacancy Management & Notifications
+- Automatic vacancy alerts when user exits
+- Broadcast vacancy to all apartment members
+- Invite link generation for new roommate recruitment
+- QR code sharing for apartment joining
+- Roommate referral tracking
+- Exit approval workflow:
+  * User requests exit
+  * Admin verifies all payments cleared
+  * Final settlement calculation
+  * Loyalty points settlement
+  * Exit confirmation
+
+================================================================================
+3. BILLING & PAYMENT TRACKING
+================================================================================
+
+3.1 Bill Categories & Tracking
+- Default bill types:
+  * Room Rent (monthly/quarterly/annually)
+  * Electricity Bill (shared)
+  * Internet Bill (shared)
+  * Gas Bill (shared)
+  * Drinking Water (optional, shared)
+  * Maintenance/Cleaning (shared)
+- Custom bill creation by admin
+- Bill splitting logic:
+  * Per person equal split
+  * Per bed type proportional split
+  * Custom percentage allocation
+  * Exclude specific users from specific bills
+
+3.2 Payment Tracking System (Manual - MVP)
+- Admin creates monthly bill cycle
+- Automatic calculation based on:
+  * Bed type pricing
+  * Shared bill amounts
+  * User-specific bill inclusions/exclusions
+  * Pro-rated calculations for mid-month join/exit
+- User payment dashboard showing:
+  * Total amount due
+  * Breakdown by bill category
+  * Due date
+  * Payment status (Pending/Paid/Overdue)
+  * Payment history
+- Payment submission workflow:
+  * User views bill breakdown
+  * User marks payment as "Paid" with details:
+    - Payment method (Cash/Bank Transfer/UPI/etc.)
+    - Transaction reference number
+    - Payment date
+    - Upload payment proof (optional, via Cloudinary)
+  * Admin receives notification
+  * Admin verifies and approves payment
+- Payment dispute handling:
+  * User can contest incorrect charges
+  * Chat thread with admin for negotiation
+  * Admin can adjust amounts
+  * Audit trail of all changes
+
+3.3 Payment Reminders & Penalties
+- Automatic reminders:
+  * 5 days before due date
+  * 1 day before due date
+  * On due date
+  * 1 day after (overdue warning)
+  * 3 days after (penalty notification)
+- Late payment fine system:
+  * Admin configurable fine amount/percentage
+  * Automatic fine addition to next bill
+  * Fine waiver option by admin
+- Loyalty points deduction for late payments
+- Payment streak tracking (on-time payment count)
+
+3.4 Annual Payment Incentives
+- Payment frequency options: Monthly/Quarterly/Annual
+- Discount calculator:
+  * Annual: 15-20% discount
+  * Quarterly: 5-10% discount
+- Savings dashboard showing money saved
+- Automatic pro-rated refund for early exit
+
+3.5 Payment Reports & Analytics
+- Admin dashboard:
+  * Total collected vs. pending
+  * Payment status heatmap (user-wise)
+  * Overdue alerts
+  * Bill-wise collection reports
+  * Monthly/Yearly financial summary
+- User dashboard:
+  * Total paid to date
+  * Average monthly expense
+  * Savings from annual payment
+  * Payment punctuality score
+
+================================================================================
+4. COMMUNITY MEAL MANAGEMENT
+================================================================================
+
+4.1 Community Meal Setup
+- Admin creates community meal program
+- Meal configuration:
+  * Include chef (Yes/No)
+  * Meal types: Breakfast, Lunch, Dinner
+  * Operating days: All 7 days or custom
+  * Off days/meals configuration
+- Chef profile management (if applicable):
+  * Chef photo (Cloudinary)
+  * Full name and contact
+  * ID card upload (Cloudinary)
+  * Monthly salary
+  * Salary split among meal participants
+  * Contract start/end date
+  * Performance rating system
+
+4.2 User Participation Options
+- Flexible participation models:
+  * Full meals (Breakfast + Lunch + Dinner)
+  * Lunch only
+  * Dinner only
+  * Custom meal selection
+  * Per-meal pricing calculation
+- Drinking water inclusion toggle
+- Opt-in/Opt-out functionality:
+  * Requires admin approval for opt-in
+  * 1-week notice for opt-out
+  * Pro-rated billing adjustments
+
+4.3 Weekly Menu Management
+- 7-day menu planner
+- Meal composition categories:
+  * Main Course: Rice, Roti, Porotta, etc.
+  * Curry 1, Curry 2
+  * Side dishes
+  * Dessert
+  * Beverages
+- Menu items CRUD:
+  * Admin adds/edits/deletes menu items
+  * Attach food images (Cloudinary)
+  * Nutritional information (optional)
+  * Allergen warnings
+- Voting & Polls for menu:
+  * Admin creates food polls
+  * Users vote on menu additions
+  * Top-voted items added to rotation
+  * Voting history tracking
+
+4.4 Grocery Team Rotation System
+- Automatic team generation:
+  * Equal distribution algorithm
+  * Example: 17 users → 7 teams of 2 + 1 team of 3
+  * Example: 18 users → 9 teams of 2
+- 4-week rotation cycle
+- Team assignment display:
+  * Week 1: Team A
+  * Week 2: Team B
+  * Week 3: Team C
+  * Week 4: Team D
+  * (Cycle repeats)
+- Team member pairing visibility
+- Admin can manually reassign teams
+
+4.5 Grocery Bill Management
+- Team grocery purchase tracking:
+  * Manual bill entry with itemized list
+  * OCR receipt scanning (Cloudinary + OCR API):
+    - Upload receipt photo
+    - Auto-extract items, quantities, prices
+    - Edit extracted data before saving
+    - Attach original receipt image
+  * Bill categories:
+    - Groceries
+    - Gas cylinder
+    - Drinking water
+- Bill breakdown:
+  * Item name, quantity, price
+  * Total amount
+  * Purchase date
+  * Store name
+  * Purchased by (team members)
+- Admin review dashboard:
+  * View all team purchases
+  * Weekly spend comparison
+  * Item-wise purchase history
+  * Approve/flag suspicious purchases
+
+4.6 Cost Splitting Logic
+- Fixed budget model (Optional):
+  * Admin sets fixed amount per person (e.g., ₹400/week)
+  * If team spends more: Team pays difference
+  * If team spends less: Refund distributed to all users
+- Dynamic split model:
+  * Total weekly cost divided by participant count
+  * Different rates for:
+    - Full meals users
+    - Lunch-only users (50% of full price)
+    - Dinner-only users (50% of full price)
+    - No-water users (deduct water cost)
+- Pro-rated calculations for mid-week join/exit
+
+4.7 Team Performance & Feedback
+- Rating system for grocery teams:
+  * 5-star rating after each week
+  * Rating categories:
+    - Budget management
+    - Quality of items
+    - Timeliness
+    - Communication
+- Feedback comments section
+- Team leaderboard (highest rated teams)
+- Loyalty points bonus for high-rated teams
+
+4.8 Community Meal Analytics
+- Participant dashboard:
+  * Weekly/monthly meal cost
+  * Cost comparison vs. eating out
+  * Savings calculation
+  * Favorite meals tracking
+- Admin analytics:
+  * Average cost per meal
+  * Weekly budget trends
+  * Most/least popular menu items
+  * Team performance comparison
+
+================================================================================
+5. TASK MANAGEMENT & ROTATION
+================================================================================
+
+5.1 Task Categories
+- Predefined task types:
+  * Cleaning bathroom
+  * Cleaning kitchen
+  * Cooking (if no chef)
+  * Taking out trash
+  * Mopping common areas
+  * Cleaning refrigerator
+- Custom task creation by admin
+- Task properties:
+  * Task name and description
+  * Estimated time duration
+  * Difficulty level (Easy/Medium/Hard)
+  * Loyalty points reward
+  * Frequency (Daily/Weekly/Bi-weekly/Monthly)
+  * Preferred time slots
+
+5.2 Task Assignment & Rotation
+- Assignment modes:
+  * Individual tasks (1 person per task)
+  * Team tasks (2+ people collaborate)
+  * Round-robin rotation
+  * Random assignment
+- Automatic rotation schedule generation
+- Task calendar view (daily/weekly/monthly)
+- Task assignment notifications
+- Upcoming task reminders (1 day before, 3 hours before)
+
+5.3 Task Exchange System
+- User-to-user task swapping:
+  * User A requests swap with User B
+  * User B accepts/rejects swap
+  * Optional: Admin approval required (configurable)
+  * Swap recorded in system
+  * Future tasks also swapped if recurring
+- Emergency task delegation:
+  * User marks unavailable for task
+  * System broadcasts to all users
+  * First responder gets the task
+  * Loyalty points bonus for taking emergency tasks
+
+5.4 Task Completion Tracking
+- Task completion workflow:
+  * User marks task as "Started"
+  * User uploads completion proof (photos via Cloudinary)
+  * User marks task as "Completed"
+  * System logs completion time
+  * Optional peer review (other users verify quality)
+  * Admin approval (if enabled)
+- Task completion metrics:
+  * On-time completion rate
+  * Average time taken per task
+  * Quality rating (if peer review enabled)
+  * Task completion streak
+
+5.5 Task Penalties & Rewards
+- Missed task penalties:
+  * Negative loyalty points
+  * Automatic fine (admin configurable)
+  * Task reassignment to next person
+  * 3 missed tasks = warning notification to admin
+- Task completion rewards:
+  * Positive loyalty points
+  * Achievement badges
+  * Leaderboard ranking
+  * Monthly "Roommate of the Month" recognition
+
+5.6 Task Notifications & Reminders
+- Multi-channel reminders:
+  * In-app notifications
+  * Email notifications
+  * Optional SMS (future)
+- Reminder timing:
+  * 1 day before task
+  * 3 hours before task
+  * 30 minutes before task
+  * Overdue alert (if not started)
+  * Escalation to admin (if 2 hours overdue)
+
+================================================================================
+6. RESOURCE SCHEDULING SYSTEM
+================================================================================
+
+6.1 Shared Resource Management
+- Default resources:
+  * Washing Machine
+  * Dryer
+  * Iron Box
+  * Clothes Drying Area
+  * Printer (optional)
+- Custom resource creation by admin
+- Resource properties:
+  * Resource name and photo
+  * Total slots per day
+  * Slot duration (15/30/60 minutes)
+  * Operating hours
+  * Max bookings per user per week
+  * Advance booking window (e.g., 7 days)
+
+6.2 Slot Booking System
+- Calendar-based booking interface
+- Visual availability display:
+  * Green: Available
+  * Yellow: Booked by user
+  * Red: Booked by others
+  * Gray: Outside operating hours
+- Booking workflow:
+  * Select resource and date
+  * Choose time slot
+  * Add notes (optional)
+  * Confirm booking
+  * Receive confirmation notification
+- Booking modifications:
+  * Cancel booking (min 1 hour before slot)
+  * Reschedule booking
+  * Extend slot (if next slot available)
+
+6.3 Slot Usage Tracking
+- Check-in/Check-out system:
+  * User checks in when starting to use resource
+  * User checks out when finished
+  * Auto-checkout if user doesn't check out (slot end + 10 min grace)
+- No-show tracking:
+  * If user doesn't check in within 15 min of slot start
+  * Mark as no-show
+  * Negative loyalty points penalty
+  * 3 no-shows = booking restriction (admin approval required)
+- Overstay tracking:
+  * If user exceeds booked slot time
+  * Grace period: 10 minutes
+  * After grace: Penalty charge + negative loyalty points
+
+6.4 Slot Notifications
+- Booking confirmation (immediate)
+- Reminder 1 hour before slot
+- Reminder 15 minutes before slot
+- Check-in reminder at slot start time
+- Check-out reminder 5 minutes before slot end
+- No-show warning after 15 minutes
+
+================================================================================
+7. LOYALTY POINTS & GAMIFICATION SYSTEM
+================================================================================
+
+7.1 Loyalty Points Structure
+- Point earning opportunities:
+  * On-time rent payment: +50 points
+  * Early payment (5+ days before due): +75 points
+  * Task completion on-time: +20 points
+  * High-quality task completion (5-star rated): +30 points
+  * Emergency task volunteer: +40 points
+  * Grocery team high rating (4+ stars): +25 points/member
+  * Referral new roommate: +100 points
+  * Zero disputes for 3 months: +150 points
+  * Watching ad sets (10 ads): +5 points
+  * Community meal feedback: +5 points
+  * Voting in polls: +2 points
+  * Perfect attendance (resource bookings): +10 points/week
+
+7.2 Point Deduction Events
+- Late payment (1-3 days): -25 points
+- Very late payment (4+ days): -50 points
+- Missed task: -30 points
+- Poor task quality (2-star or below): -20 points
+- Payment dispute (if fault found with user): -40 points
+- No-show for resource booking: -15 points
+- Overstay resource slot: -10 points
+- Raising false complaints: -50 points
+- Exit without payment: -500 points (permanent record)
+
+7.3 Loyalty Tiers & Benefits
+- Tier structure:
+  * Bronze: 0-499 points (Standard benefits)
+  * Silver: 500-999 points (+5% discount on fines)
+  * Gold: 1000-1999 points (+10% discount, priority booking)
+  * Platinum: 2000+ points (+15% discount, 1 free fine waiver/month)
+- Tier badges displayed on profile
+- Tier benefits:
+  * Higher tiers = priority in resource booking conflicts
+  * Higher tiers = higher trust score for admin approvals
+  * Higher tiers = bonus ad revenue share percentage
+
+7.4 Leaderboards & Achievements
+- Multiple leaderboards:
+  * Overall loyalty points (all-time)
+  * Monthly points leader
+  * Task completion champion
+  * Payment punctuality leader
+  * Apartment-wise rankings
+- Achievement badges:
+  * "Early Bird" (5 consecutive early payments)
+  * "Task Master" (50 tasks completed)
+  * "Team Player" (10 emergency task volunteers)
+  * "Perfectionist" (20 five-star task ratings)
+  * "Reliable" (6 months zero late payments)
+  * "Veteran" (1 year in apartment)
+  * "Peacemaker" (zero disputes for 6 months)
+- Shareable achievements (social media integration - future)
+
+7.5 Points Redemption (Future Phase)
+- Redeem points for:
+  * Waive late payment fine (500 points)
+  * Skip one task (300 points)
+  * Priority bed selection when upgrading (1000 points)
+  * Extra resource booking slot per week (200 points)
+
+================================================================================
+8. VOTING & POLLS SYSTEM
+================================================================================
+
+8.1 Poll Creation (Admin Only)
+- Poll types:
+  * Yes/No polls
+  * Multiple choice (single selection)
+  * Multiple choice (multi-selection)
+  * Rating polls (1-5 stars)
+  * Open-ended feedback
+- Poll configuration:
+  * Poll question and description
+  * Options (for multiple choice)
+  * Duration (end date/time)
+  * Voter restrictions (all users, only roommates, only meal participants)
+  * Anonymous voting option
+  * Show live results option
+
+8.2 Poll Categories
+- Menu voting (community meals)
+- Apartment rule changes
+- New roommate approval
+- Bed reallocation decisions
+- Resource booking policy changes
+- Common area improvements
+- Conflict resolution
+- Chef performance review
+- Custom polls
+
+8.3 Voting Interface
+- Active polls notification banner
+- Poll list view with status:
+  * Active (green)
+  * Ending soon (yellow, < 24 hours)
+  * Closed (gray)
+- Vote casting:
+  * One vote per user per poll
+  * Cannot change vote after submission (optional)
+  * Anonymous votes hidden from other users
+- Results display:
+  * Live results (if enabled by admin)
+  * Final results after poll closure
+  * Percentage breakdown
+  * Total voter count vs. eligible voters
+  * Graphical representation (bar charts, pie charts)
+
+8.4 Poll Notifications
+- New poll created: Immediate notification to all
+- Poll ending in 24 hours: Reminder to non-voters
+- Poll ended: Results notification to all
+- Loyalty points: +2 points for voting
+
+================================================================================
+9. COMMON FUND / MONEY POOL SYSTEM
+================================================================================
+
+9.1 Pool Creation & Management
+- Admin creates money pool
+- Pool configuration:
+  * Pool name (e.g., "Emergency Fund", "Vacation Fund")
+  * Contribution amount per person
+  * Contribution frequency (Weekly/Monthly)
+  * Total participants
+  * Total pool duration (e.g., 9 months for 9 people)
+  * Pool start date
+  * Payout order (Random/Admin-assigned/User-selected)
+
+9.2 Payout Rotation System
+- Example: 9 users × ₹100/month = ₹900/month
+- Month 1: User A receives ₹900 (doesn't pay this month)
+- Month 2: User B receives ₹900 (doesn't pay this month)
+- ...continues until all 9 users receive payout
+- Automatic payout schedule generation
+- Visual calendar showing:
+  * Who pays when
+  * Who receives when
+  * Total paid per user
+  * Remaining months
+
+9.3 Pool Participation Tracking
+- User dashboard:
+  * Total contributed to date
+  * Expected payout month
+  * Remaining contributions
+  * Payout status (Received/Pending)
+- Admin dashboard:
+  * All active pools
+  * Contribution collection status
+  * Payout completion tracking
+  * Defaulters list
+- Payment tracking:
+  * Manual entry (like regular bills)
+  * User marks contribution as paid
+  * Admin verifies
+  * Automated reminders for missed contributions
+
+9.4 Pool Penalties & Exit
+- Missed contribution penalties:
+  * -50 loyalty points
+  * Late fee (admin configurable)
+  * Cannot receive payout until current
+- Early exit from pool:
+  * Requires admin approval
+  * Must pay all remaining contributions upfront, OR
+  * Find replacement participant
+  * Forfeit payout if already received
+- Pool completion:
+  * Automatic pool closure after all payouts
+  * Final summary report
+  * Option to start new pool with same/different participants
+
+9.5 Investment Tracking (Manual Entry - MVP)
+- Collaborative investment tracking (informational only)
+- User can log:
+  * Investment name (e.g., "Mutual Fund XYZ")
+  * Participants involved
+  * Amount per participant
+  * Investment date
+  * Expected returns (optional)
+  * Maturity date (optional)
+- Simple list view (no financial calculations in MVP)
+- Notes section for tracking updates
+
+================================================================================
+10. DISPUTE HANDLING & COMMUNICATION
+================================================================================
+
+10.1 Dispute Types
+- Payment disputes (incorrect bill amount)
+- Task assignment disputes (unfair distribution)
+- Community meal disputes (quality, portion, cost)
+- Resource booking conflicts
+- Noise/behavior complaints
+- Damage to common property
+- Chef performance issues
+- General grievances
+
+10.2 Dispute Resolution Workflow
+- User initiates dispute:
+  * Select dispute category
+  * Provide detailed description
+  * Upload evidence (photos/documents via Cloudinary)
+  * Tag involved parties
+- Admin receives notification
+- Admin actions:
+  * Create dedicated dispute thread
+  * Invite involved parties to thread
+  * Review evidence
+  * Create poll for community vote (if needed)
+  * Make final decision
+  * Log resolution and outcome
+- Dispute statuses:
+  * Open
+  * Under Review
+  * Awaiting Vote
+  * Resolved
+  * Closed
+
+10.3 Dispute Chat System
+- Threaded conversation for each dispute
+- Participants: Disputing user(s), Admin(s), Witnesses (if any)
+- Chat features:
+  * Text messages
+  * Image/document sharing (Cloudinary)
+  * Voice note recording (future)
+  * Timestamp on all messages
+  * Read receipts
+- Admin moderation tools:
+  * Mute users
+  * Close thread
+  * Pin important messages
+  * Add notes (admin-only view)
+
+10.4 Dispute Resolution Tracking
+- Dispute history per user:
+  * Total disputes initiated
+  * Disputes won/lost
+  * False dispute count (penalty if high)
+- Apartment dispute analytics:
+  * Total disputes per month
+  * Common dispute categories
+  * Average resolution time
+  * Recurring issues identification
+
+10.5 External Communication Links
+- Admin can add external contact options:
+  * WhatsApp group link
+  * Telegram group link
+  * Discord server link
+  * Admin personal WhatsApp (for urgent issues)
+  * Emergency contact number
+- Links displayed in "Contact Admin" section
+- Reduces database dependency for casual communication
+
+================================================================================
+11. GUEST MANAGEMENT SYSTEM
+================================================================================
+
+11.1 Guest Account Creation
+- Roommate can create guest account when exiting
+- Guest types:
+  * Short-term guest (1-7 days)
+  * Long-term guest (1-3 months)
+  * Potential roommate (evaluation period)
+- Guest profile requirements:
+  * Full name and photo
+  * Relation to sponsoring roommate
+  * Contact number
+  * ID proof upload (Cloudinary)
+  * Duration of stay
+  * Sponsor (existing roommate) details
+
+11.2 Guest Permissions
+- Limited access:
+  * Cannot create polls/disputes
+  * Cannot manage bills
+  * Cannot see other users' private data
+- Allowed access:
+  * Resource booking (if sponsor approves)
+  * Community meals (pro-rated charges)
+  * View apartment rules
+  * Emergency contacts
+- All guest actions logged and linked to sponsor
+
+11.3 Guest Billing
+- Pro-rated charges for:
+  * Bed usage (if applicable)
+  * Electricity/utilities (per-day basis)
+  * Community meals (per-meal basis)
+- Guest bill responsibility:
+  * Sponsor is responsible for guest payments
+  * Guest bill added to sponsor's next bill
+  * Sponsor can request advance payment from guest
+
+11.4 Guest Transition to Roommate
+- If guest wishes to become roommate:
+  * Guest submits full roommate application
+  * Undergoes same approval process
+  * Sponsor provides reference
+  * Admin reviews and approves
+  * Loyalty points start fresh (no inheritance)
+
+================================================================================
+12. NOTIFICATION SYSTEM
+================================================================================
+
+12.1 Notification Categories
+- Payment reminders (5 days, 1 day before, overdue)
+- Task assignments and reminders
+- Resource booking confirmations and reminders
+- Community meal updates (menu changes, team assignments)
+- Poll notifications (new poll, ending soon, results)
+- Dispute updates
+- Approval requests (user joining, user exiting)
+- Vacancy alerts
+- Loyalty points milestones
+- Achievement unlocks
+- Ad watching availability (morning & evening)
+- System announcements from admin
+
+12.2 Notification Delivery Channels
+- In-app notifications (primary):
+  * Bell icon with unread count
+  * Notification drawer
+  * Real-time updates (Supabase Realtime)
+- Email notifications:
+  * Daily digest option
+  * Immediate for critical items (payment overdue, disputes)
+  * Weekly summary option
+- Push notifications (future - PWA):
+  * Enabled by user preference
+  * Critical notifications only
+
+12.3 Notification Preferences
+- User can configure per category:
+  * All notifications
+  * Email only
+  * In-app only
+  * None (except critical)
+- Quiet hours settings:
+  * No notifications between user-defined hours (e.g., 10 PM - 7 AM)
+  * Except critical emergencies
+
+12.4 Notification Management
+- Mark as read/unread
+- Archive notifications
+- Delete notifications
+- Notification search and filter
+- Notification history (last 90 days)
+
+================================================================================
+13. AD REVENUE SYSTEM & MONETIZATION
+================================================================================
+
+13.1 Ad Platform Integration
+- Primary: Google AdMob (mobile web)
+- Secondary: Google AdSense (desktop web)
+- Ad formats:
+  * Rewarded video ads (primary for revenue sharing)
+  * Interstitial ads (between page transitions)
+  * Banner ads (bottom of pages, non-intrusive)
+
+13.2 Ad Viewing Schedule
+- Morning session (6 AM - 12 PM):
+  * 5 ads available per user
+  * Each ad: 15-30 seconds
+  * Total time: ~2.5 minutes
+- Evening session (6 PM - 11 PM):
+  * 5 ads available per user
+  * Each ad: 15-30 seconds
+  * Total time: ~2.5 minutes
+- Daily total: 10 ads per user maximum
+
+13.3 Ad Viewing Mechanism
+- "Watch Ads" tab in user dashboard
+- Ad availability indicator:
+  * Morning: 5 ads available (green badge)
+  * Evening: 5 ads available (green badge)
+  * Already watched: 0 ads available (gray badge)
+- Watching workflow:
+  * User clicks "Watch Ads"
+  * Ad countdown timer displayed
+  * User must watch full ad (no skip for rewarded ads)
+  * Ad completion verified
+  * Loyalty points awarded (+5 per 10 ads watched)
+  * Revenue credited to user account
+
+13.4 Revenue Sharing Model
+- Revenue split:
+  * Platform: 30%
+  * Apartment pool: 70% (distributed among active viewers)
+- Individual user earnings:
+  * Based on ad completion count
+  * Formula: (User's ads watched / Total apartment ads watched) × 70% of revenue
+  * Monthly payout calculation
+- Earnings dashboard per user:
+  * Ads watched today
+  * Ads watched this month
+  * Estimated earnings this month
+  * Total lifetime earnings
+  * Payout history
+
+13.5 Revenue Distribution & Withdrawal
+- Payout frequency: Monthly
+- Minimum withdrawal threshold: ₹100 (or equivalent)
+- Payout methods (future - Stripe integration):
+  * Bank transfer
+  * UPI (India)
+  * Mobile money (Africa)
+  * PayPal (Global)
+- MVP: Manual payout tracking by admin
+  * Admin sees total revenue generated
+  * Admin calculates per-user share
+  * Admin transfers manually
+  * Admin marks payout as completed in system
+
+13.6 Ad Viewing Incentives
+- Bonus for consistent viewing:
+  * 7-day streak: +1.2x earnings multiplier
+  * 30-day streak: +1.5x earnings multiplier
+  * Entire apartment watches all ads: +10% bonus for all
+- Leaderboard: Top ad watchers of the month
+- Achievement badges for ad viewing milestones
+
+================================================================================
+14. ADMIN DASHBOARD & CONTROLS
+================================================================================
+
+14.1 Dashboard Overview
+- Key metrics at a glance:
+  * Total apartments, rooms, beds
+  * Total active roommates / guests / outsiders
+  * Occupancy rate (%)
+  * Total pending payments
+  * Overdue payment count
+  * Active disputes count
+  * Tasks completed vs. pending
+  * Community meal participants
+  * Ad revenue this month
+  * Loyalty points distribution graph
+
+14.2 User Management
+- User list with filters:
+  * By apartment/room/bed
+  * By role (roommate/guest/outsider)
+  * By payment status
+  * By loyalty tier
+- User actions:
+  * View detailed profile
+  * Edit user information
+  * Approve/reject user
+  * Suspend/ban user
+  * Adjust loyalty points manually (with reason)
+  * Send direct notification
+  * View user activity log
+
+14.3 Billing Management
+- Create bill cycles (monthly/quarterly/annual)
+- Set bill amounts per category
+- Mark payments as verified/rejected
+- Generate payment reports
+- Send bulk payment reminders
+- Adjust individual user bills
+- Apply discounts/penalties
+- Export billing data (CSV/Excel)
+
+14.4 Community Meal Management
+- Edit weekly menu
+- Manage chef profile
+- View grocery purchase history
+- Override team assignments
+- Adjust meal pricing
+- View participant list
+- Approve opt-in/opt-out requests
+- Generate meal cost reports
+
+14.5 Task Management
+- Create/edit task templates
+- Assign tasks manually (override rotation)
+- View task completion status
+- Review task completion proofs
+- Approve task swaps
+- Generate task performance reports
+- Adjust task rewards/penalties
+
+14.6 Apartment Management
+- Create new apartment/room/bed
+- Edit apartment configuration
+- Set pricing for beds
+- Manage vacancy status
+- Generate invite links
+- View apartment analytics
+- Archive old apartments
+
+14.7 Dispute Management
+- View all open disputes
+- Assign disputes to specific admins
+- Participate in dispute chats
+- Create resolution polls
+- Mark disputes as resolved
+- Generate dispute reports
+
+14.8 System Configuration
+- Global settings:
+  * Payment reminder timing
+  * Late payment penalty rates
+  * Task reminder timing
+  * Resource booking advance window
+  * Loyalty points earning rates
+  * Ad revenue split percentage
+  * Notification preferences defaults
+- Apartment-specific settings override
+
+================================================================================
+15. REPORTS & ANALYTICS
+================================================================================
+
+15.1 Financial Reports
+- Monthly billing summary (total collected, pending, overdue)
+- Per-user payment history
+- Bill category breakdown (rent vs. utilities vs. meals)
+- Payment method distribution
+- Annual savings report (annual payment users)
+- Revenue forecast (based on current occupancy)
+- Ad revenue breakdown
+
+15.2 Occupancy Reports
+- Current occupancy rate
+- Vacancy duration tracking
+- Average time to fill vacant beds
+- Bed type popularity analysis
+- Turnover rate (users joined vs. left)
+- Retention rate
+
+15.3 Community Meal Reports
+- Average weekly/monthly meal cost
+- Cost per meal per person
+- Most/least popular menu items
+- Grocery team performance rankings
+- Chef performance ratings over time
+- Cost savings vs. eating out
+
+15.4 Task Reports
+- Task completion rate (%)
+- Average task completion time
+- Most/least completed tasks
+- Top task performers
+- Task swap frequency
+- Missed task trends
+
+15.5 User Engagement Reports
+- Active users vs. inactive
+- Feature usage statistics
+- Loyalty points distribution
+- Achievement unlock rates
+- Ad viewing participation rate
+- Dispute frequency per user
+- Poll participation rate
+
+15.6 Export Options
+- PDF reports for sharing
+- CSV/Excel for data analysis
+- Date range selection
+- Scheduled automatic reports (weekly/monthly)
+
+================================================================================
+16. TECHNICAL SPECIFICATIONS
+================================================================================
+
+16.1 Frontend (React)
+- Framework: React 18+ with Hooks
+- Routing: React Router v6
+- State Management: 
+  * Context API for global state (auth, user profile)
+  * React Query for server state caching
+- UI Library:
+  * Material-UI (MUI) or Ant Design for components
+  * TailwindCSS for custom styling
+- Form Handling: React Hook Form + Yup validation
+- Charts: Recharts or Chart.js
+- Calendar: FullCalendar or React Big Calendar
+- Image Upload: Cloudinary React SDK
+- Real-time Updates: Supabase Realtime subscriptions
+- PWA Support: Service workers for offline capability (future)
+
+16.2 Backend (Supabase)
+- Authentication: Supabase Auth (email/password)
+- Database: PostgreSQL via Supabase
+- Real-time: Supabase Realtime for live updates
+- Storage: Supabase Storage for backup files (Cloudinary primary)
+- API: Supabase auto-generated REST API + PostgREST
+- Functions: Supabase Edge Functions (Deno) for:
+  * Complex billing calculations
+  * Automatic task rotation generation
+  * Payment reminder scheduling
+  * Loyalty points calculation
+  * Revenue sharing calculations
+- Row Level Security (RLS) policies:
+  * Users can only see data from their apartment network
+  * Admins have elevated permissions
+  * Private profile data restricted to owner
+- Database triggers:
+  * Auto-create notifications on certain events
+  * Auto-update loyalty points
+  * Auto-log user activity
+
+16.3 Database Schema (Core Tables)
+
+**users**
+- id (PK, UUID)
+- email (unique)
+- full_name
+- age
+- phone_number
+- profile_photo_url (Cloudinary)
+- id_card_url (Cloudinary)
+- resume_url (Cloudinary)
+- labour_card_url (Cloudinary)
+- role (admin, roommate_full, roommate_partial, guest, outsider)
+- loyalty_points (integer)
+- loyalty_tier (bronze, silver, gold, platinum)
+- created_at
+- updated_at
+- is_active (boolean)
+- approved_by (FK to users)
+- sponsored_by (FK to users, for guests)
+
+**apartments**
+- id (PK, UUID)
+- name
+- address
+- total_rent (monthly)
+- created_by (FK to users)
+- created_at
+- is_active (boolean)
+
+**rooms**
+- id (PK, UUID)
+- apartment_id (FK)
+- name
+- floor_number
+
+**beds**
+- id (PK, UUID)
+- room_id (FK)
+- bed_type (flat, lower, upper)
+- price (monthly rent)
+- is_occupied (boolean)
+- occupied_by (FK to users, nullable)
+
+**bills**
+- id (PK, UUID)
+- apartment_id (FK)
+- bill_type (rent, electricity, internet, gas, water, custom)
+- amount
+- billing_cycle (monthly, quarterly, annual)
+- due_date
+- created_by (FK to users)
+
+**user_bills** (junction table)
+- id (PK, UUID)
+- user_id (FK)
+- bill_id (FK)
+- amount_due
+- amount_paid
+- payment_status (pending, paid, overdue)
+- payment_date
+- payment_method
+- payment_reference
+- payment_proof_url (Cloudinary)
+- verified_by (FK to users, nullable)
+- verified_at
+
+**community_meals**
+- id (PK, UUID)
+- apartment_id (FK)
+- has_chef (boolean)
+- chef_name
+- chef_photo_url (Cloudinary)
+- chef_contact
+- chef_id_card_url (Cloudinary)
+- chef_salary
+- is_active (boolean)
+
+**meal_participants**
+- id (PK, UUID)
+- community_meal_id (FK)
+- user_id (FK)
+- meal_types (array: breakfast, lunch, dinner)
+- include_water (boolean)
+- weekly_cost
+- joined_at
+
+**menus**
+- id (PK, UUID)
+- community_meal_id (FK)
+- day_of_week (1-7)
+- meal_type (breakfast, lunch, dinner)
+- main_course
+- curry_1
+- curry_2
+- side_dish
+- dessert
+- beverage
+- photo_url (Cloudinary)
+
+**grocery_teams**
+- id (PK, UUID)
+- community_meal_id (FK)
+- team_number
+- week_number
+- year
+
+**grocery_team_members** (junction table)
+- id (PK, UUID)
+- grocery_team_id (FK)
+- user_id (FK)
+
+**grocery_purchases**
+- id (PK, UUID)
+- grocery_team_id (FK)
+- purchase_date
+- total_amount
+- receipt_url (Cloudinary)
+- purchased_by (FK to users)
+- approved_by (FK to users, nullable)
+
+**grocery_items**
+- id (PK, UUID)
+- grocery_purchase_id (FK)
+- item_name
+- quantity
+- price
+
+**tasks**
+- id (PK, UUID)
+- apartment_id (FK)
+- task_name
+- description
+- task_type (individual, team)
+- frequency (daily, weekly, biweekly, monthly)
+- difficulty (easy, medium, hard)
+- loyalty_points_reward
+- estimated_duration (minutes)
+
+**task_assignments**
+- id (PK, UUID)
+- task_id (FK)
+- assigned_to (FK to users)
+- assigned_date
+- due_date
+- status (pending, started, completed, missed)
+- started_at
+- completed_at
+- completion_proof_url (Cloudinary)
+- quality_rating (1-5)
+- verified_by (FK to users, nullable)
+
+**resources**
+- id (PK, UUID)
+- apartment_id (FK)
+- resource_name
+- photo_url (Cloudinary)
+- slot_duration (minutes)
+- operating_start_time
+- operating_end_time
+- max_bookings_per_user_per_week
+
+**resource_bookings**
+- id (PK, UUID)
+- resource_id (FK)
+- user_id (FK)
+- booking_date
+- start_time
+- end_time
+- status (booked, checked_in, checked_out, no_show, cancelled)
+- checked_in_at
+- checked_out_at
+- notes
+
+**polls**
+- id (PK, UUID)
+- apartment_id (FK)
+- created_by (FK to users)
+- poll_type (yes_no, multiple_choice_single, multiple_choice_multi, rating, open_ended)
+- question
+- description
+- end_date
+- is_anonymous (boolean)
+- show_live_results (boolean)
+- voter_restriction (all, roommates_only, meal_participants_only)
+- status (active, closed)
+
+**poll_options**
+- id (PK, UUID)
+- poll_id (FK)
+- option_text
+
+**poll_votes**
+- id (PK, UUID)
+- poll_id (FK)
+- poll_option_id (FK, nullable for open-ended)
+- user_id (FK)
+- vote_text (for open-ended)
+- rating (for rating type)
+- voted_at
+
+**money_pools**
+- id (PK, UUID)
+- apartment_id (FK)
+- pool_name
+- contribution_amount
+- contribution_frequency (weekly, monthly)
+- total_participants
+- start_date
+- duration_months
+- payout_order (array of user_ids)
+- current_payout_index
+- status (active, completed)
+
+**money_pool_participants**
+- id (PK, UUID)
+- money_pool_id (FK)
+- user_id (FK)
+- payout_position
+- has_received_payout (boolean)
+- payout_received_date
+
+**money_pool_contributions**
+- id (PK, UUID)
+- money_pool_id (FK)
+- user_id (FK)
+- contribution_date
+- amount
+- payment_status (paid, pending, missed)
+- verified_by (FK to users, nullable)
+
+**disputes**
+- id (PK, UUID)
+- apartment_id (FK)
+- created_by (FK to users)
+- dispute_type (payment, task, meal, resource, behavior, property, chef, general)
+- title
+- description
+- evidence_urls (array, Cloudinary)
+- involved_parties (array of user_ids)
+- status (open, under_review, awaiting_vote, resolved, closed)
+- resolution
+- resolved_by (FK to users, nullable)
+- resolved_at
+- created_at
+
+**dispute_messages**
+- id (PK, UUID)
+- dispute_id (FK)
+- user_id (FK)
+- message_text
+- attachment_urls (array, Cloudinary)
+- created_at
+- is_read (boolean)
+
+**notifications**
+- id (PK, UUID)
+- user_id (FK)
+- notification_type (payment, task, resource, meal, poll, dispute, approval, vacancy, loyalty, achievement, ad, system)
+- title
+- message
+- link_url
+- is_read (boolean)
+- created_at
+
+**loyalty_events**
+- id (PK, UUID)
+- user_id (FK)
+- event_type (payment, task, grocery_rating, referral, streak, dispute, no_show, etc.)
+- points_change (positive or negative integer)
+- description
+- created_at
+
+**achievements**
+- id (PK, UUID)
+- achievement_name
+- description
+- badge_icon_url (Cloudinary)
+- required_criteria (JSON)
+
+**user_achievements**
+- id (PK, UUID)
+- user_id (FK)
+- achievement_id (FK)
+- unlocked_at
+
+**ad_views**
+- id (PK, UUID)
+- user_id (FK)
+- apartment_id (FK)
+- view_date
+- session_type (morning, evening)
+- ads_watched_count
+- revenue_generated (calculated)
+- points_earned
+
+**ad_payouts**
+- id (PK, UUID)
+- user_id (FK)
+- payout_month
+- total_ads_watched
+- total_revenue_earned
+- payout_status (pending, paid)
+- paid_at
+- payment_method
+- payment_reference
+
+16.4 Image Storage (Cloudinary)
+- Folder structure:
+  * /roommate-manager/users/{user_id}/profile
+  * /roommate-manager/users/{user_id}/documents
+  * /roommate-manager/apartments/{apartment_id}/resources
+  * /roommate-manager/meals/{meal_id}/photos
+  * /roommate-manager/groceries/{purchase_id}/receipts
+  * /roommate-manager/tasks/{task_id}/proofs
+  * /roommate-manager/disputes/{dispute_id}/evidence
+- Transformations:
+  * Profile photos: 300x300, circular crop, face detection
+  * ID cards: 800x600, quality 90, format auto
+  * Receipts: OCR-friendly transformations, auto-rotate
+  * Task proofs: 1200x900, quality 85
+- Upload presets:
+  * profile_photos (300x300, signed upload)
+  * documents (signed upload, no transformations)
+  * receipts (OCR optimization, signed upload)
+  * general (800x600, signed upload)
+- Security:
+  * Signed uploads only (prevent unauthorized uploads)
+  * Unique filename generation (prevent overwrites)
+  * Access control via Cloudinary signed URLs
+- Backup: Cloudinary auto-backup enabled
+
+16.5 Ad Integration
+- AdMob SDK integration (React):
+  * Install: `npm install react-google-adsense`
+  * Rewarded ads for revenue sharing
+  * Interstitial ads for page transitions
+  * Banner ads (320x50) at bottom of pages
+- Ad placement strategy:
+  * Homepage: 1 banner ad (bottom)
+  * Dashboard: 1 banner ad (bottom)
+  * Between navigation: Interstitial ads (max 1 per 5 minutes)
+  * "Watch Ads" tab: Rewarded video ads
+- Ad loading optimization:
+  * Lazy load ads
+  * Preload next ad while current ad playing
+  * Cache ad availability status
+- Revenue tracking:
+  * AdMob API integration for earnings data
+  * Daily sync of revenue metrics
+  * Store in `ad_views` table with calculated share
+
+16.6 Performance Optimization
+- Code splitting by route (React.lazy)
+- Image lazy loading (React Lazy Load Image)
+- Debounced search inputs
+- Pagination for large lists (20 items per page)
+- Infinite scroll for activity feeds
+- React Query caching (5-minute stale time)
+- Supabase connection pooling
+- Database indexing on:
+  * user_id in all tables
+  * apartment_id in all tables
+  * Foreign keys
+  * payment_status, task status, booking status
+  * created_at, due_date timestamps
+
+16.7 Security Measures
+- Row Level Security (RLS) on all tables
+- Signed Cloudinary uploads only
+- Input sanitization (prevent XSS)
+- SQL injection prevention (parameterized queries via Supabase)
+- Rate limiting on API endpoints
+- CORS configuration (allowed origins only)
+- Environment variables for sensitive keys
+- Password strength requirements (min 8 chars, alphanumeric + special)
+- Session timeout after 7 days inactivity
+- Admin action audit log
+
+16.8 Responsive Design
+- Mobile-first approach
+- Breakpoints:
+  * Mobile: 320px - 767px
+  * Tablet: 768px - 1023px
+  * Desktop: 1024px+
+- Touch-friendly buttons (min 44x44px)
+- Bottom navigation for mobile
+- Hamburger menu for mobile
+- Swipe gestures for calendar navigation
+- Optimized layouts for each screen size
+
+16.9 Deployment
+- Frontend: Vercel / Netlify
+  * Automatic deployments from Git
+  * Environment variables configuration
+  * Custom domain setup
+- Backend: Supabase Cloud
+  * PostgreSQL database
+  * Automatic backups (daily)
+  * Edge Functions deployed
+- CDN: Cloudinary CDN for images
+- SSL: Automatic HTTPS
+
+================================================================================
+17. USER FLOWS
+================================================================================
+
+17.1 New Roommate Onboarding Flow
+1. User receives invite link/QR code from admin
+2. User clicks link → Registration page
+3. Fill personal details (name, age, email, phone)
+4. Upload profile photo
+5. Upload identity documents (ID card, resume, labour card)
+6. Submit application
+7. Admin receives notification
+8. Admin reviews application
+9. Admin approves → User receives welcome email
+10. User logs in for first time
+11. Tour guide shows key features
+12. Admin assigns bed to user
+13. User sees first bill and payment due date
+14. User explores community meal, tasks, resources
+
+17.2 Monthly Payment Flow
+1. 5 days before due date: User receives reminder
+2. User opens app → Payment dashboard
+3. User sees bill breakdown (rent + utilities + meal)
+4. User clicks "Mark as Paid"
+5. User enters payment details (method, reference, date)
+6. Optional: Upload payment proof screenshot
+7. User submits
+8. Admin receives verification request
+9. Admin checks payment in bank/UPI
+10. Admin approves payment
+11. User sees "Payment Verified" status
+12. User earns +50 loyalty points
+
+17.3 Community Meal Team Grocery Shopping Flow
+1. Sunday night: Team B receives notification "Your week starts tomorrow"
+2. Monday morning: Team B members see grocery list (based on menu)
+3. Team members coordinate (via WhatsApp or dispute chat)
+4. Wednesday: Team B goes shopping, buys groceries
+5. Team B member 1 uploads receipt photo
+6. OCR extracts items and prices
+7. Team B member 1 reviews and edits extracted data
+8. Submits purchase
+9. Admin receives notification
+10. Admin reviews items and amount
+11. Admin approves
+12. System calculates per-person cost
+13. All meal participants see their share added to next bill
+14. End of week: Other meal participants rate Team B (1-5 stars)
+15. Team B sees rating and feedback
+16. Team B members earn loyalty points based on rating
+
+17.4 Task Completion Flow
+1. Morning 7 AM: User receives notification "Your task today: Clean Kitchen"
+2. User acknowledges notification
+3. 5 PM: User starts task, clicks "Start Task"
+4. User cleans kitchen
+5. User takes photo of clean kitchen
+6. User uploads photo
+7. User clicks "Complete Task"
+8. System logs completion time
+9. Admin reviews photo (if enabled)
+10. Admin approves completion
+11. User earns +20 loyalty points
+12. User's task completion streak increases
+
+17.5 Resource Booking Flow (Washing Machine)
+1. User opens "Resources" tab
+2. User selects "Washing Machine"
+3. User sees calendar with available slots (green) and booked slots (red/yellow)
+4. User selects tomorrow, 2 PM slot (30 minutes)
+5. User adds note: "2 loads"
+6. User confirms booking
+7. User receives confirmation notification
+8. Tomorrow 1 PM: User receives reminder "Your washing machine slot in 1 hour"
+9. Tomorrow 1:45 PM: User receives reminder "Your slot in 15 minutes"
+10. Tomorrow 2 PM: User receives "Your slot has started - Check in now"
+11. User goes to washing machine, clicks "Check In"
+12. User uses washing machine
+13. 2:25 PM: User receives "5 minutes remaining"
+14. 2:30 PM: User clicks "Check Out"
+15. System releases slot
+16. User earns attendance points
+
+17.6 Ad Watching Flow (Morning)
+1. Morning 8 AM: User receives notification "5 morning ads available - Earn rewards!"
+2. User opens app, clicks "Watch Ads" tab
+3. User sees "5 ads available - Estimated earnings: ₹8"
+4. User clicks "Start Watching"
+5. Rewarded video ad 1 plays (30 seconds)
+6. User watches full ad
+7. Ad completes, system logs view
+8. Automatically loads next ad
+9. Repeat for all 5 ads
+10. After 5 ads: "You earned ₹8 today! +5 loyalty points"
+11. User sees updated earnings in dashboard
+12. Evening session repeats same flow
+
+17.7 Dispute Resolution Flow
+1. User A has issue with bill amount
+2. User A opens "Disputes" section
+3. User A clicks "Create Dispute"
+4. User A selects "Payment Dispute"
+5. User A writes description: "Charged for drinking water but I opted out"
+6. User A uploads screenshot of opt-out confirmation
+7. User A submits dispute
+8. Admin receives notification
+9. Admin opens dispute thread
+10. Admin reviews evidence
+11. Admin checks system records
+12. Admin finds User A is correct
+13. Admin writes message: "You're right, this was an error"
+14. Admin adjusts User A's bill (-₹50)
+15. Admin marks dispute as "Resolved"
+16. User A receives notification: "Your dispute was resolved"
+17. User A sees updated bill amount
+
+================================================================================
+18. MVP FEATURE PRIORITIZATION
+================================================================================
+
+18.1 Phase 1 - Core MVP (Launch Priority)
+✅ **Must Have (Week 1-4)**
+- User authentication (email/password)
+- Basic user profile with photo and ID upload
+- Admin vs. Roommate roles
+- Apartment/Room/Bed hierarchy creation
+- Bed allocation to users
+- Manual payment tracking:
+  * Create bills
+  * User marks paid with details
+  * Admin verifies payment
+  * Payment reminders (5 days, 1 day before)
+  * Overdue tracking
+- Community meal setup:
+  * Add chef profile
+  * User opt-in/opt-out
+  * Simple meal type selection (lunch/dinner/both)
+- Basic notification system (in-app only)
+- Responsive UI (mobile + desktop)
+
+18.2 Phase 2 - Community Meals & Tasks (Week 5-8)
+✅ **Should Have**
+- Weekly menu management (CRUD)
+- Grocery team auto-generation and rotation
+- Grocery purchase logging (manual entry + OCR receipt scanning)
+- Cost splitting for community meals
+- Team rating and feedback
+- Task creation and assignment
+- Task rotation system
+- Task completion with photo proof
+- Task reminders
+- Basic loyalty points (earning only, no redemption)
+- Leaderboard
+
+18.3 Phase 3 - Resources & Enhanced Features (Week 9-12)
+✅ **Should Have**
+- Resource scheduling (washing machine, iron, etc.)
+- Slot booking system
+- Check-in/check-out for resources
+- No-show tracking
+- Voting & polls system
+- Poll creation (admin)
+- Voting interface (users)
+- Results display
+- Dispute handling system
+- Dispute creation and chat
+- Admin dispute resolution
+- Vacancy alerts
+- Invite link generation
+
+18.4 Phase 4 - Gamification & Monetization (Week 13-16)
+✅ **Could Have**
+- Full loyalty points system (earning + deductions)
+- Loyalty tiers (Bronze/Silver/Gold/Platinum)
+- Achievement badges
+- Task exchange system
+- Payment frequency options (monthly/quarterly/annual) with discounts
+- Money pool system
+- Pool creation and management
+- Payout rotation tracking
+- Ad integration:
+  * Morning/evening ad viewing
+  * Revenue tracking
+  * Earnings dashboard
+- Guest management system
+- Email notifications
+- Reports and analytics dashboards
+
+18.5 Phase 5 - Advanced Features (Post-MVP)
+❌ **Won't Have (Initial MVP)**
+- Stripe payment gateway integration (future)
+- SMS notifications (future)
+- Push notifications / PWA (future)
+- Multi-language support (future)
+- Dark mode (future)
+- Social media sharing (future)
+- In-app chat for general communication (future)
+- Voice notes in disputes (future)
+- Loyalty points redemption (future)
+- Investment tracking calculations (future - keep manual only)
+- Mobile native apps (future)
+- Offline mode (future)
+
+================================================================================
+19. SUCCESS METRICS & KPIs
+================================================================================
+
+19.1 User Engagement Metrics
+- Daily Active Users (DAU)
+- Weekly Active Users (WAU)
+- Monthly Active Users (MAU)
+- User retention rate (30-day, 90-day)
+- Average session duration
+- Feature adoption rate (% users using each feature)
+- Ad viewing participation rate
+- Task completion rate
+- Payment on-time rate
+
+19.2 Financial Metrics
+- Total revenue from ads (monthly)
+- Average revenue per user (ARPU)
+- Payment collection rate (% of bills paid on time)
+- Overdue payment rate
+- Average payment dispute resolution time
+
+19.3 Community Meal Metrics
+- Community meal participation rate
+- Average cost per meal per person
+- Grocery team rating average
+- Menu voting participation
+- Cost variance (actual vs. budget)
+
+19.4 System Health Metrics
+- Page load time (target < 2 seconds)
+- API response time (target < 500ms)
+- Error rate (target < 1%)
+- Uptime (target 99.9%)
+- Database query performance
+
+19.5 User Satisfaction Metrics
+- Net Promoter Score (NPS) surveys
+- Dispute resolution satisfaction rating
+- Feature request volume
+- Bug report volume
+- User support ticket response time
+
+================================================================================
+20. FUTURE ENHANCEMENTS (POST-MVP)
+================================================================================
+
+20.1 Payment Gateway Integration
+- Stripe integration for automatic payments
+- UPI integration (India)
+- Mobile money (Africa)
+- Multiple currency support
+- Automatic payment reminders with payment link
+- Subscription billing for premium apartments (3+ apartments)
+
+20.2 Mobile Apps
+- React Native iOS app
+- React Native Android app
+- Offline mode for viewing data
+- Push notifications
+- Biometric authentication
+
+20.3 AI/ML Features
+- Predictive billing (estimate next month's cost)
+- Smart task assignment (based on past performance and availability)
+- Anomaly detection (unusual spending patterns)
+- Recommended menu items (based on past ratings)
+- Chatbot for common questions
+
+20.4 Advanced Communication
+- In-app chat between roommates
+- Group chat per apartment
+- Voice/video calls for dispute resolution
+- Integration with Slack/Discord
+
+20.5 Marketplace Features
+- Buy/sell used items within apartment network
+- Service sharing (e.g., "I can cook for you")
+- Skill exchange (e.g., "Teach me guitar, I'll help with your coding")
+
+20.6 Smart Home Integration
+- IoT device control (smart locks, thermostats)
+- Utility usage tracking (smart meters)
+- Automatic resource check-in (RFID/NFC)
+
+20.7 Social Features
+- Roommate matching algorithm (find compatible roommates)
+- Social profiles with interests and hobbies
+- Apartment events calendar
+- Birthday/celebration reminders
+
+20.8 Enterprise Features
+- Multi-property management for landlords
+- Integration with property management systems
+- Automated lease agreement generation
+- Background check integration
+- Credit score integration
+
+================================================================================
+END OF PRD
+================================================================================
+
+Document Version: 1.0
+Last Updated: November 4, 2025
+Author: Product Team
+Status: Ready for Development
+
+================================================================================
+APPROVAL & SIGN-OFF
+================================================================================
+
+This PRD has been reviewed and approved for development of MVP Phase 1-4.
+
+Next Steps:
+1. ✅ PRD Review and Approval
+2. ⏳ Technical Architecture Design
+3. ⏳ Database Schema Finalization
+4. ⏳ UI/UX Wireframes
+5. ⏳ Development Sprint Planning
+6. ⏳ Phase 1 Development Kickoff
+
+================================================================================

@@ -1,0 +1,1234 @@
+================================================================================
+DEVELOPMENT TASKS - STEP-BY-STEP IMPLEMENTATION GUIDE
+ZiberLive - Complete Task List with Page References
+================================================================================
+
+HOW TO USE THIS FILE
+-------------------
+This file guides you through building the application in the correct order.
+Each task tells you EXACTLY which file to read, which lines to focus on,
+and what to implement.
+
+Format: 
+[PHASE] Task Number: Task Name
+  → Read: filename.txt (lines X-Y)
+  → Implement: What to build
+  → APIs: Which endpoints
+  → Test: What to verify
+
+================================================================================
+PHASE 1: FOUNDATION & AUTHENTICATION (Week 1-4)
+================================================================================
+
+TASK 1.1: Project Setup
+------------------------
+Duration: 2 hours
+Difficulty: Easy
+
+→ Read: QUICK-START-GUIDE.txt (lines 40-80)
+→ Read: theme.txt (all) - Keep open for reference
+
+Actions:
+1. Create React + TypeScript project with Vite
+2. Install all dependencies (see QUICK-START-GUIDE.txt lines 50-65)
+3. Configure Tailwind CSS
+4. Setup shadcn/ui
+5. Create folder structure:
+   ```
+   src/
+   ├── components/ui/
+   ├── components/layout/
+   ├── pages/
+   ├── lib/
+   ├── hooks/
+   ├── stores/
+   └── types/
+   ```
+
+Test: Run `npm run dev` - should see blank page
+
+
+TASK 1.2: Supabase Setup
+------------------------
+Duration: 1 hour
+Difficulty: Easy
+
+→ Read: DATABASE-SCHEMA-COMPLETE.sql (lines 1-100)
+→ Read: QUICK-START-GUIDE.txt (lines 82-95)
+
+Actions:
+1. Create Supabase project at supabase.com
+2. Copy Project URL and anon key
+3. Create .env file:
+   ```
+   VITE_SUPABASE_URL=your-url
+   VITE_SUPABASE_ANON_KEY=your-key
+   ```
+4. Create src/lib/supabase.ts:
+   ```typescript
+   import { createClient } from '@supabase/supabase-js'
+   
+   export const supabase = createClient(
+     import.meta.env.VITE_SUPABASE_URL,
+     import.meta.env.VITE_SUPABASE_ANON_KEY
+   )
+   ```
+
+Test: Import supabase in a component - no errors
+
+
+TASK 1.3: Create Database Schema
+--------------------------------
+Duration: 2 hours
+Difficulty: Medium
+
+→ Read: DATABASE-SCHEMA-COMPLETE.sql (ALL LINES)
+→ Focus: Lines 20-200 (Core tables)
+
+Actions:
+1. Open Supabase SQL Editor
+2. Run schema from DATABASE-SCHEMA-COMPLETE.sql
+3. Enable Row Level Security (RLS)
+4. Create RLS policies for apartments table
+5. Create RLS policies for apartment_members table
+6. Verify tables created in Supabase dashboard
+
+Test: Check Supabase dashboard - all tables visible
+
+
+TASK 1.4: Theme Configuration
+-----------------------------
+Duration: 1 hour
+Difficulty: Easy
+
+→ Read: theme.txt (lines 1-150 - Colors & Typography)
+
+Actions:
+1. Create tailwind.config.js with custom theme
+2. Add all colors from theme.txt to config
+3. Add custom fonts (Inter)
+4. Test with a sample component
+
+Test: Create button with theme colors - renders correctly
+
+
+TASK 1.5: Layout Components
+---------------------------
+Duration: 3 hours
+Difficulty: Medium
+
+→ Read: pages/dashboard.txt (lines 1-50 - Layout overview)
+→ Read: theme.txt (lines 500-600 - Navigation styles)
+
+Components to create:
+1. src/components/layout/AppLayout.tsx
+2. src/components/layout/TopNavigation.tsx
+3. src/components/layout/Sidebar.tsx (desktop)
+4. src/components/layout/BottomNavigation.tsx (mobile)
+5. src/components/layout/NotificationBell.tsx
+6. src/components/layout/UserMenu.tsx
+
+Test: Render AppLayout - see header, sidebar, and content area
+
+
+TASK 1.6: Login Page
+--------------------
+Duration: 4 hours
+Difficulty: Medium
+
+→ Read: pages/authentication.txt (lines 13-80 - Login Page)
+→ Read: API-FLOWS-COMPLETE.txt (lines 50-120 - Login Flow)
+
+Actions:
+1. Create src/pages/LoginPage.tsx
+2. Follow EXACT layout from authentication.txt lines 20-45
+3. Use React Hook Form + Zod validation
+4. Implement Supabase auth
+5. Handle errors and loading states
+6. Redirect based on user role
+
+APIs to implement:
+- POST /auth/v1/token (Supabase auth)
+- GET /rest/v1/apartment_members (user profile)
+
+Test: 
+- Login with valid credentials → redirect to dashboard
+- Login with invalid → show error
+- Check console for any errors
+
+
+TASK 1.7: Registration Page (4 Steps)
+-------------------------------------
+Duration: 8 hours
+Difficulty: Hard
+
+→ Read: pages/authentication.txt (lines 81-200 - Registration)
+→ Read: API-FLOWS-COMPLETE.txt (lines 121-300 - Registration Flow)
+
+Actions:
+1. Create src/pages/RegistrationPage.tsx
+2. Implement 4-step wizard:
+   
+   STEP 1: Basic Info (lines 85-120)
+   - Full name, email, password, phone, DOB
+   - Validation with Zod
+   - Password strength indicator
+   
+   STEP 2: Documents (lines 122-155)
+   - Profile photo upload → Cloudinary
+   - ID card upload → Cloudinary
+   - Resume upload (optional) → Cloudinary
+   - Face detection on profile photo
+   
+   STEP 3: Emergency Contact (lines 157-180)
+   - Contact name, relationship, phone, email
+   - Store in state
+   
+   STEP 4: Join Apartment (lines 182-200)
+   - Enter invite code OR scan QR
+   - Validate invite code
+   - Submit complete registration
+
+APIs to implement:
+- POST /auth/v1/signup
+- POST https://api.cloudinary.com/upload (3x for documents)
+- GET /rest/v1/apartment_invites (validate)
+- POST /rest/v1/apartment_members
+- POST /rest/v1/notifications (notify admin)
+
+Test:
+- Complete all 4 steps
+- Upload documents successfully
+- Check Supabase - member record created with status='pending'
+- Admin receives notification
+
+
+TASK 1.8: Approval Pending Page
+-------------------------------
+Duration: 1 hour
+Difficulty: Easy
+
+→ Read: pages/authentication.txt (lines 201-230)
+
+Actions:
+1. Create src/pages/ApprovalPendingPage.tsx
+2. Show application status
+3. Display submitted info
+4. Add "Edit Application" button
+5. Add "Contact Admin" button
+
+Test: After registration → see this page
+
+
+TASK 1.9: Admin Approval Flow
+-----------------------------
+Duration: 4 hours
+Difficulty: Medium
+
+→ Read: pages/authentication.txt (lines 231-290)
+→ Read: pages/admin-management.txt (lines 1-50)
+
+Actions:
+1. Create src/pages/admin/MemberApprovalsPage.tsx
+2. List pending applications
+3. Show all submitted documents
+4. Bed assignment selector
+5. Approve/Reject buttons
+6. Send notifications on approval
+
+APIs:
+- GET /rest/v1/apartment_members?status=eq.pending
+- PATCH /rest/v1/apartment_members (approve/reject)
+- POST /rest/v1/notifications
+
+Test: Admin can approve → user gets access to app
+
+
+✅ TASK 1.10: Member Dashboard - COMPLETED
+---------------------------
+Duration: 6 hours
+Difficulty: Medium
+
+→ Read: pages/dashboard.txt (lines 15-120 - Member Dashboard)
+→ Read: API-FLOWS-COMPLETE.txt (dashboard summary endpoint)
+
+Actions:
+✅ Enhanced src/pages/DashboardPage.tsx
+✅ Implemented all sections:
+   - Welcome header with notifications
+   - 4 stat cards (Bills, Members, Loyalty, Investments)
+   - Pending actions section (urgent items)
+   - Recent activity feed
+   - Quick actions sidebar
+   - Leaderboard widget
+
+APIs:
+✅ GET /functions/v1/dashboard-summary
+
+Test: ✅ Dashboard shows all widgets with mock data
+
+
+✅ PHASE 1 COMPLETE: Users can register, get approved, and login
+
+
+================================================================================
+PHASE 2: BILLS & PAYMENTS (Week 5-6)
+================================================================================
+
+TASK 2.1: My Bills Dashboard
+----------------------------
+Duration: 6 hours
+Difficulty: Medium
+
+→ Read: pages/bills.txt (lines 13-100 - Bills Dashboard)
+→ Read: API-FLOWS-COMPLETE.txt (lines 400-500 - View Bills Flow)
+
+Actions:
+1. Create src/pages/bills/MyBillsPage.tsx
+2. Implement components:
+   - SummaryCardsGrid (3 cards)
+   - NextPaymentCard
+   - TabNavigation (Pending, Paid, Overdue, All)
+   - FilterBar
+   - BillCard (repeated component)
+3. Add React Query for data fetching
+4. Implement real-time updates
+
+APIs:
+- GET /rest/v1/bill_splits?member_id=eq.{id}...
+
+Test: See list of bills, filter works, real-time updates
+
+
+TASK 2.2: Bill Detail Page
+--------------------------
+Duration: 4 hours
+Difficulty: Medium
+
+→ Read: pages/bills.txt (lines 101-180 - Bill Detail)
+
+Actions:
+1. Create src/pages/bills/BillDetailPage.tsx
+2. Show complete breakdown
+3. Display calculation method
+4. Show all member splits (for transparency)
+5. Countdown timer for due date
+
+APIs:
+- GET /rest/v1/bills?id=eq.{id}
+- GET /rest/v1/bill_splits?bill_id=eq.{id}
+
+Test: Click bill → see detail page with breakdown
+
+
+TASK 2.3: Payment Submission Modal
+----------------------------------
+Duration: 6 hours  
+Difficulty: Hard
+
+→ Read: pages/bills.txt (lines 181-280 - Payment Submission)
+→ Read: API-FLOWS-COMPLETE.txt (lines 500-650 - Payment Flow)
+
+Actions:
+1. Create src/components/bills/MarkAsPaidModal.tsx
+2. Implement form with validation:
+   - Payment method dropdown
+   - Transaction reference input
+   - Payment date picker
+   - Receipt upload (Cloudinary)
+   - Notes textarea
+3. Submit for admin verification
+
+APIs:
+- POST https://api.cloudinary.com/upload
+- POST /rest/v1/payments
+- PATCH /rest/v1/bill_splits
+- POST /rest/v1/notifications (notify admin)
+
+Test: Mark payment → admin receives notification
+
+
+✅ TASK 2.4: Payment History Page - COMPLETED
+------------------------------
+Duration: 3 hours
+Difficulty: Easy
+
+→ Read: pages/bills.txt (lines 281-340)
+
+Actions:
+✅ Created src/pages/PaymentHistoryPage.tsx
+✅ Stats cards implemented
+✅ Data table with filters
+✅ Export to CSV functionality
+
+APIs:
+✅ GET /rest/v1/payments
+
+Test: ✅ Payment history working
+
+
+TASK 2.5: Admin Bill Creation
+-----------------------------
+Duration: 5 hours
+Difficulty: Medium
+
+→ Read: pages/admin-management.txt (lines 200-280)
+
+Actions:
+1. Create src/pages/admin/bills/CreateBillPage.tsx
+2. Select bill type
+3. Enter total amount
+4. System calculates splits automatically
+5. Preview splits
+6. Publish bill
+
+APIs:
+- POST /rest/v1/bills
+- POST /functions/v1/calculate-bill-splits
+- POST /rest/v1/bill_splits (bulk)
+- POST /rest/v1/notifications (notify all)
+
+Test: Admin creates bill → all members see it
+
+
+TASK 2.6: Admin Payment Verification
+------------------------------------
+Duration: 4 hours
+Difficulty: Medium
+
+→ Read: pages/admin-management.txt (lines 281-350)
+→ Read: API-FLOWS-COMPLETE.txt (lines 650-750 - Verify Payment)
+
+Actions:
+1. Create src/pages/admin/bills/VerifyPaymentsPage.tsx
+2. List pending verifications
+3. Show payment proof
+4. Approve/Reject buttons
+5. Award loyalty points on approval
+
+APIs:
+- GET /rest/v1/payments?status=eq.pending_verification
+- PATCH /rest/v1/payments
+- PATCH /rest/v1/bill_splits  
+- POST /rest/v1/rpc/add_loyalty_points
+- POST /rest/v1/notifications
+
+Test: Admin verifies → user sees "Verified" status
+
+
+✅ PHASE 2 COMPLETE: Complete manual payment tracking
+
+
+================================================================================
+PHASE 3: COMMUNITY MEALS (Week 7-10)
+================================================================================
+
+TASK 3.1: Meal Dashboard
+------------------------
+Duration: 5 hours
+Difficulty: Medium
+
+→ Read: pages/communitymeal.txt (lines 13-100)
+
+Actions:
+1. Create src/pages/meals/CommunityMealDashboardPage.tsx
+2. Show this week's menu (7 days)
+3. Display grocery duty status
+4. Chef information card
+5. Recent feedback
+
+APIs:
+- GET /rest/v1/menus?week_start_date=...
+- GET /rest/v1/chefs?apartment_id=...
+- GET /rest/v1/grocery_teams?week=...
+
+Test: See complete meal dashboard
+
+
+TASK 3.2: Weekly Menu Planner (Admin)
+-------------------------------------
+Duration: 6 hours
+Difficulty: Hard
+
+→ Read: pages/communitymeal.txt (lines 101-200)
+
+Actions:
+1. Create src/pages/admin/meals/MenuPlannerPage.tsx
+2. 7 days × 3 meals = 21 cells grid
+3. Edit meal modal for each cell
+4. Upload food photos to Cloudinary
+5. Copy last week option
+6. Publish menu
+
+APIs:
+- GET /rest/v1/menus
+- POST /rest/v1/menus (21 meals)
+- POST https://api.cloudinary.com/upload
+- POST /rest/v1/notifications
+
+Test: Admin creates menu → all members see it
+
+
+✅ TASK 3.3: Grocery Team System - COMPLETED
+-----------------------------
+Duration: 4 hours
+Difficulty: Medium
+
+→ Read: pages/communitymeal.txt (lines 201-270)
+
+Actions:
+✅ Created src/pages/GroceryTeamsPage.tsx
+✅ 4-week rotation schedule display
+✅ Current team view
+✅ Team member details
+✅ Budget tracking with progress
+
+APIs:
+✅ GET /rest/v1/rotation_teams
+- GET /rest/v1/team_members
+- GET /rest/v1/schedule_assignments
+
+Test: See rotation schedule, know your week
+
+
+TASK 3.4: Upload Receipt with OCR (4 Steps)
+-------------------------------------------
+Duration: 12 hours ⚠️ MOST COMPLEX TASK
+Difficulty: Very Hard
+
+→ Read: pages/communitymeal.txt (lines 271-400)
+→ Read: API-FLOWS-COMPLETE.txt (OCR flow section)
+
+Actions:
+1. Create src/components/meals/UploadReceiptModal.tsx
+2. Implement 4-step wizard:
+
+   STEP 1: Upload Photo
+   - Cloudinary upload
+   - Multiple receipts support (max 10)
+   - Photo preview
+   
+   STEP 2: OCR Processing
+   - Integrate Tesseract.js
+   - Show progress bar
+   - Extract text from image
+   - Parse items, quantities, prices
+   
+   STEP 3: Review & Edit
+   - Editable table of items
+   - Add/delete rows
+   - Validate total matches
+   - Confidence scores
+   
+   STEP 4: Submit
+   - Purchase date
+   - Store name
+   - Notes
+   - Submit for admin approval
+
+APIs:
+- POST https://api.cloudinary.com/upload
+- Client-side Tesseract.js processing
+- POST /rest/v1/grocery_purchases
+- POST /rest/v1/purchase_items (bulk)
+- POST /rest/v1/notifications
+
+Test: Upload receipt → OCR extracts items → submit for review
+
+
+TASK 3.5: Admin Purchase Review
+-------------------------------
+Duration: 5 hours
+Difficulty: Medium
+
+→ Read: pages/communitymeal.txt (lines 401-480)
+
+Actions:
+1. Create src/pages/admin/meals/PurchaseReviewPage.tsx
+2. List pending purchases
+3. View receipt images
+4. Review itemized list
+5. Approve/Reject
+6. Trigger cost calculation on approve
+
+APIs:
+- GET /rest/v1/grocery_purchases?status=eq.pending_approval
+- PATCH /rest/v1/grocery_purchases
+- POST /functions/v1/calculate-meal-costs
+- POST /rest/v1/bill_splits (from cost calculation)
+
+Test: Admin approves → costs calculated → bills generated
+
+
+TASK 3.6: Team Rating System
+----------------------------
+Duration: 3 hours
+Difficulty: Easy
+
+→ Read: pages/communitymeal.txt (lines 481-550)
+
+Actions:
+1. Create src/components/meals/RateTeamModal.tsx
+2. 4 rating categories (1-5 stars each)
+3. Auto-calculate overall rating
+4. Feedback text area
+5. Submit rating
+6. Award loyalty points based on rating
+
+APIs:
+- POST /rest/v1/grocery_ratings
+- POST /rest/v1/rpc/add_loyalty_points
+
+Test: Rate team → they receive points
+
+
+✅ PHASE 3 COMPLETE: Full community meal system with OCR
+
+
+================================================================================
+PHASE 4: TASKS, RESOURCES & ENGAGEMENT (Week 11-14)
+================================================================================
+
+TASK 4.1: Tasks Management Page
+-------------------------------
+Duration: 5 hours
+Difficulty: Medium
+
+→ Read: pages/dashboard.txt (lines 500-580 - Tasks section)
+
+Actions:
+1. Create src/pages/tasks/TasksPage.tsx
+2. Show today's tasks
+3. Upcoming tasks list
+4. Task completion with photo
+5. Task exchange system
+
+APIs:
+- GET /rest/v1/task_assignments?assigned_to=eq.{id}
+- PATCH /rest/v1/task_assignments (complete)
+- POST /rest/v1/rpc/add_loyalty_points
+
+Test: Complete task → earn points
+
+
+✅ TASK 4.2: Resource Booking Page - COMPLETED
+-------------------------------
+Duration: 6 hours
+Difficulty: Medium
+
+→ Read: pages/dashboard.txt (lines 581-650 - Resources)
+
+Actions:
+✅ Created src/pages/ResourceBookingPage.tsx
+✅ Resource list with availability
+✅ Booking modal with time slots
+✅ Current bookings view
+✅ Filter by resource type
+
+APIs:
+✅ GET /rest/v1/resources
+✅ GET /rest/v1/resource_bookings
+✅ POST /rest/v1/resource_bookings
+✅ PATCH /rest/v1/resource_bookings
+
+Test: Book washing machine slot → check in → check out
+
+
+TASK 4.3: Voting & Polls System
+-------------------------------
+Duration: 8 hours
+Difficulty: Hard
+
+→ Read: pages/voting.txt (ALL LINES)
+
+Actions:
+1. Create src/pages/polls/PollsDashboardPage.tsx
+2. Create src/pages/polls/VotingPage.tsx
+3. Create src/pages/polls/PollResultsPage.tsx
+4. Create src/pages/admin/polls/CreatePollPage.tsx
+5. Implement all poll types:
+   - Yes/No
+   - Multiple Choice
+   - Rating
+   - Open-ended
+6. Real-time vote counting
+7. Auto-close on end date
+
+APIs:
+- GET /rest/v1/polls
+- POST /rest/v1/polls (admin)
+- POST /rest/v1/poll_votes
+- GET /functions/v1/poll-results
+
+Test: Admin creates poll → members vote → results shown
+
+
+✅ TASK 4.4: Loyalty Points System - COMPLETED
+-------------------------------
+Duration: 4 hours
+Difficulty: Medium
+
+→ Read: prdfinal.txt (lines 300-350 - Loyalty system)
+
+Actions:
+✅ Created src/components/loyalty/LoyaltyBadge.tsx
+✅ Created src/pages/LoyaltyHistoryPage.tsx
+✅ 4 tier badges (Bronze/Silver/Gold/Platinum)
+✅ Leaderboard with rankings
+✅ Points history with transactions
+✅ Progress to next tier
+
+APIs:
+✅ GET /rest/v1/member_points_ledger
+✅ GET /functions/v1/loyalty-leaderboard
+
+Test: ✅ Loyalty system working with badges
+
+
+✅ PHASE 4 COMPLETE: Tasks, resources, voting, gamification
+
+
+================================================================================
+PHASE 5: MONEY POOLS & ADDITIONAL FEATURES (Week 15-16)
+================================================================================
+
+✅ TASK 5.1: Money Pools Dashboard - COMPLETED
+-------------------------------
+Duration: 5 hours
+Difficulty: Medium
+
+→ Read: pages/investments.txt (lines 13-120)
+
+Actions:
+✅ Created src/pages/MoneyPoolsPage.tsx
+✅ All active pools displayed
+✅ Stats cards with metrics
+✅ Pool details view
+
+APIs:
+✅ GET /rest/v1/money_pools
+
+Test: ✅ Money pools dashboard working
+
+
+TASK 5.2: Money Pool Detail Page
+--------------------------------
+Duration: 4 hours
+Difficulty: Medium
+
+→ Read: pages/investments.txt (lines 121-220)
+
+Actions:
+1. Create src/pages/money-pools/MoneyPoolDetailPage.tsx
+2. Show complete payout schedule (all months)
+3. Display net benefit calculation
+4. Current month contribution status
+5. Contribution history
+
+Test: View complete pool details
+
+
+TASK 5.3: Create Money Pool (Admin)
+-----------------------------------
+Duration: 5 hours
+Difficulty: Medium
+
+→ Read: pages/investments.txt (lines 221-300)
+
+Actions:
+1. Create src/pages/admin/money-pools/CreateMoneyPoolPage.tsx
+2. Select participants
+3. Set contribution amount
+4. Arrange payout order (drag-and-drop)
+5. Set rules and penalties
+6. Create pool
+
+APIs:
+- POST /rest/v1/money_pools
+- POST /rest/v1/money_pool_participants (bulk)
+- POST /rest/v1/notifications
+
+Test: Admin creates pool → all participants notified
+
+
+TASK 5.4: Vacancy Management
+----------------------------
+Duration: 4 hours
+Difficulty: Medium
+
+→ Read: pages/additional-features.txt (lines 13-130)
+
+Actions:
+1. Create src/pages/vacancy/VacancyManagementPage.tsx
+2. Show all vacant beds
+3. Calculate cost impact on members
+4. Generate invite links
+5. Generate QR codes
+6. Share via WhatsApp/Email
+
+APIs:
+- GET /rest/v1/locations?is_vacant=eq.true
+- GET /functions/v1/calculate-vacancy-impact
+- POST /rest/v1/apartment_invites
+
+Test: See vacant beds and share options
+
+
+TASK 5.5: Collaboration/Investment Pooling
+------------------------------------------
+Duration: 5 hours
+Difficulty: Medium
+
+→ Read: pages/additional-features.txt (lines 131-300)
+
+Actions:
+1. Create src/pages/collaboration/CollaborationPage.tsx
+2. List all investment pools
+3. Show your share in each
+4. Manual value updates
+5. Investment notes
+6. Create new pool (admin)
+
+APIs:
+- GET /rest/v1/investment_pools
+- POST /rest/v1/investment_pools
+- POST /rest/v1/investment_updates
+- POST /rest/v1/investment_notes
+
+Test: Track collaborative investments
+
+
+TASK 5.6: Ad Watching & Donations
+---------------------------------
+Duration: 6 hours
+Difficulty: Medium
+
+→ Read: pages/additional-features.txt (lines 301-450)
+
+Actions:
+1. Create src/pages/ads/AdWatchingPage.tsx
+2. Integrate Google AdMob
+3. Morning session (5 ads)
+4. Evening session (5 ads)
+5. Track earnings (70/30 split)
+6. Donation options
+7. Leaderboard
+8. Watch streaks
+
+APIs:
+- POST /rest/v1/ad_views
+- POST /rest/v1/developer_donations
+- GET /functions/v1/ad-leaderboard
+
+Test: Watch ads → earn money → donate
+
+
+TASK 5.7: Guest Access System
+-----------------------------
+Duration: 4 hours
+Difficulty: Medium
+
+→ Read: pages/additional-features.txt (lines 451-550)
+
+Actions:
+1. Create src/pages/guest/GuestRegistrationPage.tsx
+2. Create src/pages/guest/GuestDashboardPage.tsx
+3. Limited access features
+4. Automatic billing to sponsor
+5. Temporary access codes
+
+APIs:
+- POST /rest/v1/guests
+- GET /functions/v1/guest-dashboard
+
+Test: Register guest → sponsor gets notified → guest has limited access
+
+
+✅ PHASE 5 COMPLETE: All money features and additions
+
+
+================================================================================
+PHASE 6: ADMIN TOOLS (Week 17-18)
+================================================================================
+
+✅ TASK 6.1: User Management - COMPLETED
+-------------------------
+Duration: 5 hours
+Difficulty: Medium
+
+→ Read: pages/admin-management.txt (lines 13-120)
+
+Actions:
+✅ Created src/pages/admin/UserManagementPage.tsx
+✅ List all users with filters
+✅ Role management (Admin/Member/Guest)
+✅ Status management
+✅ Stats dashboard
+
+APIs:
+✅ GET /rest/v1/apartment_members
+✅ PATCH /rest/v1/apartment_members
+
+Test: ✅ Admin user management working
+
+
+✅ TASK 6.2: Settings Page (6 Tabs) - COMPLETED
+--------------------------------
+Duration: 8 hours
+Difficulty: Hard
+
+→ Read: pages/admin-management.txt (lines 121-300)
+
+Actions:
+✅ Enhanced src/pages/SettingsPage.tsx
+✅ Implemented 6 tabs:
+   - Profile (personal info, photo)
+   - Security (password, 2FA)
+   - Notifications (email, push, SMS preferences)
+   - Subscription (plans, billing, ad option)
+   - Appearance (theme, language)
+   - Privacy & Data (export, archive, delete, monetization)
+
+APIs:
+✅ GET /rest/v1/apartment_members
+✅ PATCH /rest/v1/apartment_members
+
+Test: ✅ All 6 tabs working with full functionality
+
+
+TASK 6.3: Reports & Analytics
+-----------------------------
+Duration: 6 hours
+Difficulty: Medium
+
+→ Read: pages/admin-management.txt (lines 301-400)
+
+Actions:
+1. Create src/pages/admin/reports/ReportsPage.tsx
+2. Implement tabs:
+   - Financial (collection rate, revenue)
+   - Occupancy (vacancy trends)
+   - Meals (cost breakdown)
+   - Tasks (completion rate)
+   - Engagement (user activity)
+3. Add charts (Recharts)
+4. Export to PDF/CSV
+
+APIs:
+- GET /functions/v1/admin-dashboard-summary
+- GET /functions/v1/generate-report
+
+Test: View comprehensive reports with charts
+
+
+TASK 6.4: Invite Management
+---------------------------
+Duration: 3 hours
+Difficulty: Easy
+
+→ Read: pages/admin-management.txt (lines 401-470)
+
+Actions:
+1. Create src/pages/admin/invites/InviteManagementPage.tsx
+2. List active invites
+3. Create new invite links
+4. Generate QR codes
+5. Track usage
+6. Disable invites
+
+APIs:
+- GET /rest/v1/apartment_invites
+- POST /rest/v1/apartment_invites
+- PATCH /rest/v1/apartment_invites
+
+Test: Create invite → track usage
+
+
+TASK 6.5: Activity Log
+----------------------
+Duration: 3 hours
+Difficulty: Easy
+
+→ Read: pages/admin-management.txt (lines 471-530)
+
+Actions:
+1. Create src/pages/admin/logs/ActivityLogPage.tsx
+2. List all audit logs
+3. Filter by user, action, date
+4. Search functionality
+5. Export logs
+
+APIs:
+- GET /rest/v1/audit_logs
+
+Test: See complete audit trail
+
+
+TASK 6.6: Bulk Actions
+----------------------
+Duration: 4 hours
+Difficulty: Medium
+
+→ Read: pages/admin-management.txt (lines 531-543)
+
+Actions:
+1. Create src/pages/admin/bulk-actions/BulkActionsPage.tsx
+2. Generate monthly bills for all
+3. Send bulk notifications
+4. Export data
+
+APIs:
+- POST /functions/v1/generate-monthly-bills
+- POST /functions/v1/send-bulk-notification
+
+Test: Generate bills for all members at once
+
+
+✅ PHASE 6 COMPLETE: Complete admin panel
+
+
+================================================================================
+PHASE 7: POLISH & TESTING (Week 19-20)
+================================================================================
+
+✅ TASK 7.1: Notifications System - COMPLETED
+------------------------------
+Duration: 5 hours
+Difficulty: Medium
+
+→ Read: pages/dashboard.txt (lines 651-700 - Notifications)
+
+Actions:
+✅ Created src/pages/NotificationsPage.tsx
+✅ Notification list with filters
+✅ Mark as read functionality
+✅ Mark all as read
+✅ Delete notifications
+
+APIs:
+✅ GET /rest/v1/notifications
+✅ PATCH /rest/v1/notifications
+✅ DELETE /rest/v1/notifications
+
+Test: ✅ Notifications system working
+
+
+✅ TASK 7.2: Profile Page - COMPLETED
+----------------------
+Duration: 4 hours
+Difficulty: Easy
+
+→ Read: pages/dashboard.txt (lines 180-280 - Profile)
+
+Actions:
+✅ Created src/pages/ProfilePage.tsx
+✅ 4 Tabs: Personal, Location, History, Achievements
+✅ Loyalty tier display
+✅ Payment & task statistics
+✅ Achievement badges
+
+Test: ✅ Profile page working
+
+
+TASK 7.3: Onboarding Tour
+-------------------------
+Duration: 3 hours
+Difficulty: Easy
+
+→ Read: pages/authentication.txt (lines 291-350)
+
+Actions:
+1. Create src/components/onboarding/OnboardingTour.tsx
+2. 6-step interactive tour
+3. Highlight key features
+4. Skip option
+5. Never show again option
+
+Test: First login → see tour
+
+
+TASK 7.4: Error Handling
+------------------------
+Duration: 4 hours
+Difficulty: Medium
+
+Actions:
+1. Create error boundary components
+2. Add error states to all pages
+3. Add loading states
+4. Add empty states
+5. Toast notifications for errors
+
+Test: Simulate errors → see user-friendly messages
+
+
+TASK 7.5: Responsive Design
+---------------------------
+Duration: 6 hours
+Difficulty: Medium
+
+→ Read: theme.txt (lines 800-900 - Responsive)
+
+Actions:
+1. Test all pages on mobile (320px - 640px)
+2. Test on tablet (640px - 1024px)
+3. Test on desktop (1024px+)
+4. Fix layout issues
+5. Ensure touch targets are 44px minimum
+
+Test: All pages work on all screen sizes
+
+
+TASK 7.6: Testing
+----------------
+Duration: 8 hours
+Difficulty: Hard
+
+Actions:
+1. Write unit tests for utilities (Vitest)
+2. Write integration tests for APIs
+3. Write E2E tests for critical paths (Playwright):
+   - Registration → Approval → Login
+   - Pay bill → Admin verify
+   - Upload receipt → OCR → Review
+   - Create poll → Vote → Results
+   - Create pool → Contribute → Payout
+
+Target: 70%+ code coverage
+
+Test: Run all tests → all pass
+
+
+TASK 7.7: Performance Optimization
+----------------------------------
+Duration: 4 hours
+Difficulty: Medium
+
+Actions:
+1. Code splitting (React.lazy)
+2. Image lazy loading
+3. React Query caching
+4. Debounced search inputs
+5. Pagination for large lists
+
+Test: Lighthouse score >90
+
+
+TASK 7.8: Accessibility Audit
+-----------------------------
+Duration: 4 hours
+Difficulty: Medium
+
+Actions:
+1. Run axe DevTools
+2. Fix all issues
+3. Test keyboard navigation
+4. Test with screen reader
+5. Verify color contrast
+
+Test: WCAG 2.1 Level AA compliant
+
+
+TASK 7.9: Security Audit
+------------------------
+Duration: 4 hours
+Difficulty: Medium
+
+Actions:
+1. Review all RLS policies
+2. Test unauthorized access
+3. Validate all inputs
+4. Sanitize outputs (XSS prevention)
+5. Check CORS configuration
+
+Test: No security vulnerabilities
+
+
+TASK 7.10: Deployment
+--------------------
+Duration: 4 hours
+Difficulty: Medium
+
+Actions:
+1. Setup Vercel/Netlify project
+2. Configure environment variables
+3. Setup GitHub Actions for CI/CD
+4. Configure custom domain
+5. Setup SSL
+6. Configure error tracking (Sentry)
+7. Configure analytics (Mixpanel)
+8. Deploy!
+
+Test: Production site is live and working
+
+
+✅ PHASE 7 COMPLETE: Production-ready application!
+
+
+================================================================================
+SUMMARY CHECKLIST
+================================================================================
+
+FRONTEND (50+ Pages)
+□ Authentication (8 pages)
+□ Dashboard (8 pages)
+□ Bills (8 pages)
+□ Community Meals (8 pages)
+□ Voting (6 pages)
+□ Money Pools (6 pages)
+□ Additional Features (4 pages)
+□ Admin Tools (7 pages)
+
+BACKEND
+□ Database schema (25+ tables)
+□ RLS policies (100+)
+□ API endpoints (60+)
+□ Edge Functions (10+)
+□ Scheduled jobs (4+)
+
+INTEGRATIONS
+□ Cloudinary (image storage)
+□ Tesseract.js (OCR)
+□ Google AdMob (ads)
+□ Email notifications
+□ Real-time updates
+
+QUALITY
+□ Unit tests (70%+ coverage)
+□ Integration tests
+□ E2E tests
+□ Performance (Lighthouse >90)
+□ Accessibility (WCAG 2.1 AA)
+□ Security audit passed
+
+================================================================================
+TIME ESTIMATES
+================================================================================
+
+Total Tasks: 80+ tasks
+Total Hours: ~400 hours
+
+Solo Developer (40 hrs/week): 10 weeks
+2 Developers (40 hrs/week each): 5 weeks  
+4 Developers (40 hrs/week each): 2.5 weeks
+
+================================================================================
+TIPS FOR SUCCESS
+================================================================================
+
+1. Follow tasks IN ORDER - they build on each other
+2. Read the referenced documentation FIRST before coding
+3. Test after EVERY task - don't skip testing
+4. Commit to Git after each task completion
+5. Deploy preview builds regularly for testing
+6. Get user feedback early and often
+7. Don't skip the polish phase - it matters!
+
+================================================================================
+YOU'RE READY TO BUILD! 🚀
+================================================================================
+
+Start with TASK 1.1 and work your way through systematically.
+Each task tells you exactly what to do.
+Good luck!
+

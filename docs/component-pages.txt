@@ -1,0 +1,950 @@
+================================================================================
+COMPONENT & PAGE MAPPING DOCUMENT
+RoomMate Manager - Complete Page Breakdown for Development
+================================================================================
+
+This document maps every page/screen in the application with:
+- Page URL/Route
+- Components needed
+- API endpoints used
+- Database tables accessed
+- User permissions required
+- Cloudinary usage
+
+================================================================================
+AUTHENTICATION PAGES
+================================================================================
+
+1. LOGIN PAGE
+-----------
+Route: /login
+File: src/pages/auth/LoginPage.tsx
+
+Components:
+- LoginForm
+  * EmailInput (with validation)
+  * PasswordInput (show/hide toggle)
+  * RememberMeCheckbox
+  * SubmitButton
+  * ForgotPasswordLink
+  * SignUpLink
+- Logo
+- Background (optional gradient/image)
+
+API Endpoints:
+- POST /auth/v1/token (Supabase Auth)
+
+State Management:
+- Login status (loading, error, success)
+- Form values (email, password)
+- Remember me preference
+
+Permissions: Public (unauthenticated)
+
+
+2. REGISTER PAGE (Multi-Step)
+----------------------------
+Route: /register or /invite/:token
+File: src/pages/auth/RegisterPage.tsx
+
+Components:
+- StepIndicator (shows current step 1/4)
+- Step1BasicInfo
+  * FullNameInput
+  * PhoneInput (with country code selector)
+  * EmailInput
+  * AgeInput
+  * MoveInDatePicker
+  * NextButton
+  
+- Step2IdentityVerification
+  * ProfilePhotoUpload (Cloudinary widget)
+    - Face detection validation
+    - Preview component
+  * IDCardUpload (Cloudinary)
+  * ResumeUpload (optional, Cloudinary)
+  * LabourCardUpload (optional, Cloudinary)
+  * BackButton, NextButton
+  
+- Step3AdditionalInfo
+  * EmergencyContactForm
+  * DietaryPreferences (checkboxes)
+  * AllergiesInput
+  * BackButton, NextButton
+  
+- Step4ReviewSubmit
+  * ReviewSummary (shows all entered data)
+  * EditButtons (go back to any step)
+  * TermsCheckbox
+  * SubmitButton
+
+API Endpoints:
+- POST /auth/v1/signup (Supabase)
+- POST /rest/v1/users (create user profile)
+- POST /rest/v1/apartment_members (if invite token)
+- GET /rest/v1/invites?token=eq.{token} (validate invite)
+
+Cloudinary:
+- Profile photo: /roommate-manager/users/{user_id}/profile/
+- Documents: /roommate-manager/users/{user_id}/documents/
+
+State Management:
+- Current step (1-4)
+- Form data for all steps
+- Upload progress
+- Validation errors
+- Invite data (if from invite link)
+
+Permissions: Public
+
+
+3. FORGOT PASSWORD PAGE
+---------------------
+Route: /forgot-password
+File: src/pages/auth/ForgotPasswordPage.tsx
+
+Components:
+- ForgotPasswordForm
+  * EmailInput
+  * SubmitButton
+  * BackToLoginLink
+- SuccessMessage (after submit)
+
+API Endpoints:
+- POST /auth/v1/recover (Supabase)
+
+Permissions: Public
+
+
+4. RESET PASSWORD PAGE
+--------------------
+Route: /reset-password?token={token}
+File: src/pages/auth/ResetPasswordPage.tsx
+
+Components:
+- ResetPasswordForm
+  * NewPasswordInput
+  * ConfirmPasswordInput
+  * PasswordStrengthIndicator
+  * SubmitButton
+
+API Endpoints:
+- POST /auth/v1/user (update password, Supabase)
+
+Permissions: Public (with valid token)
+
+
+5. PENDING APPROVAL PAGE
+----------------------
+Route: /pending-approval
+File: src/pages/auth/PendingApprovalPage.tsx
+
+Components:
+- PendingApprovalMessage
+  * Icon (hourglass)
+  * Message text
+  * EstimatedTime ("Usually within 24 hours")
+  * AdminContactInfo
+  * LogoutButton
+
+API Endpoints:
+- GET /rest/v1/users?id=eq.{user_id} (check approval status)
+
+State Management:
+- Poll every 30 seconds to check if approved
+
+Permissions: Authenticated but not approved
+
+
+================================================================================
+DASHBOARD PAGES
+================================================================================
+
+6. USER DASHBOARD (Main Home Page)
+--------------------------------
+Route: /dashboard
+File: src/pages/dashboard/UserDashboardPage.tsx
+
+Components:
+- DashboardHeader
+  * WelcomeMessage ("Welcome, {Name}!")
+  * ProfilePhoto
+  * LoyaltyPointsBadge
+  * TierBadge (Bronze/Silver/Gold/Platinum)
+  
+- QuickStatsCards (4 cards in grid)
+  * CurrentLocationCard
+    - Apartment name
+    - Room name
+    - Bed type
+    - Edit button (requests bed change)
+  * NextPaymentCard
+    - Amount due
+    - Due date with countdown
+    - "Pay Now" button
+    - Status indicator
+  * LoyaltyPointsCard
+    - Current points
+    - Progress to next tier
+    - Progress bar
+    - "View History" link
+  * TasksPendingCard
+    - Count of pending tasks
+    - Next task preview
+    - "View All" link
+  
+- RecentActivityFeed
+  * ActivityItem (repeated)
+    - Icon
+    - Description
+    - Timestamp
+    - Link to related item
+  * LoadMoreButton
+  
+- QuickActionsPanel
+  * Button: "Pay Bills"
+  * Button: "View Menu"
+  * Button: "Watch Ads"
+  * Button: "My Tasks"
+  
+- UpcomingEvents (if any)
+  * EventCard
+    - Event type (grocery duty, task, poll expiry)
+    - Date/time
+    - Action button
+
+API Endpoints:
+- GET /rest/v1/users?id=eq.{user_id}
+- GET /rest/v1/bill_splits?member_id=eq.{user_id}&payment_status=eq.pending
+- GET /rest/v1/task_assignments?assigned_to=eq.{user_id}&status=eq.pending
+- GET /rest/v1/notifications?user_id=eq.{user_id}&is_read=eq.false&limit=10
+- GET /rest/v1/beds?occupied_by=eq.{user_id}
+- GET /functions/v1/dashboard-summary (aggregated data)
+
+State Management:
+- User profile data
+- Bills summary
+- Tasks summary
+- Notifications
+- Real-time updates (Supabase Realtime subscription)
+
+Permissions: Authenticated + Approved
+
+
+7. ADMIN DASHBOARD
+----------------
+Route: /admin/dashboard
+File: src/pages/admin/AdminDashboardPage.tsx
+
+Components:
+- AdminHeader
+  * Title: "Admin Dashboard"
+  * ApartmentSelector (if admin of multiple)
+  * DateRangePicker
+  
+- OverviewCards (6-8 cards)
+  * TotalMembersCard
+  * VacantBedsCard (with alert if any)
+  * PendingPaymentsCard (count + total amount)
+  * OverduePaymentsCard (red alert if any)
+  * ActiveDisputesCard
+  * TaskCompletionRateCard
+  * MealParticipantsCard
+  * AdRevenueCard
+  
+- ChartsSection
+  * PaymentComplianceChart (line chart, last 6 months)
+  * BillBreakdownPieChart (rent vs utilities vs meals)
+  * OccupancyTrendChart
+  
+- RecentActivityFeed
+  * All member activities
+  * Filterable by activity type
+  
+- QuickAdminActions
+  * Button: "Create Bill"
+  * Button: "Verify Payments"
+  * Button: "Approve Members"
+  * Button: "Create Poll"
+  * Button: "Settings"
+  
+- PendingApprovals (if any)
+  * List of pending items needing action
+  * Member applications
+  * Payment verifications
+  * Grocery receipts
+  * Dispute resolutions
+
+API Endpoints:
+- GET /rest/v1/apartments?id=eq.{apartment_id}
+- GET /rest/v1/apartment_members?apartment_id=eq.{apartment_id}&status=eq.active
+- GET /rest/v1/beds?apartment_id=eq.{apartment_id}&is_occupied=eq.false
+- GET /rest/v1/bill_splits?apartment_id=eq.{apartment_id}&payment_status=in.(pending,overdue)
+- GET /rest/v1/disputes?apartment_id=eq.{apartment_id}&status=eq.open
+- GET /functions/v1/admin-dashboard-summary
+
+State Management:
+- Selected apartment
+- Date range
+- Summary statistics
+- Charts data
+- Real-time updates
+
+Permissions: Admin role
+
+
+================================================================================
+APARTMENT MANAGEMENT PAGES
+================================================================================
+
+8. MY APARTMENT PAGE (User View)
+------------------------------
+Route: /my-apartment
+File: src/pages/apartment/MyApartmentPage.tsx
+
+Components:
+- ApartmentHeader
+  * ApartmentName
+  * Address
+  * TotalMembers count
+  * OccupancyRate
+  
+- ApartmentVisualLayout
+  * FloorPlan (if image uploaded)
+  * Or RoomGrid (card layout)
+  
+- RoomCard (repeated for each room)
+  * RoomName
+  * FloorNumber
+  * BedCount
+  * ClickToViewDetails
+  
+- RoommatesSection
+  * FilterToggle ("My Room" / "All Rooms")
+  * RoommateCard (repeated)
+    - ProfilePhoto
+    - Name, Age
+    - Location (Room > Bed)
+    - LoyaltyTierBadge
+    - ContactButton (opens phone/email)
+  * SearchBar (search by name)
+  
+- SharedFacilities
+  * List of shared resources
+  * Kitchen, Bathrooms, Living Room, etc.
+
+API Endpoints:
+- GET /rest/v1/apartments?id=eq.{apartment_id}
+- GET /rest/v1/rooms?apartment_id=eq.{apartment_id}
+- GET /rest/v1/beds?apartment_id=eq.{apartment_id}
+- GET /rest/v1/apartment_members?apartment_id=eq.{apartment_id}&status=eq.active
+
+Permissions: Member of apartment
+
+
+9. APARTMENT LIST PAGE (Admin)
+----------------------------
+Route: /admin/apartments
+File: src/pages/admin/ApartmentsListPage.tsx
+
+Components:
+- PageHeader
+  * Title: "My Apartments"
+  * CreateApartmentButton
+  * FilterBar
+  
+- ApartmentGrid
+  * ApartmentCard (repeated)
+    - ApartmentName
+    - Address
+    - TotalRooms, TotalBeds
+    - OccupiedBeds / TotalBeds
+    - OccupancyPercentage (progress bar)
+    - TotalMonthlyRent
+    - EditButton
+    - ViewButton
+    - DeleteButton (if no members)
+    
+- EmptyState (if no apartments)
+  * Message: "Create your first apartment"
+  * CreateButton
+
+API Endpoints:
+- GET /rest/v1/apartments?created_by=eq.{user_id}
+- GET /functions/v1/apartment-summary (for each apartment)
+
+Permissions: Admin role
+
+
+10. CREATE APARTMENT MODAL
+------------------------
+Component: CreateApartmentModal
+Trigger: Click "Create Apartment" button
+
+Components:
+- ModalHeader ("Create New Apartment")
+- ApartmentForm
+  * ApartmentNameInput
+  * AddressTextArea
+  * TotalRentInput (optional, for reference)
+  * CurrencySelector (INR/AED/NGN/KWD/USD)
+  * SubmitButton
+  * CancelButton
+
+API Endpoints:
+- POST /rest/v1/apartments
+
+Validation:
+- Name required, max 255 chars
+- Address required
+- Currency required
+
+On Success:
+- Close modal
+- Redirect to new apartment detail page
+
+
+11. APARTMENT DETAIL PAGE (Admin)
+-------------------------------
+Route: /admin/apartments/:apartmentId
+File: src/pages/admin/ApartmentDetailPage.tsx
+
+Components:
+- Breadcrumb ("Home > Apartments > {Name}")
+- ApartmentHeader
+  * Name (editable inline)
+  * Address (editable inline)
+  * TotalRent (editable inline)
+  * SaveButton (if edited)
+  * DeleteButton
+  * SettingsButton
+  
+- TabNavigation
+  * Tab: Rooms & Beds
+  * Tab: Members
+  * Tab: Settings
+  
+- RoomsTab
+  * AddRoomButton
+  * RoomGrid
+    * RoomCard (repeated)
+      - RoomName
+      - FloorNumber
+      - BedLayout visual
+      - TotalBeds
+      - OccupiedCount
+      - EditButton
+      - DeleteButton
+      - ClickToViewDetails
+  
+- Room Detail View (expanded)
+  * RoomHeader (name, floor, edit/delete)
+  * BedGrid
+    * BedCard (repeated)
+      - BedType icon (Flat/Lower/Upper)
+      - MonthlyPrice
+      - OccupancyStatus badge
+      - If occupied:
+        · UserPhoto
+        · UserName
+        · UnassignButton
+      - If vacant:
+        · "Available" message
+        · AssignUserButton
+  * AddBedButton
+  
+- MembersTab
+  * MembersList
+  * See "Member Management" section below
+
+API Endpoints:
+- GET /rest/v1/apartments?id=eq.{apartment_id}
+- GET /rest/v1/rooms?apartment_id=eq.{apartment_id}
+- GET /rest/v1/beds?apartment_id=eq.{apartment_id}
+- PATCH /rest/v1/apartments?id=eq.{apartment_id}
+- DELETE /rest/v1/apartments?id=eq.{apartment_id}
+
+Permissions: Admin of this apartment
+
+
+12. CREATE/EDIT ROOM MODAL
+------------------------
+Component: RoomModal
+Props: apartmentId, roomId (if editing)
+
+Components:
+- ModalHeader ("Create Room" or "Edit Room")
+- RoomForm
+  * RoomNameInput
+  * FloorNumberInput (optional)
+  * RoomPhotoUpload (Cloudinary, optional)
+  * SubmitButton
+  * CancelButton
+
+API Endpoints:
+- POST /rest/v1/rooms (create)
+- PATCH /rest/v1/rooms?id=eq.{room_id} (edit)
+
+Cloudinary:
+- Room photos: /roommate-manager/apartments/{apartment_id}/rooms/
+
+
+13. ADD BED MODAL
+--------------
+Component: AddBedModal
+Props: roomId
+
+Components:
+- ModalHeader ("Add Bed")
+- BedForm
+  * BedTypeSelector (Flat/Lower/Upper with icons)
+  * MonthlyPriceInput
+  * PriceSuggestions (based on bed type):
+    - "Flat beds typically ₹X"
+    - "Lower beds typically ₹Y"
+    - "Upper beds typically ₹Z"
+  * PreviewBox (shows how bed will appear)
+  * SubmitButton
+  * CancelButton
+
+API Endpoints:
+- POST /rest/v1/beds
+
+Validation:
+- Bed type required
+- Price must be positive number
+
+
+14. ASSIGN BED MODAL
+-----------------
+Component: AssignBedModal
+Props: bedId
+
+Components:
+- ModalHeader ("Assign User to Bed")
+- BedInfo (read-only)
+  * RoomName
+  * BedType
+  * MonthlyPrice
+  
+- UserSearch
+  * SearchInput (by name/email)
+  * UserList (filtered results)
+    * UserCard (selectable)
+      - Photo
+      - Name
+      - Email
+      - CurrentLocation (if assigned)
+      - SelectButton
+  
+- ConfirmationSection
+  * SelectedUser preview
+  * ConfirmButton
+  * CancelButton
+
+API Endpoints:
+- GET /rest/v1/apartment_members?apartment_id=eq.{apartment_id}&status=eq.active
+- PATCH /rest/v1/beds?id=eq.{bed_id}
+
+On Success:
+- Update beds table: is_occupied=true, occupied_by=user_id
+- Update user.location_id
+- Send notification to user
+- Close modal
+
+
+================================================================================
+BILLING PAGES
+================================================================================
+
+15. MY BILLS PAGE (User)
+----------------------
+Route: /bills
+File: src/pages/bills/MyBillsPage.tsx
+
+Components:
+- PageHeader ("My Bills")
+- SummaryCards (3 cards)
+  * TotalDueCard
+    - Large amount display
+    - "Total Due This Month"
+    - PayAllButton
+  * PaidThisMonthCard
+    - Amount (green)
+    - CheckmarkIcon
+  * OverdueCard (if any)
+    - Amount (red)
+    - WarningIcon
+    - "Pay Now" button
+  
+- NextPaymentDue
+  * Countdown component
+  * Bill details
+  * ActionButton
+  
+- TabNavigation
+  * Tab: Pending (default)
+  * Tab: Paid
+  * Tab: Overdue
+  * Tab: All
+  
+- BillsListSection
+  * FilterBar (by type, date range)
+  * SortDropdown (by date, amount)
+  * BillCard (repeated)
+    - BillTypeIcon
+    - BillName
+    - AmountDue
+    - DueDate (with countdown if pending)
+    - StatusBadge (Pending/Paid/Overdue/Disputed)
+    - ActionButtons:
+      · "Pay Now" (if pending/overdue)
+      · "View Receipt" (if paid)
+      · "Dispute" (if pending/overdue)
+    - ExpandButton (view breakdown)
+  
+- BillDetailExpanded
+  * BillInfo
+  * Breakdown (if combined bill)
+  * PaymentHistory (if any)
+  * DisputeButton
+
+API Endpoints:
+- GET /rest/v1/bill_splits?member_id=eq.{member_id}
+- GET /rest/v1/bills?id=in.({bill_ids})
+- GET /rest/v1/payments?payer_member_id=eq.{member_id}
+
+Permissions: Member
+
+
+16. BILL DETAIL PAGE
+------------------
+Route: /bills/:billId
+File: src/pages/bills/BillDetailPage.tsx
+
+Components:
+- Breadcrumb ("Home > Bills > {Bill Type}")
+- BillHeader
+  * BillTypeIcon + Name
+  * Period (dates)
+  * StatusBadge
+  
+- BillSummaryCard
+  * TotalApartmentBill (if admin)
+  * YourShare (highlighted)
+  * DueDate
+  * DaysRemaining (countdown)
+  
+- BreakdownSection
+  * YourBedInfo
+    - Location
+    - BedType
+    - MonthlyRent
+  * CalculationExplanation
+    - How amount was calculated
+    - Formula shown
+  * SplitAmongMembers (list)
+  
+- PaymentStatusSection
+  * If pending:
+    - "Payment Required" banner
+    - PayNowButton
+  * If paid:
+    - "Paid on {date}" with checkmark
+    - PaymentDetails
+    - ReceiptLink (if uploaded)
+  * If overdue:
+    - "Overdue by X days" warning
+    - LateFee (if applied)
+    - PayNowButton
+  * If disputed:
+    - "Dispute in progress" badge
+    - ViewDisputeLink
+  
+- ActionButtons
+  * PayNowButton
+  * DisputeButton
+  * DownloadInvoiceButton (future)
+
+API Endpoints:
+- GET /rest/v1/bills?id=eq.{bill_id}
+- GET /rest/v1/bill_splits?bill_id=eq.{bill_id}&member_id=eq.{member_id}
+- GET /rest/v1/payments?bill_split_id=eq.{split_id}
+
+Permissions: Member with access to this bill
+
+
+17. MARK AS PAID MODAL
+--------------------
+Component: MarkAsPaidModal
+Props: billSplitId
+
+Components:
+- ModalHeader ("Mark Payment as Paid")
+- BillSummary (read-only)
+  * BillType
+  * AmountDue
+  * DueDate
+  
+- PaymentForm
+  * PaymentMethodDropdown
+    - Options: Cash, Bank Transfer, UPI, KNET, Mobile Money, Card, Other
+  * TransactionReferenceInput
+  * PaymentDatePicker (default: today)
+  * PaymentProofUpload (Cloudinary, optional)
+    - FileUpload or CameraCapture
+    - Preview thumbnail
+  * NotesTextArea (optional)
+  * SubmitButton ("Submit for Verification")
+  * CancelButton
+
+API Endpoints:
+- POST /rest/v1/payments
+- PATCH /rest/v1/bill_splits?id=eq.{split_id}
+
+Cloudinary:
+- Payment proofs: /roommate-manager/payments/{user_id}/{bill_id}/
+
+On Success:
+- Close modal
+- Update bill status to "Pending Verification"
+- Show success toast
+- Send notification to admin
+
+
+18. PAYMENT HISTORY PAGE
+----------------------
+Route: /bills/history
+File: src/pages/bills/PaymentHistoryPage.tsx
+
+Components:
+- PageHeader ("Payment History")
+- FilterBar
+  * DateRangePicker
+  * BillTypeFilter
+  * StatusFilter
+  * ClearFiltersButton
+  
+- StatCards
+  * TotalPaidCard
+  * AverageMonthlyCard
+  * OnTimePaymentRateCard
+  * SavingsFromAnnualCard (if applicable)
+  
+- PaymentHistoryTable
+  * Columns:
+    - Date
+    - Bill Type
+    - Amount
+    - Payment Method
+    - Status
+    - Verified By
+    - Actions (View Receipt, Re-download)
+  * Pagination
+  * ExportButton (CSV/PDF)
+  
+- PaymentPunctu
+
+alityScore
+  * Score display (percentage)
+  * StreakCounter
+  * Badge (if high score)
+
+API Endpoints:
+- GET /rest/v1/payments?payer_member_id=eq.{member_id}
+- GET /rest/v1/bill_splits?member_id=eq.{member_id}&payment_status=eq.paid
+- GET /functions/v1/payment-summary
+
+Permissions: Member
+
+
+19. BILLS DASHBOARD (Admin)
+-------------------------
+Route: /admin/bills
+File: src/pages/admin/BillsDashboardPage.tsx
+
+Components:
+- PageHeader ("Bills Management")
+- CreateBillButton
+- DateRangePicker
+- ApartmentSelector (if multiple)
+
+- OverviewCards
+  * TotalBillsCreatedCard
+  * TotalToCollectCard
+  * TotalCollectedCard
+  * OutstandingAmountCard
+  * OverdueCountCard (red if > 0)
+  
+- BillsListSection
+  * FilterBar (by type, status, date)
+  * BillsTable
+    * Columns:
+      - Bill Type
+      - Period
+      - Total Amount
+      - Collected / Total
+      - Status
+      - Due Date
+      - Actions (View, Edit, Delete)
+    * RowExpansion (shows all user splits)
+  
+- PendingVerificationsSection
+  * PaymentVerificationQueue
+  * Count badge
+  * Link to verification page
+
+API Endpoints:
+- GET /rest/v1/bills?apartment_id=eq.{apartment_id}
+- GET /rest/v1/bill_splits?apartment_id=eq.{apartment_id}
+- GET /rest/v1/payments?status=eq.pending_verification
+- GET /functions/v1/billing-summary
+
+Permissions: Admin
+
+
+20. CREATE BILL PAGE
+------------------
+Route: /admin/bills/create
+File: src/pages/admin/CreateBillPage.tsx
+
+Components:
+- PageHeader ("Create New Bill")
+- StepIndicator (1/4)
+
+- Step1: BillTypeSelection
+  * BillTypeCards (grid)
+    - Rent
+    - Electricity
+    - Internet
+    - Gas
+    - Water
+    - Grocery
+    - Custom
+  * Or dropdown if many types
+  * NextButton
+  
+- Step2: BillDetails
+  * BillPeriod
+    - StartDatePicker
+    - EndDatePicker
+  * TotalAmountInput
+  * DueDatePicker (with suggestions)
+  * NotesTextArea (optional)
+  * BackButton, NextButton
+  
+- Step3: SplitConfiguration
+  * CalculationMethodSelector
+    - Radio: Equal Split
+    - Radio: Per Bed
+    - Radio: Prorated
+    - Radio: Custom
+  * ExcludeUsersMultiSelect (optional)
+  * PreviewButton
+  * BackButton, NextButton
+  
+- Step4: ReviewAndPublish
+  * BillSummary
+  * UserSplitsTable
+    * Columns:
+      - User Name
+      - Bed Type
+      - Amount Due
+      - Edit (manual adjust)
+  * TotalValidation (sum = total amount)
+  * PublishButton
+  * SaveAsDraftButton
+  * BackButton
+
+API Endpoints:
+- GET /rest/v1/bill_types?apartment_id=eq.{apartment_id}
+- GET /rest/v1/apartment_members?apartment_id=eq.{apartment_id}&status=eq.active
+- POST /rest/v1/bills
+- POST /rest/v1/bill_splits (bulk insert)
+- POST /functions/v1/calculate-bill-splits
+
+On Success:
+- Redirect to bills dashboard
+- Send notifications to all members
+
+Permissions: Admin
+
+
+21. PAYMENT VERIFICATION QUEUE
+----------------------------
+Route: /admin/payments/verify
+File: src/pages/admin/PaymentVerificationPage.tsx
+
+Components:
+- PageHeader ("Payment Verification Queue")
+- FilterBar
+  * StatusFilter
+  * DateRangeFilter
+  * UserFilter
+  * SortBy (oldest first, amount, user)
+  
+- PendingCount badge
+  
+- VerificationList
+  * PaymentCard (repeated)
+    - UserInfo (photo, name)
+    - BillInfo (type, amount)
+    - PaymentDetails
+      · Method
+      · Reference
+      · Date
+      · User notes
+    - PaymentProofThumbnail (click to view full)
+    - ActionButtons
+      · VerifyButton (green)
+      · RejectButton (red)
+      · RequestMoreInfoButton (yellow)
+    
+- VerifyPaymentModal
+  * Payment details (all info)
+  * Payment proof (full size, zoomable)
+  * AdminNotesTextArea (optional)
+  * ConfirmVerifyButton
+  
+- RejectPaymentModal
+  * RejectionReasonTextArea (required)
+  * CommonReasons (quick select)
+  * ConfirmRejectButton
+
+API Endpoints:
+- GET /rest/v1/payments?status=eq.pending_verification
+- PATCH /rest/v1/payments?id=eq.{payment_id}
+- PATCH /rest/v1/bill_splits?id=eq.{split_id}
+- POST /functions/v1/process-loyalty-points
+
+On Verify:
+- Update payment status to 'verified'
+- Update bill_split status to 'paid'
+- Award loyalty points
+- Send notification to user
+
+Permissions: Admin
+
+
+================================================================================
+[Document continues with remaining pages...]
+================================================================================
+
+Total Pages to Create: 60+
+
+Remaining Sections:
+- Community Meals Pages (10 pages)
+- Tasks Pages (8 pages)
+- Resources Pages (6 pages)
+- Loyalty & Gamification Pages (5 pages)
+- Voting & Polls Pages (4 pages)
+- Money Pools Pages (6 pages)
+- Disputes Pages (5 pages)
+- Notifications Pages (3 pages)
+- Ad Watching Pages (3 pages)
+- Settings Pages (6 pages)
+- Reports Pages (4 pages)
+
+Status: First 21 pages documented (Auth, Dashboard, Apartment, Billing)
+Next: Continue with remaining page groups
+

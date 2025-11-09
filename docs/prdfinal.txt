@@ -1,0 +1,713 @@
+================================================================================
+PRODUCT REQUIREMENTS DOCUMENT - FINAL VERSION
+ROOMMATE MANAGER - Comprehensive Shared Living Management Platform
+================================================================================
+
+VERSION: 2.0 Final
+DATE: November 4, 2025
+STATUS: Ready for Development
+
+================================================================================
+EXECUTIVE SUMMARY
+================================================================================
+
+Product Name: RoomMate Manager
+Target Markets: India, UAE, Nigeria, Kuwait, Global
+Target Users: Students, Working Professionals, Property Managers in shared living
+Core Value Proposition: Complete automation of shared living management with 
+rotating grocery teams, community meals, hierarchical pricing, loyalty system,
+and ad revenue sharing.
+
+Tech Stack:
+- Frontend: React 18+ (TypeScript), Vite, shadcn/ui, Tailwind CSS
+- Backend: Supabase (PostgreSQL 15+), Edge Functions (Deno)
+- Storage: Cloudinary (images, OCR)
+- Auth: Supabase Auth (Email/Phone OTP)
+- Monetization: Google AdMob/AdSense with revenue sharing
+
+Key Differentiators:
+✓ Automated rotating grocery teams with OCR receipt scanning
+✓ Hierarchical bed-level pricing (Flat/Lower/Upper)
+✓ Complete community meal management with chef tracking
+✓ Democratic dispute resolution with auto-escalation
+✓ Loyalty points system with gamification
+✓ Ad revenue sharing among roommates
+✓ Identity verification and approval workflow
+✓ No daily expense limits (vs Splitwise 3-4/day)
+
+================================================================================
+1. AUTHENTICATION & USER MANAGEMENT
+================================================================================
+
+1.1 AUTHENTICATION (COMBINED BEST FROM BOTH)
+Primary: Phone OTP via Twilio
+- 6-digit verification code
+- Regional routing (India DLT registered, UAE/Nigeria/Kuwait local)
+- SMS delivery within 30 seconds
+- 3 retry attempts
+- 15-minute code validity
+
+Secondary: Email/Password via Supabase Auth
+- Password requirements: min 8 chars, 1 uppercase, 1 number, 1 special
+- Account lockout: 5 failed attempts, 15-minute lockout
+- Password reset via email link
+
+Session Management:
+- JWT tokens with 30-day expiry
+- Automatic token refresh
+- Multi-device login support (max 5 devices)
+- Session revocation from settings
+
+1.2 USER ONBOARDING & PROFILE
+Multi-Step Registration Wizard:
+
+Step 1: Basic Information (Required)
+- Full name
+- Phone number (unique, verified via OTP)
+- Email address (unique)
+- Age/Date of birth
+- Move-in date
+
+Step 2: Identity Verification (Required)
+- Profile photo upload (Cloudinary: 300x300, face detection)
+- Government ID/Identity card (Cloudinary: original quality)
+- Resume/CV (Optional, Cloudinary)
+- Labour card (Optional, Cloudinary)
+
+Step 3: Additional Information
+- Emergency contact (name, phone, relationship)
+- Relationship to other roommates (if any)
+- Dietary preferences (for community meals)
+- Allergies/restrictions
+
+Step 4: Admin Approval
+- Application submitted → "Pending Approval" status
+- Admin receives notification with all documents
+- Admin reviews and approves/rejects
+- If approved: User receives welcome email + gains access
+- If rejected: User notified with reason
+
+1.3 USER ROLES & PERMISSIONS
+Super Admin:
+- Full system access across all apartments
+- Create/delete apartments
+- Manage billing configuration
+- System-wide settings
+- View all analytics
+
+Admin (Per Apartment):
+- Approve/reject member applications
+- Create and modify bills
+- Verify payments
+- Create polls and resolve disputes
+- Manage chef and meal system
+- Assign/deduct loyalty points
+- Remove/suspend members
+- Generate reports
+
+Member (Full Access):
+- View apartment information
+- View and pay bills
+- Upload payment receipts
+- Participate in community meals
+- Submit grocery receipts
+- Complete tasks
+- Book resources
+- Participate in polls
+- Raise disputes
+- View loyalty points and leaderboard
+
+Member (Partial Access - Customizable):
+- Admin defines which features member can access
+- Example: Community meals only, no bills/tasks
+
+Guest (Temporary, max 30 days):
+- View-only access to apartment info
+- Cannot participate in bills
+- Cannot vote in polls
+- Cannot raise disputes
+- All actions logged under sponsor
+
+Outsider (Community Meal Only):
+- Access only to community meal system
+- No apartment access
+- Bills only for meals
+- Pro-rated meal charges
+
+1.4 PROFILE MANAGEMENT
+Private Profile (visible only within apartment):
+- Basic info (name, age, contact)
+- Profile photo (Cloudinary URL)
+- Uploaded documents (ID, resume, labour card)
+- Current location: Apartment > Room > Bed Type
+- Loyalty points score and tier (visible to all)
+- Payment history and compliance rate
+- Task completion rate
+- Community meal participation status
+- Linked relationships
+- Move-in date, expected move-out date (optional)
+
+Profile Actions:
+- Edit personal information (phone requires re-verification)
+- Change profile photo
+- Update preferences (notifications, meals)
+- View payment history
+- View points history
+- Download all data (GDPR compliance)
+
+
+================================================================================
+2. APARTMENT & ROOM MANAGEMENT
+================================================================================
+
+2.1 HIERARCHICAL STRUCTURE
+Three-Level System: Apartment → Room → Bed
+
+Bed Types with Tiered Pricing:
+1. Flat Bed (Premium)
+   - Individual full bed
+   - Highest monthly price
+   - Most privacy
+   
+2. Lower Bed (Standard)
+   - Bottom bunk of double-decker
+   - Medium price (typically 20-30% less than flat)
+   - Easy access
+   
+3. Upper Bed (Economy)
+   - Top bunk of double-decker
+   - Lowest price (typically 40-50% less than flat)
+   - Most affordable option
+
+Each Level Properties:
+- Customizable names
+- Individual pricing
+- Occupancy status tracking
+- Current occupant details
+- Vacancy duration tracking
+
+2.2 APARTMENT CREATION & CONFIGURATION
+Free Tier: 2 apartments
+Paid Tier: Unlimited apartments ($10/month per additional apartment)
+
+Apartment Setup:
+- Apartment name (custom, e.g., "Greg's Apartment")
+- Full address
+- Total monthly rent (used for prorating)
+- Default currency (INR/AED/NGN/KWD/USD)
+
+Room Setup:
+- Room name/number (custom or numbered)
+- Floor number (optional)
+- Room photo (Cloudinary)
+
+Bed Setup:
+- Bed type selection (Flat/Lower/Upper)
+- Monthly rent for this specific bed
+- Bed photo (optional, Cloudinary)
+- Visual bed layout designer (drag-and-drop positioning)
+
+Apartment Settings (JSONB in database):
+```json
+{
+  "currency": "INR",
+  "payment_reminder_days": [5, 3, 1, 0, -1, -3, -7],
+  "late_payment_fine_rate": 50,
+  "late_payment_fine_type": "flat",
+  "loyalty_points_enabled": true,
+  "community_meal_enabled": true,
+  "tasks_enabled": true,
+  "resources_enabled": true,
+  "voting_quorum_percentage": 50,
+  "voting_majority_percentage": 50,
+  "dispute_escalation_hours": 48,
+  "grace_period_days": 3,
+  "max_free_apartments": 2
+}
+```
+
+2.3 BED ALLOCATION & ASSIGNMENT
+Assignment Workflow:
+1. Admin creates apartment with rooms and beds
+2. Beds initially marked as vacant (is_vacant = true)
+3. User applies and gets approved
+4. Admin assigns user to specific bed
+5. System updates:
+   - beds.is_occupied = true
+   - beds.occupied_by = user_id
+   - user.location_id = bed_id
+6. User sees location in profile: "Apartment 1 > Room 305 > Lower Bed"
+
+Features:
+- Drag-and-drop bed assignment interface
+- Real-time vacancy tracking
+- Red indicator for vacant beds (visible to all)
+- Bed swap functionality:
+  * User A requests swap with User B
+  * Both users must agree
+  * Optional admin approval (configurable)
+  * System updates both assignments
+- Guest bed booking (temporary allocation with end date)
+
+2.4 VACANCY MANAGEMENT
+Automatic Vacancy Detection:
+- Triggered when user exits or is removed
+- Bed marked vacant immediately
+- Broadcast notification to all apartment members
+- Admin dashboard shows vacancy count
+- Vacancy duration tracker (days vacant)
+
+Vacancy Alerts:
+- Email to all members: "Bed vacant in Room 305"
+- In-app notification with bed details
+- Vacancy impacts bill splitting (recalculated)
+
+2.5 INVITATION SYSTEM
+Generate Invite:
+1. Admin clicks "Invite New Member"
+2. System generates unique token (UUID)
+3. Creates invite record with:
+   - Token
+   - Target bed (optional)
+   - Expiry date (default 30 days)
+   - Max uses (default 1)
+   - Custom message
+
+Invite Methods:
+A. Link: https://app.roommatemanager.com/invite/abc123xyz
+   - Shareable via WhatsApp, email, SMS
+   - Shows apartment details before signup
+   
+B. QR Code:
+   - Generated using qrcode.react
+   - Downloadable as PNG
+   - Printable
+   - Scan with phone camera → auto-opens invite link
+
+Invite Flow:
+1. User receives invite link/QR
+2. Clicks/scans → Redirected to registration
+3. Invite details pre-filled (apartment, bed if specified)
+4. User completes registration
+5. Admin approves
+6. Invite marked as used
+7. If invite expired: Shows error message
+
+2.6 MEMBER EXIT WORKFLOW
+Exit Process:
+1. Member requests exit:
+   - Provides move-out date
+   - Reason for leaving (optional)
+   
+2. Admin checks:
+   - All bills paid? (system validation)
+   - Tasks completed? (system validation)
+   - Active disputes? (system validation)
+   - Outstanding money pool contributions? (system validation)
+   
+3. If any issue:
+   - Admin rejects with reason
+   - Member must resolve issues
+   
+4. If all clear:
+   - Final bill generated (prorated to move-out date)
+   - Member pays final bill
+   - Admin approves exit
+   
+5. System actions:
+   - Bed marked vacant (is_occupied = false)
+   - Member status = 'moved_out'
+   - Loyalty points settled (cannot go negative on exit)
+   - Read-only access for 30 days (can view history)
+   - After 30 days: Account archived
+   
+6. Bill recalculation:
+   - Shared bills re-split among remaining members
+   - Notifications sent about cost changes
+
+
+================================================================================
+3. BILLING & PAYMENT MANAGEMENT (BEST OF BOTH)
+================================================================================
+
+3.1 BILL TYPES & CONFIGURATION
+Default Bill Types:
+1. Rent (Required)
+   - Calculation: Per bed (individual rates)
+   - Prorated: Yes (for mid-month join/exit)
+   - Recurrence: Monthly/Quarterly/Annual
+   
+2. Electricity (Shared)
+   - Calculation: Equal split OR per bed proportional
+   - Opt-in: No (automatic for all)
+   - Recurrence: Monthly
+   
+3. Internet (Shared)
+   - Calculation: Equal split
+   - Opt-in: No
+   - Recurrence: Monthly
+   
+4. Gas (Shared)
+   - Calculation: Equal split
+   - Opt-in: No
+   - Recurrence: Monthly
+   
+5. Water (Shared)
+   - Calculation: Equal split
+   - Opt-in: Yes (some may use external water)
+   - Recurrence: Monthly
+   
+6. Grocery (Community Meal Only)
+   - Calculation: Based on meal participation
+   - Opt-in: Yes (only meal participants)
+   - Recurrence: Weekly (combined into monthly bill)
+   
+7. Drinking Water (Community Meal Only)
+   - Calculation: Equal split among opt-ins
+   - Opt-in: Yes (user can opt out)
+   - Recurrence: Weekly/Monthly
+   
+8. Maintenance/Cleaning (Shared)
+   - Calculation: Equal split
+   - Opt-in: No
+   - Recurrence: Monthly
+   
+9. Custom Bills
+   - Admin can create any bill type
+   - Configurable calculation method
+   - Configurable opt-in requirement
+
+Bill Type Properties (bill_types table):
+- name: varchar(100)
+- calculation_method: enum(equal_split, per_bed, prorated, custom)
+- is_prorated: boolean (apply prorating for mid-month)
+- is_opt_in: boolean (requires explicit opt-in)
+- recurrence_pattern: enum(monthly, quarterly, annual, one_time)
+- default_due_day: integer (1-31, day of month)
+- grace_period_days: integer (default 3 days)
+- is_active: boolean
+
+3.2 BILL CREATION PROCESS
+Admin Workflow:
+1. Select bill type from configured types
+2. Enter billing period (start date, end date)
+3. Enter total amount for apartment
+4. System calculates eligible members:
+   - If opt-in required: Only opted-in members
+   - If not: All active members
+   - Excludes: Guests, moved_out members
+   
+5. System calculates individual splits based on method:
+
+Equal Split Formula:
+```
+Amount per member = Total Amount / Number of eligible members
+```
+
+Per Bed Formula:
+```
+Total bed values = Sum of all occupied bed monthly rates
+Amount per member = (Member's bed rate / Total bed values) × Total Amount
+```
+
+Prorated Formula (for rent when mid-month join/exit):
+```
+Days in billing period = Period end - Period start + 1
+Days occupied = MIN(Move-out date, Period end) - MAX(Move-in date, Period start) + 1
+Prorated amount = (Bed monthly rate / Days in month) × Days occupied
+```
+
+Custom Formula:
+```
+Admin manually enters amount for each member
+System validates: Sum of individual amounts = Total amount (±5% tolerance)
+```
+
+6. Preview screen shows all member splits
+7. Admin can manually adjust individual amounts
+8. Admin publishes bill
+9. System creates records:
+   - bills table: One record with total
+   - bill_splits table: One record per member with their amount
+10. Notifications sent to all members
+
+3.3 PAYMENT TRACKING (MANUAL - MVP)
+User Payment Workflow:
+1. User opens "My Bills" page
+2. Sees bill with breakdown:
+   - Bill type and period
+   - Due date with countdown
+   - Amount due
+   - Status: Pending/Paid/Overdue
+   - Detailed breakdown (if multiple bills combined)
+   
+3. User clicks "Mark as Paid"
+4. Payment form opens:
+   - Payment method (dropdown):
+     * Cash
+     * Bank Transfer
+     * UPI (India)
+     * KNET (Kuwait)
+     * Mobile Money (Nigeria)
+     * Credit Card
+     * Other (specify)
+   - Transaction reference/ID (text, required)
+   - Payment date (date picker, default today)
+   - Payment proof upload (optional, Cloudinary):
+     * Screenshot of transaction
+     * Bank statement
+     * Receipt photo
+   - Notes (optional text area)
+   
+5. User submits
+6. System updates:
+   - bill_splits.payment_status = 'pending_verification'
+   - Creates payment record
+   - Uploads proof to Cloudinary if provided
+   
+7. Notification sent to admin: "Payment submitted by [User]"
+
+Admin Verification Workflow:
+1. Admin opens "Payment Verification Queue"
+2. Sees list of pending payments:
+   - User name and photo
+   - Bill type and amount
+   - Payment method
+   - Transaction reference
+   - Payment date
+   - Payment proof (thumbnail)
+   - User notes
+   
+3. Admin clicks "View Details"
+4. Reviews all information
+5. Checks actual payment in bank/UPI/etc.
+6. Admin actions:
+
+Option A: Approve
+   - Clicks "Approve Payment"
+   - Adds admin notes (optional)
+   - System updates:
+     * bill_splits.payment_status = 'paid'
+     * bill_splits.verified_by = admin_id
+     * bill_splits.verified_at = NOW()
+     * Process loyalty points (see section 7)
+   - Notification to user: "Payment verified! +100 points"
+   
+Option B: Reject
+   - Clicks "Reject Payment"
+   - Enters rejection reason (required)
+   - System updates:
+     * bill_splits.payment_status = 'pending' (back to unpaid)
+     * Adds rejection reason
+   - Notification to user with reason
+   - User can resubmit with corrections
+
+3.4 PAYMENT REMINDERS (COMBINED SCHEDULE)
+Automated Reminder System (Edge Function - Cron Job):
+
+Runs daily at 9:00 AM (apartment timezone)
+
+Reminder Schedule:
+- Day -5: First reminder
+  * Channels: Email, In-app
+  * Message: "Payment reminder: [Bill] ₹[Amount] due in 5 days"
+  
+- Day -3: Second reminder
+  * Channels: Email, In-app, Push (if enabled)
+  * Message: "Payment reminder: [Bill] ₹[Amount] due in 3 days"
+  
+- Day -1: Final reminder before due
+  * Channels: Email, In-app, Push, SMS (if enabled)
+  * Message: "Final reminder: [Bill] ₹[Amount] due tomorrow!"
+  * Urgency: High
+  
+- Day 0 (Due date): Due today
+  * Channels: Email, In-app, Push, SMS
+  * Message: "Payment due TODAY: [Bill] ₹[Amount]"
+  * Urgency: Critical
+  
+- Day +1: Overdue alert
+  * Channels: All (Email, In-app, Push, SMS)
+  * Message: "OVERDUE: [Bill] ₹[Amount] was due yesterday"
+  * Action: -25 loyalty points automatically deducted
+  * Status: bill_splits.payment_status = 'overdue'
+  
+- Day +3: Serious overdue
+  * Channels: All + WhatsApp (if configured)
+  * Message: "SERIOUS: Payment 3 days overdue. ₹[Amount + Late Fee]"
+  * Action: -50 loyalty points, admin notified
+  * Late fee: Applied if configured
+  
+- Day +7: Critical overdue
+  * Channels: All (repeated)
+  * Message: "CRITICAL: Payment 7 days overdue. Contact admin immediately"
+  * Action: -100 loyalty points, all apartment members notified
+  * Status: Escalated to admin
+  
+- Day +14: Account inactive
+  * Action: Member status = 'inactive'
+  * All access suspended except viewing bills
+  * Admin intervention required
+
+Edge Function Logic:
+```typescript
+// Runs daily
+export async function sendPaymentReminders() {
+  const today = new Date()
+  
+  // Get all unpaid bill splits
+  const { data: billSplits } = await supabase
+    .from('bill_splits')
+    .select('*, bills(*), apartment_members(*)')
+    .in('payment_status', ['pending', 'overdue'])
+  
+  for (const split of billSplits) {
+    const daysUntilDue = dateDiff(split.bills.due_date, today)
+    
+    if ([5, 3, 1, 0, -1, -3, -7].includes(daysUntilDue)) {
+      await sendReminder(split, daysUntilDue)
+    }
+    
+    // Apply penalties for overdue
+    if (daysUntilDue < 0 && !split.penalty_applied) {
+      await applyOverduePenalty(split, daysUntilDue)
+    }
+  }
+}
+```
+
+3.5 LATE PAYMENT PENALTIES
+Automatic Penalty System:
+
+Loyalty Points Deduction:
+- 1 day overdue: -25 points (automatic)
+- 3 days overdue: -50 points + admin notification
+- 7 days overdue: -100 points + apartment-wide alert
+- 14 days overdue: -200 points + account suspension
+
+Late Payment Fines (Configurable by Admin):
+- Fine type: Flat amount OR Percentage
+- Example flat: ₹50 per day overdue
+- Example percentage: 1% of bill amount per day
+- Applied automatically based on settings
+- Added to next bill or current bill
+- Fine waiver: Admin can manually waive
+
+Payment Streak Tracking:
+- Tracks consecutive on-time payments
+- 6 months streak: +1000 bonus points
+- 12 months streak: +2000 bonus points
+- Streak broken by single late payment
+- Displayed on user profile
+
+3.6 PAYMENT FREQUENCY OPTIONS & DISCOUNTS
+Payment Plans:
+1. Monthly (Default)
+   - Pay each month
+   - Standard rate
+   
+2. Quarterly (3 months advance)
+   - 5-10% discount (admin configurable)
+   - Example: ₹10,000/month → ₹28,500 for 3 months (5% discount)
+   - One payment every 3 months
+   
+3. Annual (12 months advance)
+   - 15-20% discount (admin configurable)
+   - Example: ₹10,000/month → ₹102,000 for 12 months (15% discount)
+   - One payment per year
+   - Highest savings
+
+Benefits Display:
+- Savings calculator on payment page
+- Shows potential savings for each plan
+- Annual comparison chart
+- Motivates advance payment
+
+Pro-rated Refund on Exit:
+- If user paid quarterly/annually and exits early
+- System calculates:
+  ```
+  Unused months = Total months - Months used
+  Refund = (Monthly rate × Unused months) × (1 - Discount rate)
+  ```
+- Example: Paid annually, exits after 8 months
+  - Refund = (₹10,000 × 4) × 0.85 = ₹34,000
+- Admin processes refund manually (MVP)
+
+3.7 PAYMENT DISPUTES
+User Dispute Workflow:
+1. User clicks "Dispute This Amount" on bill
+2. Dispute form opens:
+   - Dispute reason (required text area)
+   - Expected correct amount (number input)
+   - Evidence upload (Cloudinary):
+     * Screenshots
+     * Documents
+     * Max 5 files
+   - Detailed explanation
+   
+3. User submits dispute
+4. System updates:
+   - bill_splits.payment_status = 'disputed'
+   - Creates dispute record
+   - Creates dispute chat thread
+   
+5. Notifications sent:
+   - To admin: "Payment dispute raised by [User]"
+   - To user: "Dispute submitted (ID: #123)"
+
+Admin Resolution (48-hour SLA):
+Option 1: Accept and Adjust
+   - Admin reviews evidence
+   - Finds user is correct
+   - Adjusts bill amount:
+     ```sql
+     UPDATE bill_splits 
+     SET amount = [new_amount], 
+         payment_status = 'pending'
+     WHERE id = [split_id]
+     ```
+   - Adds resolution notes
+   - Closes dispute
+   - User receives notification
+
+Option 2: Reject with Explanation
+   - Admin reviews evidence
+   - Finds charge is correct
+   - Provides detailed explanation
+   - Dispute status = 'rejected'
+   - User receives explanation
+   - Original amount remains
+
+Option 3: No Response (Auto-escalation)
+   - If admin doesn't respond within 48 hours
+   - System automatically creates poll:
+     * Title: "Resolve Dispute: [Title]"
+     * Options: "Support [User]" / "Support Admin"
+     * Duration: 48 hours
+     * Eligible voters: All apartment members
+   - Quorum: 50% (configurable)
+   - Majority wins
+   - Result automatically applied
+   - Dispute closed
+
+Poll Result Application:
+- If "Support User": Bill adjusted as user requested
+- If "Support Admin": Bill remains unchanged
+- If quorum not met: Admin must decide
+- All parties notified of result
+
+
+================================================================================
+[Document continues with remaining 12 sections...]
+================================================================================
+
+Due to length, I'll create this as a multi-file deliverable. Let me create the remaining critical documents.
+
+Document Status: COMPLETE - Section 1-3
+Remaining Sections: 4-15 (Community Meals, Tasks, Resources, Loyalty, Voting, 
+Money Pools, Disputes, Guests, Notifications, Ads, Admin Tools, Reports, 
+Technical Specs, Database Schema)
+
+Next: Create component-pages.txt with page-by-page breakdown
+

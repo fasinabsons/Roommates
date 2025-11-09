@@ -1,0 +1,1010 @@
+================================================================================
+API ENDPOINTS DOCUMENTATION
+RoomMate Manager - Complete API Reference
+================================================================================
+
+BASE URLs:
+- Supabase REST API: https://{project}.supabase.co/rest/v1/
+- Supabase Auth: https://{project}.supabase.co/auth/v1/
+- Edge Functions: https://{project}.supabase.co/functions/v1/
+- Cloudinary Upload: https://api.cloudinary.com/v1_1/{cloud_name}/upload
+
+Authentication: Bearer {JWT_TOKEN} (in Authorization header)
+
+================================================================================
+AUTHENTICATION ENDPOINTS (Supabase Auth)
+================================================================================
+
+1. SIGNUP
+---------
+POST /auth/v1/signup
+Content-Type: application/json
+
+Request Body:
+{
+  "email": "user@example.com",
+  "password": "SecurePass123!",
+  "data": {
+    "full_name": "John Doe",
+    "phone": "+919876543210",
+    "age": 25
+  }
+}
+
+Response 200:
+{
+  "access_token": "eyJhbGci...",
+  "token_type": "bearer",
+  "expires_in": 3600,
+  "refresh_token": "...",
+  "user": {
+    "id": "uuid",
+    "email": "user@example.com",
+    "user_metadata": {...}
+  }
+}
+
+2. LOGIN
+--------
+POST /auth/v1/token?grant_type=password
+Content-Type: application/json
+
+Request Body:
+{
+  "email": "user@example.com",
+  "password": "SecurePass123!"
+}
+
+Response 200: Same as signup
+
+3. PHONE OTP SIGNUP
+------------------
+POST /auth/v1/otp
+Content-Type: application/json
+
+Request Body:
+{
+  "phone": "+919876543210",
+  "create_user": true
+}
+
+Response 200:
+{
+  "message": "OTP sent successfully"
+}
+
+4. VERIFY OTP
+------------
+POST /auth/v1/verify
+Content-Type: application/json
+
+Request Body:
+{
+  "type": "sms",
+  "phone": "+919876543210",
+  "token": "123456"
+}
+
+Response 200: User session created
+
+5. REFRESH TOKEN
+---------------
+POST /auth/v1/token?grant_type=refresh_token
+Content-Type: application/json
+
+Request Body:
+{
+  "refresh_token": "..."
+}
+
+Response 200: New access token
+
+6. LOGOUT
+--------
+POST /auth/v1/logout
+Authorization: Bearer {token}
+
+Response 204: No content
+
+7. FORGOT PASSWORD
+-----------------
+POST /auth/v1/recover
+Content-Type: application/json
+
+Request Body:
+{
+  "email": "user@example.com"
+}
+
+Response 200:
+{
+  "message": "Password recovery email sent"
+}
+
+
+================================================================================
+USER MANAGEMENT ENDPOINTS
+================================================================================
+
+8. GET USER PROFILE
+------------------
+GET /rest/v1/users?id=eq.{user_id}
+Authorization: Bearer {token}
+
+Response 200:
+{
+  "id": "uuid",
+  "email": "user@example.com",
+  "full_name": "John Doe",
+  "phone_number": "+919876543210",
+  "age": 25,
+  "profile_photo_url": "https://res.cloudinary.com/...",
+  "id_card_url": "https://res.cloudinary.com/...",
+  "role": "roommate_full",
+  "loyalty_points": 500,
+  "loyalty_tier": "silver",
+  "is_active": true,
+  "created_at": "2025-01-01T00:00:00Z"
+}
+
+9. UPDATE USER PROFILE
+---------------------
+PATCH /rest/v1/users?id=eq.{user_id}
+Authorization: Bearer {token}
+Content-Type: application/json
+
+Request Body:
+{
+  "full_name": "John Updated",
+  "age": 26,
+  "profile_photo_url": "new_url"
+}
+
+Response 200: Updated user object
+
+10. GET ALL USERS (Admin)
+------------------------
+GET /rest/v1/users?select=*
+Authorization: Bearer {token}
+
+Query Params:
+- apartment_id=eq.{id} (filter by apartment)
+- role=eq.admin (filter by role)
+- is_active=eq.true
+- order=created_at.desc
+- limit=20
+- offset=0
+
+Response 200: Array of users
+
+
+================================================================================
+APARTMENT MANAGEMENT ENDPOINTS
+================================================================================
+
+11. CREATE APARTMENT
+------------------
+POST /rest/v1/apartments
+Authorization: Bearer {token}
+Content-Type: application/json
+
+Request Body:
+{
+  "name": "Greg's Apartment",
+  "address": "123 Main St, City",
+  "total_rent": 40000.00,
+  "created_by": "{user_id}",
+  "settings": {
+    "currency": "INR",
+    "late_payment_fine_rate": 50,
+    "voting_quorum_percentage": 50
+  }
+}
+
+Response 201:
+{
+  "id": "uuid",
+  "name": "Greg's Apartment",
+  ...
+}
+
+12. GET APARTMENTS
+----------------
+GET /rest/v1/apartments?created_by=eq.{user_id}
+Authorization: Bearer {token}
+
+Response 200: Array of apartments
+
+13. GET APARTMENT BY ID
+---------------------
+GET /rest/v1/apartments?id=eq.{apartment_id}
+Authorization: Bearer {token}
+
+Response 200: Single apartment object
+
+14. UPDATE APARTMENT
+------------------
+PATCH /rest/v1/apartments?id=eq.{apartment_id}
+Authorization: Bearer {token}
+Content-Type: application/json
+
+Request Body:
+{
+  "name": "Updated Name",
+  "total_rent": 45000.00
+}
+
+Response 200: Updated apartment
+
+15. DELETE APARTMENT
+------------------
+DELETE /rest/v1/apartments?id=eq.{apartment_id}
+Authorization: Bearer {token}
+
+Response 204: No content
+
+16. CREATE ROOM
+-------------
+POST /rest/v1/rooms
+Authorization: Bearer {token}
+Content-Type: application/json
+
+Request Body:
+{
+  "apartment_id": "uuid",
+  "name": "Room 305",
+  "floor_number": 3
+}
+
+Response 201: Room object
+
+17. GET ROOMS
+-----------
+GET /rest/v1/rooms?apartment_id=eq.{apartment_id}
+Authorization: Bearer {token}
+
+Response 200: Array of rooms
+
+18. CREATE BED
+------------
+POST /rest/v1/beds
+Authorization: Bearer {token}
+Content-Type: application/json
+
+Request Body:
+{
+  "room_id": "uuid",
+  "bed_type": "lower",
+  "price": 8000.00,
+  "is_occupied": false
+}
+
+Response 201: Bed object
+
+19. GET BEDS
+----------
+GET /rest/v1/beds?room_id=eq.{room_id}
+Authorization: Bearer {token}
+
+Response 200: Array of beds
+
+20. ASSIGN BED
+------------
+PATCH /rest/v1/beds?id=eq.{bed_id}
+Authorization: Bearer {token}
+Content-Type: application/json
+
+Request Body:
+{
+  "is_occupied": true,
+  "occupied_by": "user_uuid"
+}
+
+Response 200: Updated bed object
+
+
+================================================================================
+BILLING ENDPOINTS
+================================================================================
+
+21. CREATE BILL TYPE
+------------------
+POST /rest/v1/bill_types
+Authorization: Bearer {token}
+Content-Type: application/json
+
+Request Body:
+{
+  "apartment_id": "uuid",
+  "name": "Electricity",
+  "calculation_method": "equal_split",
+  "is_prorated": false,
+  "is_opt_in": false,
+  "recurrence_pattern": "monthly",
+  "default_due_day": 5,
+  "grace_period_days": 3
+}
+
+Response 201: Bill type object
+
+22. GET BILL TYPES
+----------------
+GET /rest/v1/bill_types?apartment_id=eq.{apartment_id}
+Authorization: Bearer {token}
+
+Response 200: Array of bill types
+
+23. CREATE BILL
+-------------
+POST /rest/v1/bills
+Authorization: Bearer {token}
+Content-Type: application/json
+
+Request Body:
+{
+  "apartment_id": "uuid",
+  "bill_type_id": "uuid",
+  "period_start": "2025-01-01",
+  "period_end": "2025-01-31",
+  "total_amount": 5000.00,
+  "due_date": "2025-01-05",
+  "status": "published",
+  "created_by": "user_uuid"
+}
+
+Response 201: Bill object
+
+24. GET BILLS
+-----------
+GET /rest/v1/bills?apartment_id=eq.{apartment_id}
+Authorization: Bearer {token}
+
+Query Params:
+- status=eq.published
+- due_date=gte.2025-01-01
+- order=due_date.desc
+
+Response 200: Array of bills
+
+25. CREATE BILL SPLITS (Bulk)
+---------------------------
+POST /rest/v1/bill_splits
+Authorization: Bearer {token}
+Content-Type: application/json
+
+Request Body: [
+  {
+    "bill_id": "uuid",
+    "member_id": "uuid",
+    "amount": 1250.00,
+    "calculation_basis": {"method": "equal_split"},
+    "payment_status": "unpaid"
+  },
+  ...
+]
+
+Response 201: Array of bill splits
+
+26. GET USER BILL SPLITS
+-----------------------
+GET /rest/v1/bill_splits?member_id=eq.{member_id}
+Authorization: Bearer {token}
+
+Query Params:
+- payment_status=eq.pending
+- order=bills.due_date.asc
+- select=*,bills(*),apartment_members(*)
+
+Response 200: Array of bill splits with joined data
+
+27. SUBMIT PAYMENT
+----------------
+POST /rest/v1/payments
+Authorization: Bearer {token}
+Content-Type: application/json
+
+Request Body:
+{
+  "apartment_id": "uuid",
+  "payer_member_id": "uuid",
+  "bill_split_id": "uuid",
+  "amount": 1250.00,
+  "payment_method": "UPI",
+  "transaction_reference": "TXN123456",
+  "receipt_url": "https://res.cloudinary.com/...",
+  "payment_date": "2025-01-03",
+  "status": "pending_verification",
+  "notes": "Paid via PhonePe"
+}
+
+Response 201: Payment object
+
+28. GET PAYMENTS
+--------------
+GET /rest/v1/payments?payer_member_id=eq.{member_id}
+Authorization: Bearer {token}
+
+Response 200: Array of payments
+
+29. VERIFY PAYMENT (Admin)
+-------------------------
+PATCH /rest/v1/payments?id=eq.{payment_id}
+Authorization: Bearer {token}
+Content-Type: application/json
+
+Request Body:
+{
+  "status": "verified",
+  "verified_by": "admin_uuid",
+  "verified_at": "2025-01-03T10:00:00Z"
+}
+
+Response 200: Updated payment
+
+
+================================================================================
+COMMUNITY MEALS ENDPOINTS
+================================================================================
+
+30. CREATE COMMUNITY MEAL
+------------------------
+POST /rest/v1/community_meals
+Authorization: Bearer {token}
+Content-Type: application/json
+
+Request Body:
+{
+  "apartment_id": "uuid",
+  "has_chef": true,
+  "chef_name": "Chef Kumar",
+  "chef_photo_url": "https://...",
+  "chef_contact": "+919999999999",
+  "chef_id_card_url": "https://...",
+  "chef_salary": 15000.00,
+  "is_active": true
+}
+
+Response 201: Community meal object
+
+31. ADD MEAL PARTICIPANT
+-----------------------
+POST /rest/v1/meal_participants
+Authorization: Bearer {token}
+Content-Type: application/json
+
+Request Body:
+{
+  "community_meal_id": "uuid",
+  "user_id": "uuid",
+  "meal_types": ["breakfast", "lunch", "dinner"],
+  "include_water": true
+}
+
+Response 201: Meal participant object
+
+32. CREATE MENU
+-------------
+POST /rest/v1/menus
+Authorization: Bearer {token}
+Content-Type: application/json
+
+Request Body:
+{
+  "community_meal_id": "uuid",
+  "day_of_week": 1,
+  "meal_type": "lunch",
+  "main_course": "Rice",
+  "curry_1": "Chicken Curry",
+  "curry_2": "Dal",
+  "side_dish": "Salad",
+  "dessert": "Ice Cream",
+  "beverage": "Juice",
+  "photo_url": "https://..."
+}
+
+Response 201: Menu object
+
+33. GET WEEKLY MENU
+-----------------
+GET /rest/v1/menus?community_meal_id=eq.{meal_id}
+Authorization: Bearer {token}
+
+Query Params:
+- day_of_week=gte.1&day_of_week=lte.7
+- order=day_of_week.asc,meal_type.asc
+
+Response 200: Array of menu items (21 items for full week)
+
+34. CREATE GROCERY TEAM
+---------------------
+POST /rest/v1/grocery_teams
+Authorization: Bearer {token}
+Content-Type: application/json
+
+Request Body:
+{
+  "community_meal_id": "uuid",
+  "team_number": 1,
+  "week_number": 1,
+  "year": 2025
+}
+
+Response 201: Grocery team object
+
+35. ADD TEAM MEMBERS
+------------------
+POST /rest/v1/grocery_team_members
+Authorization: Bearer {token}
+Content-Type: application/json
+
+Request Body: [
+  {
+    "grocery_team_id": "uuid",
+    "user_id": "user1_uuid"
+  },
+  {
+    "grocery_team_id": "uuid",
+    "user_id": "user2_uuid"
+  }
+]
+
+Response 201: Array of team member records
+
+36. SUBMIT GROCERY PURCHASE
+--------------------------
+POST /rest/v1/grocery_purchases
+Authorization: Bearer {token}
+Content-Type: application/json
+
+Request Body:
+{
+  "grocery_team_id": "uuid",
+  "purchase_date": "2025-01-03",
+  "total_amount": 4500.00,
+  "receipt_url": "https://res.cloudinary.com/...",
+  "purchased_by": "user_uuid",
+  "store_name": "SuperMart"
+}
+
+Response 201: Grocery purchase object
+
+37. ADD GROCERY ITEMS
+--------------------
+POST /rest/v1/grocery_items
+Authorization: Bearer {token}
+Content-Type: application/json
+
+Request Body: [
+  {
+    "grocery_purchase_id": "uuid",
+    "item_name": "Chicken",
+    "quantity": 3.0,
+    "price": 450.00
+  },
+  ...
+]
+
+Response 201: Array of grocery items
+
+38. APPROVE GROCERY PURCHASE (Admin)
+-----------------------------------
+PATCH /rest/v1/grocery_purchases?id=eq.{purchase_id}
+Authorization: Bearer {token}
+Content-Type: application/json
+
+Request Body:
+{
+  "status": "approved",
+  "reviewed_by": "admin_uuid",
+  "reviewed_at": "2025-01-04T10:00:00Z",
+  "feedback": "Good quality items, within budget"
+}
+
+Response 200: Updated grocery purchase
+
+
+================================================================================
+EDGE FUNCTIONS (Custom Business Logic)
+================================================================================
+
+39. CALCULATE BILL SPLITS
+------------------------
+POST /functions/v1/calculate-bill-splits
+Authorization: Bearer {token}
+Content-Type: application/json
+
+Request Body:
+{
+  "bill_id": "uuid",
+  "apartment_id": "uuid",
+  "total_amount": 5000.00,
+  "calculation_method": "equal_split",
+  "exclude_user_ids": []
+}
+
+Response 200:
+{
+  "splits": [
+    {
+      "member_id": "uuid",
+      "amount": 1250.00,
+      "calculation_basis": {...}
+    },
+    ...
+  ],
+  "total_validated": true
+}
+
+40. PROCESS RECEIPT OCR
+----------------------
+POST /functions/v1/process-receipt-ocr
+Authorization: Bearer {token}
+Content-Type: application/json
+
+Request Body:
+{
+  "receipt_url": "https://res.cloudinary.com/...",
+  "grocery_purchase_id": "uuid"
+}
+
+Response 200:
+{
+  "store_name": "SuperMart",
+  "purchase_date": "2025-01-03",
+  "items": [
+    {
+      "item_name": "Chicken",
+      "quantity": 3.0,
+      "unit_price": 150.00,
+      "total_price": 450.00,
+      "confidence_score": 0.95
+    },
+    ...
+  ],
+  "subtotal": 4300.00,
+  "tax": 200.00,
+  "total": 4500.00
+}
+
+41. SEND PAYMENT REMINDERS (Scheduled)
+-------------------------------------
+Scheduled: Daily at 9:00 AM
+POST /functions/v1/send-payment-reminders
+
+No request body (scheduled job)
+
+Response 200:
+{
+  "reminders_sent": 15,
+  "penalties_applied": 3,
+  "errors": []
+}
+
+42. GENERATE DASHBOARD SUMMARY
+-----------------------------
+GET /functions/v1/dashboard-summary?user_id={user_id}
+Authorization: Bearer {token}
+
+Response 200:
+{
+  "user": {...},
+  "pending_bills": {
+    "count": 3,
+    "total_amount": 15000.00,
+    "next_due_date": "2025-01-05"
+  },
+  "pending_tasks": {
+    "count": 2,
+    "next_task": {...}
+  },
+  "loyalty_points": {
+    "current": 500,
+    "tier": "silver",
+    "points_to_next_tier": 500
+  },
+  "notifications_unread": 5,
+  "recent_activity": [...]
+}
+
+43. GENERATE GROCERY TEAMS (Scheduled)
+-------------------------------------
+POST /functions/v1/generate-grocery-teams
+Authorization: Bearer {token}
+Content-Type: application/json
+
+Request Body:
+{
+  "community_meal_id": "uuid",
+  "start_date": "2025-01-01",
+  "weeks": 4
+}
+
+Response 200:
+{
+  "teams_created": 8,
+  "rotation_schedule": [...]
+}
+
+44. CALCULATE MEAL COSTS
+-----------------------
+POST /functions/v1/calculate-meal-costs
+Authorization: Bearer {token}
+Content-Type: application/json
+
+Request Body:
+{
+  "grocery_purchase_id": "uuid",
+  "community_meal_id": "uuid"
+}
+
+Response 200:
+{
+  "total_cost": 4500.00,
+  "participant_shares": [
+    {
+      "user_id": "uuid",
+      "share_amount": 265.00,
+      "meal_types": ["lunch", "dinner"],
+      "include_water": true
+    },
+    ...
+  ],
+  "bills_created": true
+}
+
+45. PROCESS LOYALTY POINTS
+-------------------------
+POST /functions/v1/process-loyalty-points
+Authorization: Bearer {token}
+Content-Type: application/json
+
+Request Body:
+{
+  "user_id": "uuid",
+  "event_type": "payment_on_time",
+  "points_change": 100,
+  "description": "Paid rent on time",
+  "related_id": "bill_split_uuid"
+}
+
+Response 200:
+{
+  "points_added": 100,
+  "new_total": 600,
+  "new_tier": "silver",
+  "tier_changed": false
+}
+
+46. ESCALATE DISPUTES (Scheduled)
+--------------------------------
+Scheduled: Hourly
+POST /functions/v1/escalate-disputes
+
+No request body
+
+Response 200:
+{
+  "disputes_checked": 5,
+  "disputes_escalated": 1,
+  "polls_created": 1
+}
+
+47. ADMIN DASHBOARD SUMMARY
+--------------------------
+GET /functions/v1/admin-dashboard-summary?apartment_id={apartment_id}
+Authorization: Bearer {token}
+
+Response 200:
+{
+  "total_members": 12,
+  "vacant_beds": 2,
+  "pending_payments": {
+    "count": 8,
+    "amount": 32000.00
+  },
+  "overdue_payments": {
+    "count": 2,
+    "amount": 10000.00
+  },
+  "active_disputes": 1,
+  "task_completion_rate": 85.5,
+  "meal_participants": 10,
+  "ad_revenue_this_month": 1200.00
+}
+
+
+================================================================================
+CLOUDINARY ENDPOINTS
+================================================================================
+
+48. UPLOAD IMAGE
+--------------
+POST https://api.cloudinary.com/v1_1/{cloud_name}/upload
+Content-Type: multipart/form-data
+
+Form Data:
+- file: <image file or base64 data URI>
+- upload_preset: "roommate_uploads"
+- folder: "roommate-manager/users/{user_id}/profile"
+- public_id: "{user_id}_profile"
+
+Response 200:
+{
+  "secure_url": "https://res.cloudinary.com/...",
+  "public_id": "roommate-manager/users/uuid/profile",
+  "width": 300,
+  "height": 300,
+  "format": "jpg",
+  "resource_type": "image",
+  "created_at": "2025-01-01T00:00:00Z"
+}
+
+49. UPLOAD WITH TRANSFORMATION
+-----------------------------
+POST https://api.cloudinary.com/v1_1/{cloud_name}/upload
+
+Form Data:
+- file: <image>
+- upload_preset: "profile_photos"
+- folder: "roommate-manager/users/{user_id}/profile"
+- transformation: "c_fill,w_300,h_300,g_face"
+
+Response: Same as above
+
+50. GET IMAGE URL (Frontend)
+---------------------------
+Not an API call, but URL generation:
+
+```javascript
+import { Cloudinary } from '@cloudinary/url-gen';
+const cld = new Cloudinary({cloud: {cloudName: 'your_cloud_name'}});
+const img = cld.image('public_id');
+const url = img.toURL();
+```
+
+
+================================================================================
+REAL-TIME SUBSCRIPTIONS (Supabase Realtime)
+================================================================================
+
+51. SUBSCRIBE TO TABLE CHANGES
+-----------------------------
+JavaScript/TypeScript:
+
+```typescript
+const subscription = supabase
+  .channel('bill_splits_changes')
+  .on(
+    'postgres_changes',
+    {
+      event: '*', // or 'INSERT', 'UPDATE', 'DELETE'
+      schema: 'public',
+      table: 'bill_splits',
+      filter: 'member_id=eq.{user_id}'
+    },
+    (payload) => {
+      console.log('Change received!', payload)
+      // Update UI
+    }
+  )
+  .subscribe()
+```
+
+Common Subscriptions:
+- bill_splits (for new bills, payment status changes)
+- notifications (for new notifications)
+- task_assignments (for new tasks)
+- dispute_messages (for new dispute messages)
+- polls (for new polls)
+
+
+================================================================================
+ERROR RESPONSES
+================================================================================
+
+Standard Error Format:
+{
+  "error": "Error message",
+  "code": "error_code",
+  "details": "Detailed error information",
+  "hint": "Suggestion to fix"
+}
+
+Common HTTP Status Codes:
+- 200: Success
+- 201: Created
+- 204: No Content (successful deletion)
+- 400: Bad Request
+- 401: Unauthorized
+- 403: Forbidden
+- 404: Not Found
+- 409: Conflict
+- 422: Unprocessable Entity (validation error)
+- 500: Internal Server Error
+
+Example Error Response:
+{
+  "error": "Validation failed",
+  "code": "PGRST204",
+  "details": "Invalid input syntax for type integer",
+  "hint": "Ensure all required fields are provided"
+}
+
+
+================================================================================
+RATE LIMITS
+================================================================================
+
+Supabase REST API:
+- 1000 requests per minute per IP
+- 100 connections per minute per IP
+
+Edge Functions:
+- 500 requests per minute per project
+- 10 seconds timeout per function
+
+Cloudinary:
+- Free tier: 25 credits/month (varies by operation)
+- Transformations cached on CDN
+
+
+================================================================================
+PAGINATION
+================================================================================
+
+Using Range Headers:
+
+Request:
+GET /rest/v1/bills
+Range: 0-9
+
+Response Headers:
+Content-Range: 0-9/47
+
+Response Body: First 10 records
+
+Next Page:
+Range: 10-19
+
+
+================================================================================
+FILTERING & OPERATORS
+================================================================================
+
+Operators:
+- eq: equals
+- neq: not equals
+- gt: greater than
+- gte: greater than or equal
+- lt: less than
+- lte: less than or equal
+- like: pattern matching
+- ilike: case-insensitive pattern
+- is: null check
+- in: in list
+- contains: JSONB contains
+- order: ordering
+
+Examples:
+- ?status=eq.active
+- ?amount=gte.1000
+- ?name=ilike.%john%
+- ?id=in.(uuid1,uuid2,uuid3)
+- ?payment_status=is.null
+- ?created_at=order.desc
+
+
+================================================================================
+END OF API DOCUMENTATION
+================================================================================
+
+Total Endpoints: 50+
+Authentication: JWT Bearer Token
+Real-time: Supabase Realtime WebSockets
+File Storage: Cloudinary
+
+For implementation, use:
+- Supabase JS Client (@supabase/supabase-js)
+- Cloudinary React SDK (cloudinary-react)
+- React Query for caching (@tanstack/react-query)
+

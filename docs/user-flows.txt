@@ -1,0 +1,1323 @@
+================================================================================
+ROOMMATE MANAGER - COMPREHENSIVE USER FLOWS
+Detailed Step-by-Step User Journeys
+================================================================================
+
+IMAGE STORAGE NOTE: All images uploaded throughout these flows are stored in
+Cloudinary with the following structure:
+/roommate-manager/{category}/{apartment_id or user_id}/{specific_folder}/
+
+================================================================================
+FLOW 1: NEW USER ONBOARDING (COMPLETE JOURNEY)
+================================================================================
+
+ACTORS: New User (Sarah), Admin (John)
+CLOUDINARY FOLDERS: /users/{sarah_id}/profile, /users/{sarah_id}/documents
+
+STEP-BY-STEP FLOW:
+
+1. INVITATION
+   - John (admin) creates invite link for vacant bed
+   - John shares link: https://app.com/invite/abc123xyz
+   - Sarah receives link via WhatsApp
+
+2. REGISTRATION (Sarah's Side)
+   - Sarah clicks invite link
+   - Redirected to registration page (invite pre-filled)
+   - Sarah sees: "You're invited to join Greg's Apartment"
+   
+   Page 1: Basic Information
+   - Email: sarah@email.com
+   - Password: ********** (validated: min 8 chars, 1 number, 1 special)
+   - Confirm Password: **********
+   - Full Name: Sarah Johnson
+   - Age: 24
+   - Phone: +91-9876543210
+   - Click "Next"
+   
+   Page 2: Profile Photo
+   - Click "Upload Photo"
+   - Cloudinary widget opens
+   - Sarah uploads selfie.jpg
+   - Cloudinary processes:
+     * Transforms to 300x300
+     * Face detection confirms face present
+     * Stores: /roommate-manager/users/sarah_id/profile/profile.jpg
+   - Preview shows circular cropped photo
+   - Click "Next"
+   
+   Page 3: Identity Documents
+   - ID Card:
+     * Click "Upload ID Card"
+     * Sarah uploads drivers_license.jpg
+     * Stores: /roommate-manager/users/sarah_id/documents/id_card.jpg
+     * Preview shows document
+   - Resume (optional):
+     * Click "Upload Resume"
+     * Sarah uploads resume.pdf
+     * Stores: /roommate-manager/users/sarah_id/documents/resume.pdf
+   - Labour Card (optional):
+     * Skipped
+   - Click "Next"
+   
+   Page 4: Review & Submit
+   - Shows all entered information
+   - Shows uploaded images (thumbnails from Cloudinary)
+   - Terms & Conditions checkbox: ✓ checked
+   - Click "Submit Application"
+   - System:
+     * Creates user record (is_active = false)
+     * Links invite to user
+     * Sends notification to John (admin)
+   - Sarah sees: "Application Submitted! Awaiting admin approval."
+   - Email sent: "Your application has been received"
+
+3. ADMIN APPROVAL (John's Side)
+   - John receives notification: "New user application: Sarah Johnson"
+   - John opens "Pending Approvals" page
+   - Sees Sarah's application card:
+     * Profile photo (from Cloudinary URL)
+     * Name: Sarah Johnson, Age: 24
+     * Email, Phone
+     * Applied date
+     * "View Details" button
+   
+   - John clicks "View Details"
+   - Modal opens showing:
+     * All basic info
+     * Profile photo (full size from Cloudinary)
+     * ID Card (view full size from Cloudinary, zoom enabled)
+     * Resume (PDF viewer or download link from Cloudinary)
+     * Bed requested: Room 305, Lower Bed
+     * "Approve" and "Reject" buttons
+   
+   - John clicks "Approve"
+   - Confirmation: "Are you sure you want to approve Sarah Johnson?"
+   - John confirms
+   - System:
+     * Updates users.is_active = true
+     * Updates users.approved_by = john_id
+     * Assigns bed (beds.occupied_by = sarah_id, is_occupied = true)
+     * Sends welcome email to Sarah
+     * Creates welcome notification
+     * Awards +100 referral points to John (if invite had referrer)
+
+4. FIRST LOGIN (Sarah's Side)
+   - Sarah receives email: "Your application has been approved!"
+   - Sarah visits app, logs in
+   - Email: sarah@email.com
+   - Password: **********
+   - Click "Login"
+   
+   - First-time welcome tour starts (tooltips/modal):
+     * "Welcome to RoomMate Manager!"
+     * Tour highlights: Dashboard, Bills, Tasks, Community Meals, Profile
+     * Skip or "Next" through tour
+   
+   - Sarah lands on Dashboard
+   - Sees:
+     * Welcome message: "Hi Sarah!"
+     * Profile photo (from Cloudinary)
+     * Current location: Greg's Apartment > Room 305 > Lower Bed
+     * Next payment due: ₹5,000 on Dec 10
+     * Loyalty points: 0 (Bronze tier)
+     * Pending tasks: 0
+     * Recent activity: "Welcome to the apartment!"
+
+5. EXPLORE APARTMENT (Sarah)
+   - Sarah clicks "My Apartment" from sidebar
+   - Sees visual apartment layout
+   - Sees all roommates (photos from Cloudinary):
+     * John (Room 301, Flat Bed) - Admin badge
+     * Mike (Room 303, Lower Bed)
+     * Lisa (Room 305, Upper Bed) - Same room!
+     * Sarah (Room 305, Lower Bed) - YOU badge
+   - Can filter: "My Room Only"
+   - Sees shared facilities: Kitchen, 2 Bathrooms, Living Room
+
+RESULT: Sarah is now an active roommate with full access to the app
+
+
+================================================================================
+FLOW 2: MONTHLY PAYMENT CYCLE (COMPLETE)
+================================================================================
+
+ACTORS: User (Sarah), Admin (John)
+CLOUDINARY FOLDERS: /payments/{sarah_id}/{bill_id}/
+
+TIMELINE: Start of Month → Payment → Verification
+
+DAY 1 (Dec 1): BILL CREATION
+----------------------------
+Admin (John):
+- Clicks "Create New Bill" in admin dashboard
+- Modal: Create Monthly Bill
+  * Apartment: Greg's Apartment
+  * Bill Type: "Rent"
+  * Amount: ₹40,000 (total apartment rent)
+  * Billing Cycle: Monthly
+  * Billing Date: Dec 1, 2024
+  * Due Date: Dec 7, 2024 (7 days from billing)
+  * Split Type: Equal Split
+  * Exclude users: None
+- Preview shows:
+  * 4 users × ₹10,000 each = ₹40,000
+  * Sarah: ₹10,000
+  * John: ₹10,000
+  * Mike: ₹10,000
+  * Lisa: ₹10,000
+- John clicks "Create Bill"
+- System:
+  * Creates bills record
+  * Creates 4 user_bills records
+  * Sends notification to all 4 users: "New bill: Rent ₹10,000 due Dec 7"
+  * Email sent: "Your rent bill is ready"
+
+All Users Receive:
+- In-app notification (bell icon shows "1")
+- Email notification (if enabled)
+- Dashboard updates with new bill
+
+DAY 2 (Dec 2): USER VIEWS BILL
+------------------------------
+Sarah:
+- Opens app, sees notification: "New bill: Rent ₹10,000"
+- Clicks notification → Redirected to Bill Detail page
+- Sees:
+  * Bill Type: Rent 🏠
+  * Amount Due: ₹10,000
+  * Due Date: Dec 7, 2024 (5 days remaining) ⏰
+  * Status: PENDING (orange badge)
+  * Breakdown:
+    - Your bed (Lower Bed): ₹8,000/month
+    - Shared utilities split: ₹2,000
+    - Total: ₹10,000
+  * "Pay Now" button (green, prominent)
+  * "Dispute Amount" button (gray, small)
+- Sarah notes the due date, plans to pay on Dec 5
+
+DAY 3 (Dec 2): 5-DAY REMINDER
+-----------------------------
+System (Automated - Edge Function runs 9 AM daily):
+- Queries: Bills due in 5 days (Dec 7)
+- Finds: Rent bill with 4 pending payments
+- Sends reminders to: Sarah, John, Mike, Lisa
+- Notification: "⏰ Payment reminder: Rent ₹10,000 due in 5 days"
+- Email: "Don't forget your upcoming payment"
+
+Sarah receives notification and email
+
+DAY 5 (Dec 5): SARAH MAKES PAYMENT
+----------------------------------
+Sarah:
+- Opens "My Bills" page
+- Clicks Rent bill
+- Clicks "Pay Now" button
+- Payment Form Modal opens:
+  
+  Bill Summary (read-only):
+  - Bill Type: Rent
+  - Amount Due: ₹10,000
+  - Due Date: Dec 7, 2024
+  
+  Payment Details Form:
+  - Payment Method: Dropdown
+    * Sarah selects: "UPI"
+  - Payment Date: Date picker
+    * Defaults to today (Dec 5)
+    * Sarah keeps default
+  - Transaction ID: Text input
+    * Sarah enters: "UPI123456789"
+  - Notes (optional): Text area
+    * Sarah writes: "Paid via PhonePe to John's UPI"
+  - Payment Proof: Upload button
+    * Sarah clicks "Upload Proof"
+    * Cloudinary widget opens
+    * Sarah uploads screenshot: payment_proof.jpg
+    * Cloudinary processes and stores:
+      /roommate-manager/payments/sarah_id/rent_dec_2024/proof.jpg
+    * Thumbnail preview shows
+  
+  - Sarah clicks "Submit Payment for Verification"
+  - System:
+    * Updates user_bills record:
+      - payment_method = 'UPI'
+      - payment_date = '2024-12-05'
+      - payment_reference = 'UPI123456789'
+      - payment_notes = 'Paid via PhonePe...'
+      - payment_proof_url = Cloudinary URL
+      - payment_status stays 'pending' (awaits verification)
+    * Creates notification for John (admin): "Sarah submitted payment for verification"
+    * Creates notification for Sarah: "Payment submitted! Awaiting verification"
+  
+  - Success message: "Payment submitted successfully! Admin will verify shortly."
+  - Modal closes
+  - Bill status still shows "Pending Verification" (yellow badge)
+
+DAY 5 (Later): ADMIN VERIFICATION
+----------------------------------
+Admin John:
+- Receives notification: "Sarah submitted payment for verification"
+- Opens "Payment Verification Queue"
+- Sees Sarah's payment card:
+  * User: Sarah Johnson (photo from Cloudinary)
+  * Bill: Rent - December 2024
+  * Amount: ₹10,000
+  * Payment Method: UPI
+  * Transaction ID: UPI123456789
+  * Payment Date: Dec 5, 2024
+  * Notes: "Paid via PhonePe to John's UPI"
+  * Payment Proof: Thumbnail (from Cloudinary)
+  * Actions: "Verify" | "Reject" | "Request Info"
+
+- John clicks "Verify"
+- Verify Payment Modal opens:
+  * Shows all payment details
+  * Shows payment proof full-size (Cloudinary URL with zoom)
+  * Admin Notes field: John types "Verified in my PhonePe account"
+  * "Confirm Verification" button
+  
+- John clicks "Confirm Verification"
+- System:
+  * Updates user_bills:
+    - payment_status = 'paid'
+    - verified_by = john_id
+    - verified_at = NOW()
+  * Processes loyalty points:
+    - Sarah paid 2 days early (Dec 5 vs Dec 7)
+    - Awards +75 points (early payment bonus)
+    - Creates loyalty_events record
+  * Updates Sarah's total points: 0 → 75
+  * Sends notification to Sarah: "✅ Your payment has been verified! +75 points"
+  
+- John sees: "Payment verified successfully"
+- Sarah's payment removed from verification queue
+
+Sarah:
+- Receives notification: "✅ Your payment has been verified! +75 points"
+- Opens Bills page
+- Rent bill now shows:
+  * Status: PAID ✓ (green badge)
+  * Paid on: Dec 5, 2024
+  * Verified by: John (Admin)
+  * Loyalty Points Earned: +75 🌟
+- Dashboard updates:
+  * Next payment due: (next bill if any)
+  * Loyalty Points: 75 (Bronze tier)
+
+RESULT: Complete payment cycle from creation to verification
+
+
+================================================================================
+FLOW 3: COMMUNITY MEAL - WEEKLY GROCERY SHOPPING
+================================================================================
+
+ACTORS: Team A (Sarah, Mike), All Meal Participants, Admin
+CLOUDINARY FOLDERS: /groceries/{purchase_id}/receipts/
+
+WEEK OVERVIEW: Team A's turn to shop for week of Dec 1-7
+
+DAY 0 (Nov 30, Sunday Evening): WEEK NOTIFICATION
+-------------------------------------------------
+System:
+- Identifies next week's grocery team: Team A (Sarah, Mike)
+- Sends notifications:
+  * To Sarah & Mike: "🛒 Your grocery shopping week starts tomorrow!"
+  * To all meal participants: "This week's grocery team: Sarah & Mike"
+- Email sent with shopping guidelines
+
+Team A (Sarah & Mike):
+- Receive notifications
+- Mike messages Sarah on WhatsApp: "Let's shop on Wednesday?"
+- Sarah agrees: "Sure, I'll create a list based on this week's menu"
+
+DAY 1 (Dec 1, Monday): MENU REVIEW
+----------------------------------
+Sarah:
+- Opens "Community Meals" section
+- Clicks "This Week's Menu"
+- Sees 7-day menu (Dec 1-7):
+  * Monday: Chicken Curry, Rice, Salad
+  * Tuesday: Dal, Roti, Vegetables
+  * Wednesday: Fish Curry, Rice
+  * ... (continues for 7 days)
+- Each meal shows photo (from Cloudinary)
+- Sarah creates mental shopping list:
+  * Chicken: 3 kg
+  * Fish: 2 kg
+  * Rice: 10 kg
+  * Vegetables: various
+  * Spices, etc.
+
+DAY 3 (Dec 3, Wednesday): GROCERY SHOPPING
+-------------------------------------------
+Sarah & Mike:
+- Go to supermarket together
+- Shop for all items based on weekly menu
+- Total: ₹4,500
+- Pay at counter
+- Receive printed receipt
+
+Sarah (in parking lot):
+- Opens app
+- Goes to "My Grocery Team" page
+- Clicks "Upload Purchase Receipt"
+- Upload Receipt Modal opens:
+
+  Step 1: Upload Receipt Photo
+  - Click "Take Photo" or "Upload from Gallery"
+  - Sarah takes photo of receipt with phone camera
+  - Photo: receipt_dec3.jpg
+  - Cloudinary widget processes:
+    * Auto-rotates if needed
+    * Optimizes for OCR
+    * Stores: /roommate-manager/groceries/purchase_001/receipts/receipt_1.jpg
+  - Preview shows receipt image
+  - Click "Next"
+  
+  Step 2: OCR Processing
+  - System sends image to Cloudinary AI OCR
+  - Extracts text from receipt
+  - Parses items, quantities, prices
+  - Displays extracted data in editable table:
+    
+    | Item Name      | Quantity | Price  | Actions |
+    |----------------|----------|--------|---------|
+    | Chicken        | 3 kg     | ₹450   | ✏️ 🗑️   |
+    | Fish           | 2 kg     | ₹600   | ✏️ 🗑️   |
+    | Rice (Basmati) | 10 kg    | ₹800   | ✏️ 🗑️   |
+    | Tomatoes       | 5 kg     | ₹150   | ✏️ 🗑️   |
+    | Onions         | 3 kg     | ₹90    | ✏️ 🗑️   |
+    | ... (25 more items)                           |
+    | Total          |          | ₹4,500 |         |
+  
+  - Sarah reviews: OCR got most items correct
+  - Sarah edits one item: "Ric" → "Rice (Basmati)"
+  - Sarah adds missing item manually: Click "+ Add Item"
+    * Item: "Cooking Oil", Quantity: "2 L", Price: "₹280"
+  - Recalculated total: ₹4,780 (Sarah notices discrepancy)
+  - Sarah corrects: Total was ₹4,500, OCR missed discount
+  - Sarah adjusts last item price to match
+  - Click "Next"
+  
+  Step 3: Additional Information
+  - Purchase Date: Dec 3, 2024 (auto-filled)
+  - Store Name: "SuperMart" (Sarah types)
+  - Total Amount: ₹4,500 (auto-calculated from items)
+  - Notes (optional): "Bought extra vegetables as they were on sale"
+  - Click "Next"
+  
+  Step 4: Review & Submit
+  - Shows summary:
+    * 28 items purchased
+    * Total: ₹4,500
+    * Receipt image (thumbnail from Cloudinary)
+  - Click "Submit for Approval"
+  - System:
+    * Creates grocery_purchase record
+    * Inserts 28 grocery_items records
+    * Links receipt Cloudinary URL
+    * Sends notification to admin John
+    * Sends notification to all meal participants
+  
+  - Success message: "Purchase submitted! Awaiting admin approval."
+
+All Meal Participants:
+- Receive notification: "Team A uploaded grocery purchase: ₹4,500"
+- Can view items list (transparency)
+
+DAY 3 (Later): ADMIN REVIEW
+----------------------------
+Admin John:
+- Receives notification: "New grocery purchase pending approval"
+- Opens "Grocery Purchases Review" page
+- Sees Sarah's purchase card:
+  * Team: Team A (Sarah, Mike)
+  * Week: Dec 1-7
+  * Purchase Date: Dec 3
+  * Total: ₹4,500
+  * Items: 28
+  * Receipt: Thumbnail (from Cloudinary)
+  * Budget: ₹5,000 (weekly budget)
+  * Variance: -₹500 (Under budget ✓)
+  * Status: Pending
+  * Actions: "View Details" | "Approve" | "Reject"
+
+- John clicks "View Details"
+- Purchase Detail Modal opens:
+  * Full itemized list (all 28 items with prices)
+  * Original receipt image (full size from Cloudinary, can zoom)
+  * Store: SuperMart
+  * Notes: "Bought extra vegetables..."
+  * Budget comparison:
+    - Allocated: ₹5,000
+    - Spent: ₹4,500
+    - Remaining: ₹500 ✓
+  * Admin notes field (optional)
+  * "Approve Purchase" button
+
+- John verifies items are reasonable
+- John clicks "Approve Purchase"
+- Confirmation: "Approve this purchase? This will calculate costs for all participants."
+- John confirms
+- System:
+  * Updates grocery_purchase.approved_by = john_id
+  * Triggers Edge Function: calculate-meal-costs
+  
+  Calculate Meal Costs Function:
+  - Gets all meal participants (17 users)
+  - For each user, calculates share based on meal types:
+    * Full meals (breakfast+lunch+dinner): 100% share
+    * Lunch only: 40% share
+    * Dinner only: 50% share
+    * Breakfast only: 30% share
+    * Adjust for water inclusion (+₹50 if included)
+  
+  Example calculations:
+  - Sarah (Full meals + water): ₹4,500 / 17 = ₹265 + ₹50 = ₹315
+  - Mike (Lunch + Dinner only, no water): ₹265 × 0.90 = ₹238
+  - Lisa (Dinner only): ₹265 × 0.50 = ₹132
+  
+  - Creates user_bills for each participant
+  - Adds to their monthly bill
+  - Sends notifications to all
+  
+- John sees: "Purchase approved and costs calculated"
+
+All Meal Participants:
+- Receive notification: "This week's meal cost: ₹315" (amount varies per user)
+- Can view in Bills section
+- Amount added to next month's bill
+
+DAY 7 (Dec 7, Sunday Evening): TEAM RATING
+-------------------------------------------
+System:
+- Week ends
+- Sends notification to all meal participants (except Team A):
+  "Rate this week's grocery team (Sarah & Mike)"
+
+Other Users (John, Lisa, etc.):
+- Click notification
+- Rate Grocery Team Modal opens:
+  * Team: Sarah & Mike (photos from Cloudinary)
+  * Week: Dec 1-7
+  * Total Spent: ₹4,500
+  * Rating categories (1-5 stars each):
+    - Budget Management: ⭐⭐⭐⭐⭐ (5 stars - came under budget)
+    - Quality of Items: ⭐⭐⭐⭐⭐ (5 stars - fresh items)
+    - Timeliness: ⭐⭐⭐⭐⭐ (5 stars - shopped early in week)
+    - Communication: ⭐⭐⭐⭐☆ (4 stars - good)
+  * Overall rating: Auto-averages to 4.75 stars
+  * Feedback (optional): "Great job! Everything was fresh and within budget."
+  * Submit button
+
+- User submits rating
+- System records rating
+- After all users rate (or deadline passes):
+  * Calculates average rating for Team A: 4.8 stars
+  * Awards loyalty points to Sarah & Mike: +25 points each (rating ≥ 4.0)
+  * Sends notification: "Your team received 4.8 stars! +25 points"
+
+Sarah & Mike:
+- Receive notification: "🌟 Your team was rated 4.8 stars! +25 points"
+- Can view detailed feedback
+- Loyalty points updated:
+  * Sarah: 75 → 100 points
+  * Mike: 50 → 75 points
+
+RESULT: Complete grocery cycle from shopping to payment to rating
+
+
+================================================================================
+FLOW 4: TASK COMPLETION WITH PHOTO PROOF
+================================================================================
+
+ACTORS: User (Sarah)
+CLOUDINARY FOLDERS: /tasks/{task_id}/proofs/{sarah_id}/
+
+TODAY: Dec 10, Sarah's assigned task: Clean Kitchen
+
+MORNING (7:00 AM): TASK REMINDER
+---------------------------------
+System:
+- Sends notification: "☀️ Good morning! Your task today: Clean Kitchen"
+- Email sent (if enabled)
+
+Sarah:
+- Wakes up, sees notification
+- Opens app → "My Tasks" page
+- Sees Today's Tasks section:
+  * Clean Kitchen 🧹
+  * Status: Pending
+  * Due: Today (Dec 10)
+  * Estimated Time: 30 minutes
+  * Reward: +20 points
+  * Difficulty: Easy
+  * "Start Task" button
+
+AFTERNOON (3:00 PM): ANOTHER REMINDER
+--------------------------------------
+System:
+- Sends notification: "⏰ Reminder: Clean Kitchen task due today"
+
+Sarah decides to do it now
+
+AFTERNOON (3:30 PM): START TASK
+--------------------------------
+Sarah:
+- Opens app → My Tasks
+- Clicks "Start Task" on Clean Kitchen
+- Confirmation: "Start this task now?"
+- Sarah confirms
+- System:
+  * Updates task_assignments.status = 'started'
+  * Records task_assignments.started_at = NOW()
+  * Shows timer on task card
+  
+- Task card now shows:
+  * Status: In Progress (yellow badge)
+  * Timer: 00:00:15 (counting up)
+  * "Complete Task" button (now enabled)
+
+Sarah:
+- Goes to kitchen
+- Cleans countertops
+- Washes dishes
+- Mops floor
+- Takes 25 minutes
+
+AFTERNOON (3:55 PM): COMPLETE TASK
+-----------------------------------
+Sarah (back in kitchen after cleaning):
+- Opens app → My Tasks
+- Task card shows Timer: 00:25:30
+- Clicks "Complete Task" button
+- Complete Task Modal opens:
+
+  Upload Completion Proof:
+  - Instructions: "Take photos of the cleaned area"
+  - "Take Photo" button
+  - "Upload from Gallery" button
+  - Multiple photos allowed
+  
+  - Sarah clicks "Take Photo"
+  - Camera opens (browser camera permission)
+  - Sarah takes photo 1: Clean countertops
+  - Cloudinary uploads:
+    * Stores: /roommate-manager/tasks/kitchen_clean_001/proofs/sarah_id/photo_1.jpg
+  - Thumbnail preview shows
+  
+  - Sarah clicks "Take Photo" again
+  - Takes photo 2: Clean floor
+  - Cloudinary uploads:
+    * Stores: /roommate-manager/tasks/kitchen_clean_001/proofs/sarah_id/photo_2.jpg
+  - Two thumbnails now showing
+  
+  Add Notes (optional):
+  - Text area: Sarah types "Deep cleaned. Organized spice rack too."
+  
+  - Click "Submit Completion"
+  - System:
+    * Updates task_assignments:
+      - status = 'completed'
+      - completed_at = NOW()
+      - completion_proof_url = [array of 2 Cloudinary URLs]
+      - notes = "Deep cleaned..."
+    * Time taken: 25 minutes (started_at to completed_at)
+    * Sends notification to admin (if verification enabled)
+    * If auto-approve enabled:
+      - Awards +20 loyalty points immediately
+      - Sends notification: "Task completed! +20 points"
+    * If admin verification required:
+      - Status stays 'completed' but points pending
+      - Notification: "Task submitted for verification"
+
+Sarah sees: "Task completed successfully! Awaiting admin verification."
+
+EVENING (6:00 PM): ADMIN VERIFICATION
+--------------------------------------
+Admin John:
+- Opens "Task Verification Queue"
+- Sees Sarah's completed task:
+  * Task: Clean Kitchen
+  * User: Sarah Johnson (photo from Cloudinary)
+  * Completed: Dec 10, 3:55 PM
+  * Time Taken: 25 minutes (within estimate of 30)
+  * Completion Photos: 2 photos (thumbnails from Cloudinary)
+  * Notes: "Deep cleaned. Organized spice rack too."
+  * Actions: "Verify" | "Reject"
+
+- John clicks "Verify"
+- Verify Task Modal opens:
+  * Shows all task details
+  * Completion photos full-size (Cloudinary URLs):
+    - Photo 1: Sparkling clean countertops ✓
+    - Photo 2: Shiny clean floor ✓
+  * Quality Rating: Stars (1-5)
+    - John gives: ⭐⭐⭐⭐⭐ (5 stars - excellent work)
+  * Admin Notes: John types "Excellent work! Even organized spices."
+  * "Approve & Award Points" button
+
+- John clicks "Approve & Award Points"
+- System:
+  * Updates task_assignments.verified_by = john_id
+  * Records quality_rating = 5
+  * Since rating is 5 stars (excellent):
+    - Awards +30 points (high-quality completion bonus)
+  * Creates loyalty_events record
+  * Updates Sarah's points: 100 → 130
+  * Checks for achievements:
+    - Sarah has completed 5 tasks total
+    - No achievement unlocked yet (Task Master needs 50)
+  * Sends notification to Sarah: "✅ Task verified! 5-star rating! +30 points"
+
+Sarah:
+- Receives notification: "✅ Task verified! 5-star rating! +30 points"
+- Opens app
+- Dashboard shows:
+  * Loyalty Points: 130 (Bronze tier)
+  * Tasks completed: 5
+  * Average rating: 4.8 stars
+- Opens "My Tasks"  → "Task History"
+- Sees Clean Kitchen task:
+  * Completed: Dec 10, 3:55 PM
+  * Time: 25 min
+  * Rating: ⭐⭐⭐⭐⭐
+  * Points Earned: +30
+  * Admin Comment: "Excellent work! Even organized spices."
+
+RESULT: Task completed with photo proof, verified, and points awarded
+
+
+================================================================================
+FLOW 5: RESOURCE BOOKING - WASHING MACHINE
+================================================================================
+
+ACTORS: User (Sarah)
+CLOUDINARY FOLDERS: N/A (no images for bookings)
+
+TODAY: Dec 11, Sarah needs to wash clothes
+
+MORNING (9:00 AM): PLAN BOOKING
+--------------------------------
+Sarah:
+- Opens app
+- Clicks "Resources" from sidebar
+- Sees available resources:
+  * 🧺 Washing Machine (card with photo from Cloudinary)
+  * 👔 Iron Box
+  * 🌞 Clothes Drying Area
+  * 🖨️ Printer
+
+- Sarah clicks "Washing Machine" card
+- Redirected to Washing Machine Booking page
+
+Booking Page Shows:
+- Resource header:
+  * Name: Washing Machine
+  * Photo (from Cloudinary)
+  * Operating Hours: 6:00 AM - 11:00 PM
+  * Slot Duration: 30 minutes
+  * Max bookings per user per week: 5
+  * Your bookings this week: 2/5
+
+- Week calendar (Dec 11-17):
+  * Grid: Days (columns) × Time slots (rows)
+  * Color coding:
+    - Green slots: Available
+    - Yellow slots: Your bookings
+    - Red slots: Booked by others
+    - Gray slots: Outside operating hours
+
+- Sarah views today (Dec 11):
+  * 2:00 PM slot: Green (Available)
+  * 2:30 PM slot: Green (Available)
+  * 3:00 PM slot: Red (Booked - Mike)
+  * 3:30 PM slot: Green (Available)
+
+- Sarah clicks 2:00 PM slot
+- Create Booking Modal opens:
+  * Resource: Washing Machine
+  * Date: Dec 11, 2024
+  * Time: 2:00 PM - 2:30 PM
+  * Duration: 30 minutes (default)
+  * Option to extend: "Book next slot too?" (checkbox)
+    - Sarah checks this (needs 1 hour total)
+  * Updated: 2:00 PM - 3:00 PM (2 consecutive slots)
+  * Notes (optional): Sarah types "2 loads of laundry"
+  * "Confirm Booking" button
+
+- Sarah clicks "Confirm Booking"
+- System validates:
+  * User hasn't exceeded weekly limit (2/5, now 4/5) ✓
+  * Slots are available ✓
+  * No overlapping bookings ✓
+- System:
+  * Creates 2 resource_bookings records (2 slots)
+  * Sends confirmation notification
+  * Sends calendar invite (future feature)
+
+- Success message: "Booking confirmed! 2:00 PM - 3:00 PM on Dec 11"
+- Calendar updates: Slots now yellow (Sarah's booking)
+
+AFTERNOON (1:00 PM): 1-HOUR REMINDER
+-------------------------------------
+System:
+- Sends notification: "⏰ Your washing machine slot starts in 1 hour"
+
+Sarah sees notification, prepares laundry
+
+AFTERNOON (1:45 PM): 15-MIN REMINDER
+-------------------------------------
+System:
+- Sends notification: "🧺 Your washing machine slot starts in 15 minutes"
+
+Sarah gathers laundry, heads to laundry room
+
+AFTERNOON (2:00 PM): SLOT START
+--------------------------------
+System:
+- Sends notification: "Your slot has started! Check in now."
+
+Sarah (at washing machine):
+- Opens app → Resources → My Bookings
+- Sees active booking:
+  * Washing Machine
+  * 2:00 PM - 3:00 PM
+  * Status: Active (green pulse animation)
+  * "Check In" button (large, prominent)
+  * Timer: 00:00 (slot just started)
+
+- Sarah clicks "Check In"
+- Confirmation: "Check in to Washing Machine?"
+- Sarah confirms
+- System:
+  * Updates resource_bookings.status = 'checked_in'
+  * Records checked_in_at = NOW()
+  * Starts usage timer
+
+- Booking card updates:
+  * Status: In Use (blue badge)
+  * Usage Timer: 00:02:15 (counting up)
+  * "Check Out" button (now enabled)
+  * Time Remaining: 57:45 (60 min slot - usage time)
+
+Sarah:
+- Loads first laundry batch
+- Starts washing machine
+- Waits 30 minutes
+- Moves to dryer
+- Loads second batch
+- Starts again
+
+AFTERNOON (2:55 PM): 5-MIN WARNING
+-----------------------------------
+System:
+- Sends notification: "⏰ 5 minutes remaining in your slot"
+
+Sarah sees notification, almost done with second load
+
+AFTERNOON (3:00 PM): CHECK OUT
+-------------------------------
+Sarah (finishes loading dryer):
+- Opens app → My Bookings
+- Sees:
+  * Usage Timer: 00:58:30
+  * Time Remaining: 01:30
+  * "Check Out" button
+
+- Sarah clicks "Check Out"
+- Confirmation: "Check out from Washing Machine?"
+- Sarah confirms
+- System:
+  * Updates resource_bookings.status = 'checked_out'
+  * Records checked_out_at = NOW()
+  * Calculates actual usage: 58 minutes 30 seconds
+  * Awards +10 loyalty points (on-time usage bonus)
+  * Updates Sarah's points: 130 → 140
+  * Sends notification: "Checked out successfully! +10 points"
+  * Releases slot for others
+
+- Success message: "Thank you for checking out on time!"
+
+Sarah's Stats Updated:
+- Total resource bookings: 10
+- On-time check-out rate: 100%
+- Loyalty points from resources: +50
+
+RESULT: Successful resource booking from reservation to check-out
+
+
+================================================================================
+FLOW 6: WATCHING ADS FOR REVENUE SHARING
+================================================================================
+
+ACTORS: User (Sarah)
+CLOUDINARY FOLDERS: N/A
+
+TODAY: Dec 12, Sarah wants to earn extra money
+
+MORNING (8:00 AM): AD AVAILABILITY NOTIFICATION
+------------------------------------------------
+System:
+- Sends notification: "💰 Morning ads available! Watch 5 ads, earn ₹8 + points"
+
+Sarah:
+- Sees notification
+- Clicks → Redirected to "Watch Ads" page
+
+Watch Ads Page Shows:
+- Header: "Earn Rewards by Watching Ads"
+- Subtitle: "70% of revenue shared with you and your roommates!"
+
+- Session Cards:
+  
+  Morning Session (6 AM - 12 PM):
+  * Status: 5 ads available ✓
+  * Estimated earnings: ₹8
+  * Loyalty points: +2.5
+  * "Start Watching" button (green, large)
+  
+  Evening Session (6 PM - 11 PM):
+  * Status: Not available yet (gray)
+  * Available in: 10 hours
+  * "Come back later" message
+
+- Today's Progress:
+  * Ads watched: 0/10
+  * Earnings today: ₹0
+  * Progress bar: 0%
+
+- This Month Stats:
+  * Total ads: 120
+  * Total earned: ₹96
+  * Streak: 12 days 🔥
+
+- All-Time Stats:
+  * Total ads: 450
+  * Total earned: ₹360
+  * Rank in apartment: #2
+
+- Sarah clicks "Start Watching" (Morning Session)
+
+MORNING (8:01 AM): AD SESSION STARTS
+-------------------------------------
+Ad Watching Interface:
+- Full screen (or modal)
+- Header: "Ad 1 of 5"
+- Instructions: "Watch the full ad to earn rewards"
+- Timer: Ad loading...
+
+AD 1:
+- Rewarded video ad loads (Google AdMob)
+- 30-second ad plays: Commercial for mobile game
+- No skip button (rewarded ads must be watched fully)
+- Sarah watches
+- Timer: 00:30 remaining → 00:00
+- Ad completes
+
+System:
+- Records ad view in database
+- Calculates revenue (based on AdMob CPM, e.g., ₹1.60 per ad)
+- Shows: "Ad 1 complete! +₹1.60"
+- Short animation: Coins falling
+
+Automatically loads AD 2:
+- Header now: "Ad 2 of 5"
+- 25-second ad plays: Snack commercial
+- Sarah watches
+- Ad completes: "+₹1.60"
+
+AD 3:
+- 30-second ad: Car advertisement
+- Sarah watches
+- "+₹1.60"
+
+AD 4:
+- 20-second ad: Clothing brand
+- Sarah watches
+- "+₹1.60"
+
+AD 5 (Final):
+- 30-second ad: Food delivery app
+- Sarah watches
+- Ad completes
+
+MORNING (8:05 AM): SESSION COMPLETE
+------------------------------------
+All 5 ads watched (total ~2.5 minutes)
+
+Success Screen:
+- 🎉 "Session Complete!"
+- Summary:
+  * Ads watched: 5
+  * Time spent: 2 min 35 sec
+  * Earnings: ₹8.00
+  * Loyalty points: +2.5 points
+  * Streak: 13 days 🔥
+- Streak bonus: "13-day streak! 1.2× earnings multiplier active"
+- Adjusted earnings: ₹8.00 × 1.2 = ₹9.60
+
+System:
+- Creates ad_views record:
+  * user_id: sarah_id
+  * view_date: Dec 12
+  * session_type: 'morning'
+  * ads_watched_count: 5
+  * revenue_generated: ₹9.60
+  * points_earned: 2.5
+- Updates Sarah's loyalty points: 140 → 142.5
+- Updates streak: 13 days
+- Sends notification: "Morning session complete! ₹9.60 earned"
+
+Sarah's Updated Dashboard:
+- Today's Progress:
+  * Ads watched: 5/10 (50%)
+  * Earnings today: ₹9.60
+- Morning Session:
+  * Status: ✓ Completed (green checkmark)
+  * "Already watched today"
+- Evening Session:
+  * Status: 5 ads available (after 6 PM)
+
+EVENING (7:00 PM): EVENING SESSION NOTIFICATION
+------------------------------------------------
+System:
+- Sends notification: "🌙 Evening ads available! Watch 5 more ads, earn ₹8"
+
+Sarah:
+- Opens app → Watch Ads page
+- Evening Session now active
+- Clicks "Start Watching"
+
+(Repeats same process as morning)
+
+EVENING (7:05 PM): BOTH SESSIONS COMPLETE
+------------------------------------------
+After evening session:
+
+Daily Summary Screen:
+- 🎉 "All ads watched today!"
+- Today's Total:
+  * Ads watched: 10/10 ✓
+  * Total earnings: ₹19.20
+  * Loyalty points: +5
+  * Streak: 13 days (maintained)
+- Message: "Come back tomorrow for more rewards!"
+
+System:
+- Records second ad_views record
+- Total for Dec 12:
+  * Morning: ₹9.60
+  * Evening: ₹9.60
+  * Total: ₹19.20
+- Updates monthly totals:
+  * December ads: 120 → 130
+  * December earnings: ₹96 → ₹115.20
+
+END OF MONTH (Dec 31): PAYOUT CALCULATION
+------------------------------------------
+System (Automated - Edge Function runs Dec 31, 11:59 PM):
+- Calculates December revenue for Greg's Apartment:
+  * Total apartment ad revenue: ₹800
+  * Platform share (30%): ₹240
+  * Apartment share (70%): ₹560 (to be distributed)
+  
+- Distribution among users:
+  * Sarah: 130 ads → Revenue: ₹200
+  * John: 100 ads → Revenue: ₹150
+  * Mike: 80 ads → Revenue: ₹120
+  * Lisa: 120 ads → Revenue: ₹180
+  * Total: 430 ads, ₹650 gross revenue
+
+- Calculate Sarah's share:
+  * Sarah's contribution: 130/430 = 30.23%
+  * Sarah's share: ₹560 × 30.23% = ₹169.30
+  * Sarah is Platinum tier: +5% bonus
+  * Final: ₹169.30 × 1.05 = ₹177.77
+
+- Creates ad_payouts record:
+  * user_id: sarah_id
+  * payout_month: December 2024
+  * total_ads_watched: 130
+  * total_revenue_earned: ₹177.77
+  * payout_status: 'pending'
+
+- Sends notification: "💰 December earnings: ₹177.77! Payout pending."
+- Email sent with detailed breakdown
+
+JANUARY (Jan 5): ADMIN PROCESSES PAYOUT
+----------------------------------------
+Admin John:
+- Opens "Ad Revenue Dashboard"
+- Sees "Pending Payouts" section:
+  * Sarah: ₹177.77
+  * John: ₹140 (his own share)
+  * Mike: ₹105
+  * Lisa: ₹158
+
+- For Sarah, clicks "Process Payout"
+- Payout Modal:
+  * User: Sarah Johnson
+  * Amount: ₹177.77
+  * Month: December 2024
+  * Ads watched: 130
+  * Payment method: (admin selects) Bank Transfer
+  * Reference number: (admin enters) TXN789456123
+  * "Mark as Paid" button
+
+- John transfers ₹177.77 to Sarah's bank account
+- John enters transaction ID
+- John clicks "Mark as Paid"
+- System:
+  * Updates ad_payouts.payout_status = 'paid'
+  * Records paid_at, payment_method, payment_reference
+  * Sends notification to Sarah: "✅ Payout received! ₹177.77"
+
+Sarah:
+- Receives notification
+- Opens "My Earnings" page
+- Sees:
+  * December 2024: ✓ Paid (green badge)
+  * Amount: ₹177.77
+  * Paid on: Jan 5, 2025
+  * Payment method: Bank Transfer
+  * Reference: TXN789456123
+
+RESULT: Complete ad revenue cycle from watching to earning to payout
+
+
+================================================================================
+FLOW 7: DISPUTE RESOLUTION - BILL DISPUTE
+================================================================================
+
+ACTORS: User (Sarah), Admin (John)
+CLOUDINARY FOLDERS: /disputes/{dispute_id}/evidence/
+
+SCENARIO: Sarah was charged for drinking water but she opted out
+
+DAY 1 (Dec 15): SARAH DISCOVERS ISSUE
+--------------------------------------
+Sarah:
+- Opens "My Bills" page
+- Sees December bills:
+  * Rent: ₹10,000 ✓ Paid
+  * Electricity: ₹800 (Pending)
+  * Internet: ₹600 (Pending)
+  * Community Meal: ₹1,200 (Pending)
+  * **Drinking Water: ₹150 (Pending)** ← Issue here
+
+- Sarah clicks "Drinking Water" bill
+- Bill Detail Page shows:
+  * Total apartment water cost: ₹600
+  * Split among: 4 users
+  * Your share: ₹150
+
+- Sarah thinks: "Wait, I opted out of drinking water in community meal settings!"
+
+- Sarah clicks "Dispute This Amount" button
+- Create Dispute Modal opens:
+
+  Step 1: Dispute Type
+  - Pre-selected: Payment Dispute ✓
+
+  Step 2: Details
+  - Dispute Title: Sarah types "Incorrectly charged for drinking water"
+  - Description: (text area)
+    Sarah types: "I opted out of drinking water in my community meal 
+    settings on Dec 1. I should not be charged ₹150 for water."
+  - Tag Involved Parties: (optional)
+    Sarah selects: Admin John
+  - Priority: (dropdown)
+    Sarah selects: Medium
+
+  Step 3: Evidence
+  - Upload supporting documents:
+    * Sarah clicks "Upload Evidence"
+    * Screenshots her community meal settings showing "Include Water: NO"
+    * Uploads: settings_screenshot.jpg
+    * Cloudinary stores: /roommate-manager/disputes/dispute_101/evidence/sarah_evidence_1.jpg
+  - Preview shows screenshot
+  - Click "Next"
+
+  Step 4: Review & Submit
+  - Shows all dispute info
+  - Expected resolution: (optional)
+    Sarah types: "Remove ₹150 water charge from my bill"
+  - Click "Submit Dispute"
+
+System:
+- Creates disputes record:
+  * id: dispute_101
+  * created_by: sarah_id
+  * dispute_type: 'payment'
+  * title: "Incorrectly charged for drinking water"
+  * description: (Sarah's text)
+  * evidence_urls: [Cloudinary URL]
+  * involved_parties: [sarah_id, john_id]
+  * status: 'open'
+- Creates dispute_messages (first message with description)
+- Updates user_bills.payment_status = 'disputed' for water bill
+- Sends notification to John: "New dispute from Sarah: Water charge"
+- Sends confirmation to Sarah: "Dispute #101 created"
+
+Success message: "Dispute submitted. Admin will review shortly."
+
+DAY 1 (Later): ADMIN RECEIVES NOTIFICATION
+-------------------------------------------
+Admin John:
+- Receives notification: "New dispute from Sarah"
+- Opens "Disputes Dashboard"
+- Sees open disputes:
+  * Dispute #101 (NEW - red badge)
+  * Type: Payment
+  * Created by: Sarah
+  * Title: "Incorrectly charged for drinking water"
+  * Created: 2 hours ago
+  * Priority: Medium
+  * Status: Open
+
+- John clicks on Dispute #101
+- Redirected to Dispute Thread Page:
+
+  Header:
+  - Dispute #101: Incorrectly charged for drinking water
+  - Status: Open 🟢
+  - Created by: Sarah Johnson (photo from Cloudinary)
+  - Involved: Sarah, John (Admin)
+  - Created: Dec 15, 10:30 AM
+
+  Chat Thread:
+  - [10:30 AM] Sarah (Initial message):
+    "I opted out of drinking water in my community meal settings on Dec 1. 
+    I should not be charged ₹150 for water."
+    📎 Attachment: settings_screenshot.jpg (from Cloudinary, clickable)
+
+  Admin Panel (collapsed):
+  - Admin Notes: (internal)
+  - Actions:
+    * Create Poll
+    * Adjust Bill
+    * Assign to Admin
+    * Close as Resolved
+    * Close as Invalid
+
+DAY 1 (30 min later): ADMIN INVESTIGATES
+-----------------------------------------
+John:
+- Clicks attachment: Views Sarah's settings screenshot (full size from Cloudinary)
+- Screenshot clearly shows: "Include Water: NO ✓"
+- John checks system records:
+  * Opens Community Meal Participants
+  * Finds Sarah's record
+  * Confirms: include_water = false
+  * Checks water bill split calculation
+  * Finds bug: Sarah was included in split incorrectly
+
+- John types in dispute chat:
+  "Hi Sarah, I've reviewed your evidence. You're absolutely right - you opted 
+  out of water on Dec 1. This was a system error in the bill calculation. 
+  I'm adjusting your bill now."
+
+- Message sent with timestamp [11:00 AM]
+- Sarah receives notification: "John replied to your dispute"
+
+- John clicks "Adjust Bill" in Admin Panel
+- Adjust Bill Modal:
+  * Current Bill: Water - ₹150
+  * New Amount: ₹0 (John enters)
+  * Reason: "User opted out of water, billing error"
+  * "Confirm Adjustment" button
+
+- John clicks "Confirm Adjustment"
+- System:
+  * Updates user_bills:
+    - amount_due: ₹150 → ₹0
+    - payment_status: 'disputed' → 'paid' (zero amount = auto-paid)
+  * Logs adjustment in audit trail
+  * Creates notification for Sarah
+
+- John returns to dispute thread
+- Types final message:
+  "Your bill has been adjusted to ₹0. Apologies for the inconvenience!"
+
+- John clicks "Close as Resolved" in Admin Panel
+- Resolution Modal:
+  * Resolution Summary: (required)
+    John types: "Billing error confirmed. User correctly opted out of water. 
+    Bill adjusted to ₹0."
+  * Actions Taken: (checklist)
+    ✓ Adjusted bill amount
+    ☐ Reassigned task
+    ☐ Issued warning
+    ☐ No action needed
+    ☐ Other
+  * Notify all parties: ✓ (checked)
+  * "Close Dispute" button
+
+- John clicks "Close Dispute"
+- System:
+  * Updates disputes.status = 'resolved'
+  * Records resolved_by = john_id, resolved_at = NOW()
+  * Sends notification to Sarah: "Your dispute has been resolved!"
+  * Email sent with resolution summary
+
+DAY 1 (Afternoon): SARAH RECEIVES RESOLUTION
+---------------------------------------------
+Sarah:
+- Receives notification: "✅ Your dispute has been resolved!"
+- Clicks notification → Opens Dispute Thread
+- Sees complete conversation:
+  * Her initial complaint
+  * John's investigation
+  * John's resolution message
+  * Resolution summary (yellow box):
+    "Resolved by John on Dec 15, 11:15 AM
+    Resolution: Billing error confirmed. User correctly opted out of water. 
+    Bill adjusted to ₹0."
+
+- Sarah clicks "View Updated Bill"
+- Water bill now shows:
+  * Amount Due: ₹0
+  * Status: Paid ✓ (green)
+  * Note: "Adjusted by admin - billing error"
+
+Sarah is satisfied!
+
+System Updates:
+- No loyalty points deducted (dispute was valid)
+- Sarah's dispute history: 1 dispute, 1 won
+- John's admin rating maintained (handled quickly)
+
+RESULT: Successful dispute resolution with bill adjustment
+
+
+================================================================================
+END OF USER FLOWS DOCUMENT
+================================================================================
+
+These flows demonstrate the complete user experience across all major features:
+1. ✅ Onboarding with Cloudinary document uploads
+2. ✅ Monthly payment cycle with proof uploads
+3. ✅ Grocery shopping with OCR receipt scanning
+4. ✅ Task completion with photo proofs
+5. ✅ Resource booking and check-in/out
+6. ✅ Ad watching and revenue sharing
+7. ✅ Dispute resolution with evidence
+
+All image storage utilizes Cloudinary for:
+- Profile photos
+- ID documents
+- Payment proofs
+- Grocery receipts
+- Task completion photos
+- Dispute evidence
+
+Cloudinary transformations applied:
+- Face detection for profiles
+- OCR optimization for receipts
+- Compression and format optimization
+- Secure signed URLs throughout
+
+================================================================================
+

@@ -1,0 +1,1411 @@
+PRODUCT REQUIREMENTS DOCUMENT
+ROOMMATE MANAGEMENT WEB APPLICATION
+
+==================================================
+1. PRODUCT OVERVIEW
+==================================================
+
+Product Name: RoomMate Manager
+
+Target Markets: India, UAE, Nigeria, Kuwait, Global
+
+Target Users: Students, Working professionals in shared accommodations, Property managers
+
+Core Value: Automated rotating grocery teams, community meal management, hierarchical bed pricing, identity verification, loyalty points, democratic dispute resolution
+
+
+==================================================
+2. USER MANAGEMENT
+==================================================
+
+2.1 AUTHENTICATION
+- Phone number OTP (primary)
+- Email OTP (secondary)
+- 6-digit verification code
+- JWT token authentication
+- 30-day session expiry
+- Multi-device login support
+
+2.2 USER PROFILES
+Required Fields:
+- Full name
+- Phone number (unique)
+- Email address (unique)
+- Profile photo
+- Identity card/Government ID
+- Move-in date
+
+Optional Fields:
+- Age/Date of birth
+- Resume/CV
+- Labor card
+- Relationship to other roommates
+- Emergency contact
+- Move-out date
+
+2.3 USER ROLES
+Admin:
+- Approve/reject members
+- Create and modify bills
+- Verify payments
+- Create polls
+- Modify settings
+- Assign loyalty points
+- Remove members
+
+Member:
+- View apartment info
+- View and pay bills
+- Upload receipts
+- Participate in polls
+- Submit grocery receipts
+- Raise disputes
+- View loyalty points
+
+Guest:
+- Temporary access (max 30 days)
+- View-only access
+- Cannot participate in bills
+- Cannot vote
+
+
+==================================================
+3. APARTMENT MANAGEMENT
+==================================================
+
+3.1 HIERARCHICAL STRUCTURE
+Apartment > Room > Bed
+
+Bed Types:
+- Flat Bed (highest price)
+- Lower Bed (medium price)
+- Upper Bed (lowest price)
+
+Each level has:
+- Name (customizable)
+- Pricing (bed level)
+- Occupancy status
+- Current occupant
+
+3.2 APARTMENT SETTINGS
+- Default currency (INR/AED/NGN/KWD)
+- Payment reminder schedule
+- Late payment fine rate
+- Loyalty point rules
+- Community meal enabled/disabled
+- Voting quorum percentage (default 50%)
+- Dispute escalation timeout (default 48 hours)
+
+3.3 BILL TYPES
+Default:
+- Rent (required)
+- Electricity
+- Internet
+- Gas
+- Water
+- Grocery (community meal only)
+- Drinking water (community meal only)
+- Custom bill types
+
+3.4 INVITATION SYSTEM
+Methods:
+- Unique invite link (30-day expiry)
+- QR code (downloadable)
+
+Process:
+1. Admin generates invite
+2. Member receives link/QR
+3. Member completes profile with ID
+4. Admin approves/rejects
+5. Approved member gains access
+
+
+==================================================
+4. BILL AND PAYMENT MANAGEMENT
+==================================================
+
+4.1 BILL TYPES CONFIGURATION
+Properties:
+- Name
+- Calculation method (equal_split, per_bed, prorated, custom)
+- Opt-in required (yes/no)
+- Proration by occupancy (yes/no)
+- Recurrence (monthly, quarterly, annual, one_time)
+- Default due date
+- Grace period (default 3 days)
+
+4.2 BILL CREATION
+Process:
+1. Admin selects bill type
+2. System calculates eligible members
+3. Admin enters total amount
+4. System calculates individual splits
+5. Admin can manually adjust splits
+6. Admin publishes bill
+7. Members receive notifications
+
+Calculation Methods:
+
+Equal Split:
+Amount = Total / Number of members
+
+Per Bed:
+Amount = Bed monthly rate (prorated if partial occupancy)
+
+Prorated:
+Days in period = End date - Start date + 1
+Days occupied = MIN(Move-out, Period end) - MAX(Move-in, Period start) + 1
+Amount = (Monthly rate / Days in period) × Days occupied
+
+4.3 PAYMENT TRACKING
+Flow:
+1. Member views bill
+2. Member pays externally (bank/UPI/cash)
+3. Member marks as paid in app
+4. Member enters payment details:
+   - Payment method
+   - Transaction reference
+   - Payment date
+   - Receipt upload (optional)
+   - Notes
+5. Status: pending_verification
+6. Admin reviews
+7. Admin approves or rejects
+8. If approved: Loyalty points awarded
+9. If rejected: Member can resubmit
+
+4.4 PAYMENT REMINDERS
+Schedule:
+- 5 days before: First reminder (Email)
+- 3 days before: Second reminder (Email + Push)
+- 1 day before: Final reminder (Email + Push + SMS)
+- Due date: Due today (Email + Push + SMS)
+- 1 day overdue: Overdue alert (Email + Push + SMS)
+- 3 days overdue: Serious (Email + Push + SMS + WhatsApp)
+- 7 days overdue: Critical (All channels)
+
+Penalties:
+- 1 day overdue: -25 loyalty points
+- 3 days overdue: -50 points + admin notification
+- 7 days overdue: -100 points + apartment notification
+- 14 days overdue: Member marked inactive
+
+4.5 PAYMENT DISPUTES
+Process:
+1. Member raises dispute with reason and evidence
+2. Admin has 48 hours to respond
+3. Option 1: Admin accepts and adjusts bill
+4. Option 2: Admin rejects with explanation
+5. Option 3: No response = auto-escalate to voting
+6. If voting: 48-hour poll, 50% quorum, majority wins
+7. Resolution implemented automatically
+8. Dispute closed
+
+==================================================
+5. COMMUNITY MEAL SYSTEM
+==================================================
+
+5.1 CHEF MANAGEMENT
+Chef Profile:
+- Full name
+- Profile photo
+- Phone number
+- Email
+- Identity card (required)
+- Monthly salary
+- Start date
+- Status (active, on_leave, terminated)
+- Emergency contact
+
+Salary Split:
+Individual contribution = Chef salary / Number of meal participants
+
+5.2 MEAL MENU
+Structure:
+- Weekly menu (Monday to Sunday)
+- Per day: Breakfast, Lunch, Dinner (each optional)
+- Each meal: Main items (Rice, Roti, Porotta), Curries, Sides, Dessert
+- Off days/meals supported
+
+Management:
+- Admin creates weekly menu
+- Admin can publish or save as draft
+- Members receive notifications
+- Voting for menu changes
+
+5.3 MEAL PARTICIPATION TYPES
+1. Full Meal Plan: Breakfast + Lunch + Dinner + Water
+2. Lunch + Dinner: No breakfast, water optional
+3. Dinner Only: 1/3 meal cost + chef + grocery split
+4. Lunch Only: 1/3 meal cost + chef + grocery split
+5. Custom: Admin-defined
+
+Opt-in/Opt-out:
+- Members select meal plan
+- Changes effective next billing cycle
+- Limited to once per month
+- Grace period for new members (first week)
+
+5.4 ROTATING GROCERY TEAMS
+Team Formation:
+- Automatic based on meal participants
+- Team size: 2-4 members
+- Example: 17 people = 7 teams of 2 + 1 team of 3
+- Admin can manually adjust
+- Weekly rotation
+
+Grocery Flow:
+1. Notification 7 days before team's turn
+2. Team purchases groceries, gas, water
+3. Team takes receipt photos
+4. Team uploads receipts (max 10 photos)
+5. OCR extracts items and amounts
+6. Team member reviews and edits
+7. Team submits for admin review
+8. Admin approves or rejects
+9. If approved: Cost calculated and split
+10. Bills generated for all meal participants
+11. Other members rate team (1-5 stars)
+
+Budget Models:
+Fixed Budget:
+- Admin sets amount per person
+- If over budget: Team pays difference
+- If under budget: Savings distributed
+
+Dynamic Budget:
+- No fixed amount
+- Total spent split equally
+
+5.5 OCR RECEIPT PROCESSING
+Process:
+1. Upload receipt photo (max 5MB JPG/PNG)
+2. Client-side compression
+3. OCR extraction (Tesseract.js MVP, Azure CV production)
+4. Parse: Store name, date, items, quantities, prices, total
+5. Display in editable table
+6. User can add/delete/edit items
+7. Validation: Total must match receipt (±5% tolerance)
+8. Submit for approval
+
+Extracted Data:
+- Store name
+- Purchase date
+- Line items (name, quantity, unit price, total)
+- Subtotal
+- Tax
+- Total amount
+
+
+==================================================
+6. LOYALTY POINTS SYSTEM
+==================================================
+
+6.1 POSITIVE ACTIONS
+- Complete profile with ID: +500 (one-time)
+- Pay bill on time: +100
+- Pay bill early (3+ days): +150
+- Complete grocery duty on time: +200
+- Receive 4+ star grocery rating: +100
+- Vote in polls: +10 per vote
+- Refer approved member: +500
+- Help resolve dispute: +50 (admin discretion)
+- 6-month on-time streak: +1000 bonus
+
+6.2 NEGATIVE ACTIONS
+- Late payment 1 day: -25
+- Late payment 3 days: -50
+- Late payment 7 days: -100
+- Late payment 14+ days: -200
+- Miss grocery duty: -500
+- Receive <2 star grocery rating: -100
+- Frivolous dispute: -50
+- Violate guidelines: -500 (admin discretion)
+
+6.3 DISPLAY AND USAGE
+- Current balance on dashboard
+- Leaderboard (top 10, optional)
+- Points history with transactions
+- Badges: Bronze (1K), Silver (5K), Gold (10K), Platinum (25K)
+
+Future Usage:
+- Rent discount redemption
+- Skip grocery duty (1000 points)
+- Priority bed selection
+- Vote weight multiplier
+
+
+==================================================
+7. VOTING AND POLLS
+==================================================
+
+7.1 POLL TYPES
+- Menu voting
+- Team formation
+- General decisions
+- Dispute resolution
+- Rule changes
+- Member removal (requires 75% majority)
+
+7.2 POLL PROPERTIES
+- Title and description
+- 2-10 options
+- Start and end date/time
+- Quorum requirement (default 50%)
+- Majority requirement (default 50%)
+- Results visible during voting (yes/no)
+- Anonymous voting (yes/no)
+
+7.3 VOTING FLOW
+1. Admin creates poll
+2. All eligible members notified
+3. Members vote
+4. Real-time vote count updates (if enabled)
+5. Poll closes automatically or manually
+6. Check quorum: Votes / Eligible ≥ Quorum %
+7. If quorum met: Winner determined
+8. If quorum not met: Admin decides
+9. Results published
+10. Action implemented
+
+7.4 DISPUTE ESCALATION TO VOTING
+Trigger: Dispute open 48 hours without admin resolution
+
+Auto-created Poll:
+- Title: "Resolve Dispute: [Title]"
+- Options: "In favor of member" / "In favor of admin"
+- Duration: 48 hours
+- Quorum: 50%
+- Result automatically applied
+
+
+==================================================
+8. VACANCY MANAGEMENT
+==================================================
+
+8.1 VACANCY DISPLAY
+Indicators:
+- Apartment view: Total vacant beds count
+- Room view: Vacant beds highlighted
+- Bed view: Status (Green: Occupied, Red: Vacant)
+
+Alerts:
+- All members notified when bed vacant
+- Admin dashboard shows vacancy
+- Vacancy duration tracked
+
+8.2 MEMBER EXIT
+Process:
+1. Member requests exit with move-out date
+2. Admin checks: All bills paid, tasks done, no disputes
+3. Admin approves or rejects
+4. If approved: Final bill generated (prorated)
+5. Bed marked vacant
+6. Member status: moved_out
+7. Read-only access for 30 days
+
+8.3 GUEST SYSTEM
+- Exiting member can nominate guest
+- Guest duration: max 30 days
+- Guest role: View-only
+- Original member liable for bills
+- Guest pays original member externally
+
+
+==================================================
+9. NOTIFICATIONS
+==================================================
+
+9.1 CHANNELS
+- Email (AWS SES)
+- SMS (Twilio, regional routing)
+- Push (Firebase Cloud Messaging)
+- WhatsApp (Twilio, critical only)
+- In-app (real-time via Supabase)
+
+9.2 NOTIFICATION TYPES
+Bills and Payments:
+- New bill published
+- Payment reminders (5,3,1,0,-1,-3,-7 days)
+- Payment verified/rejected
+
+Community Meals:
+- Weekly menu published
+- Grocery team duty reminder (7,3,1,0 days)
+- Receipt approved/rejected
+- Cost split calculated
+
+Voting:
+- New poll created
+- Poll reminder (24 hours before close)
+- Poll results available
+
+Apartment:
+- New member joined
+- Member exited
+- Bed vacant
+- Settings changed
+
+Disputes:
+- Dispute raised
+- Dispute escalated
+- Dispute resolved
+
+9.3 USER PREFERENCES
+- Enable/disable per channel per notification type
+- Quiet hours (no notifications except critical)
+- Frequency (instant, daily digest, weekly digest)
+- Unsubscribe option in emails
+
+
+==================================================
+10. ADMIN TOOLS
+==================================================
+
+10.1 MEMBER MANAGEMENT
+- View all profiles
+- Approve/reject applications
+- Edit member details
+- Change roles
+- Add/deduct loyalty points
+- Suspend members
+- Remove members
+- View activity logs
+
+10.2 APARTMENT CONFIGURATION
+Settings Pages:
+- General (name, address, currency, fines)
+- Bills (types, calculation methods, due dates)
+- Community Meals (chef, menu, budget, teams)
+- Loyalty Points (action values, leaderboard)
+- Voting (quorum, majority, escalation timeout)
+- Notifications (channels, preferences)
+
+10.3 REPORTING
+Financial Reports:
+- Total bills generated
+- Total payments collected
+- Outstanding amounts
+- Member payment history
+- Grocery spending trends
+- Export: PDF, CSV
+
+Member Analytics:
+- Payment compliance rate
+- On-time payment percentage
+- Loyalty points trend
+- Voting participation
+- Apartment health score
+
+10.4 AUDIT LOGS
+Logged Actions:
+- All admin actions
+- Critical member actions
+- System actions
+
+Log Properties:
+- Action type
+- User ID
+- Timestamp
+- Details (JSON)
+- IP address
+- Device info
+
+Access: Admin only, searchable, exportable, 1-year retention
+
+
+==================================================
+11. TECHNICAL STACK
+==================================================
+
+11.1 FRONTEND
+- Framework: React 18.2+
+- Build: Vite 5.0+
+- Language: TypeScript
+- UI: shadcn/ui (Radix UI)
+- Styling: Tailwind CSS 3.3+
+- Icons: Lucide React
+- Forms: React Hook Form + Zod
+- State: React Query (server), Zustand (global), useState (local)
+- Routing: React Router DOM 6
+- Date: date-fns
+- QR: qrcode.react
+- OCR: Tesseract.js (MVP) / Azure CV (production)
+- Images: Compressor.js
+- Charts: Recharts
+- Toasts: Sonner
+
+11.2 BACKEND
+- Platform: Supabase
+- Database: PostgreSQL 15+
+- Extensions: ltree (hierarchy), pgcrypto (encryption)
+- Auth: Supabase Auth (JWT)
+- Storage: Cloudinary
+- API: Auto-generated REST + GraphQL
+- Functions: Supabase Edge Functions (Deno)
+- Real-time: Supabase Realtime (WebSockets)
+- Cron: Edge Function scheduled jobs
+
+11.3 EXTERNAL SERVICES
+- Email: AWS SES ($0.10/1K emails)
+- SMS: Twilio (regional routing)
+- WhatsApp: Twilio WhatsApp API
+- Push: Firebase Cloud Messaging (free)
+- OCR Production: Azure Computer Vision ($1.50/1K)
+- Images: Cloudinary (free tier 25GB)
+
+
+==================================================
+12. DATABASE SCHEMA
+==================================================
+
+12.1 CORE TABLES
+
+apartments
+- id (UUID, primary key)
+- name (varchar 255)
+- address (text)
+- currency (varchar 3, default INR)
+- created_by (UUID, references users)
+- settings (jsonb)
+- created_at, updated_at (timestamptz)
+
+locations
+- id (UUID, primary key)
+- apartment_id (UUID, references apartments)
+- parent_id (UUID, references locations)
+- path (ltree, for hierarchy)
+- type (varchar: room, bed)
+- name (varchar 255)
+- bed_type (varchar: flat, lower, upper)
+- monthly_rate (decimal 10,2)
+- is_vacant (boolean)
+- metadata (jsonb)
+- created_at, updated_at (timestamptz)
+
+apartment_members
+- id (UUID, primary key)
+- apartment_id (UUID, references apartments)
+- user_id (UUID, references users)
+- location_id (UUID, references locations)
+- role (enum: admin, member, guest)
+- status (enum: pending, active, inactive, moved_out)
+- name (varchar 255)
+- phone (varchar 20)
+- email (varchar 255)
+- photo_url (text)
+- identity_card_url (text)
+- cv_url, labor_card_url (text)
+- emergency_contact (jsonb)
+- relationship_to_others (text)
+- move_in_date, move_out_date (date)
+- monthly_rate_override (decimal 10,2)
+- opt_ins (jsonb)
+- loyalty_points (integer, default 0)
+- created_at, updated_at (timestamptz)
+
+bill_types
+- id (UUID, primary key)
+- apartment_id (UUID, references apartments)
+- name (varchar 100)
+- calculation_method (varchar: equal_split, per_bed, prorated, custom)
+- is_prorated (boolean)
+- is_opt_in (boolean)
+- recurrence_pattern (varchar: monthly, quarterly, annual, one_time)
+- default_due_day (integer 1-31)
+- grace_period_days (integer, default 3)
+- is_active (boolean)
+- created_at (timestamptz)
+
+bills
+- id (UUID, primary key)
+- apartment_id (UUID, references apartments)
+- bill_type_id (UUID, references bill_types)
+- period_start, period_end (date)
+- total_amount (decimal 10,2)
+- due_date (date)
+- status (varchar: draft, published, partially_paid, paid, overdue)
+- created_by (UUID, references users)
+- notes (text)
+- created_at, updated_at (timestamptz)
+
+bill_splits
+- id (UUID, primary key)
+- bill_id (UUID, references bills)
+- member_id (UUID, references apartment_members)
+- amount (decimal 10,2)
+- calculation_basis (jsonb)
+- amount_paid (decimal 10,2, default 0)
+- payment_status (varchar: unpaid, partial, paid, overdue)
+- created_at, updated_at (timestamptz)
+
+payments
+- id (UUID, primary key)
+- apartment_id (UUID, references apartments)
+- payer_member_id (UUID, references apartment_members)
+- bill_split_id (UUID, references bill_splits)
+- amount (decimal 10,2)
+- payment_method (varchar 50)
+- transaction_reference (varchar 255)
+- receipt_url (text)
+- payment_date (date)
+- status (varchar: pending_verification, verified, rejected)
+- verified_by (UUID, references users)
+- verified_at (timestamptz)
+- rejection_reason (text)
+- notes (text)
+- created_at, updated_at (timestamptz)
+
+12.2 COMMUNITY MEAL TABLES
+
+chefs
+- id (UUID, primary key)
+- apartment_id (UUID, references apartments)
+- name (varchar 255)
+- phone (varchar 20)
+- email (varchar 255)
+- photo_url (text)
+- identity_card_url (text)
+- monthly_salary (decimal 10,2)
+- start_date, end_date (date)
+- status (varchar: active, on_leave, terminated)
+- emergency_contact (jsonb)
+- notes (text)
+- created_at, updated_at (timestamptz)
+
+meal_menus
+- id (UUID, primary key)
+- apartment_id (UUID, references apartments)
+- week_start_date (date)
+- menu_data (jsonb)
+- status (varchar: draft, published)
+- created_by (UUID, references users)
+- created_at, updated_at (timestamptz)
+
+rotation_teams
+- id (UUID, primary key)
+- apartment_id (UUID, references apartments)
+- name (varchar 100)
+- sequence_number (integer)
+- is_active (boolean)
+- created_at (timestamptz)
+
+team_members
+- rotation_team_id (UUID, references rotation_teams)
+- member_id (UUID, references apartment_members)
+- assigned_at (timestamptz)
+- PRIMARY KEY (rotation_team_id, member_id)
+
+schedule_assignments
+- id (UUID, primary key)
+- apartment_id (UUID, references apartments)
+- rotation_team_id (UUID, references rotation_teams)
+- week_start_date, week_end_date (date)
+- status (varchar: scheduled, in_progress, completed, overdue)
+- created_at, updated_at (timestamptz)
+
+grocery_purchases
+- id (UUID, primary key)
+- apartment_id (UUID, references apartments)
+- assignment_id (UUID, references schedule_assignments)
+- receipt_url (text)
+- store_name (varchar 255)
+- purchase_date (date)
+- total_amount (decimal 10,2)
+- status (varchar: pending_approval, approved, rejected)
+- reviewed_by (UUID, references users)
+- reviewed_at (timestamptz)
+- feedback (text)
+- submitted_by (UUID, references apartment_members)
+- created_at, updated_at (timestamptz)
+
+purchase_items
+- id (UUID, primary key)
+- purchase_id (UUID, references grocery_purchases)
+- item_name (varchar 255)
+- quantity (decimal 10,2)
+- unit_price (decimal 10,2)
+- total_price (decimal 10,2)
+- confidence_score (decimal 3,2)
+- created_at (timestamptz)
+
+12.3 LOYALTY AND ENGAGEMENT TABLES
+
+point_actions
+- id (UUID, primary key)
+- apartment_id (UUID, references apartments)
+- action_name (varchar 100)
+- description (text)
+- points_value (integer)
+- is_active (boolean)
+- created_at (timestamptz)
+
+member_points_ledger
+- id (UUID, primary key)
+- member_id (UUID, references apartment_members)
+- point_action_id (UUID, references point_actions)
+- points (integer)
+- description (text)
+- related_table (varchar 100)
+- related_id (UUID)
+- earned_at (timestamptz)
+
+12.4 VOTING AND DISPUTE TABLES
+
+polls
+- id (UUID, primary key)
+- apartment_id (UUID, references apartments)
+- title (varchar 255)
+- description (text)
+- poll_type (varchar: menu, team, general, dispute, rule_change, removal)
+- start_date, end_date (timestamptz)
+- status (varchar: draft, active, closed)
+- quorum_percentage (integer, default 50)
+- majority_percentage (integer, default 50)
+- show_results_during_voting (boolean)
+- anonymous_voting (boolean)
+- created_by (UUID, references users)
+- created_at, updated_at (timestamptz)
+
+poll_options
+- id (UUID, primary key)
+- poll_id (UUID, references polls)
+- option_text (text)
+- option_order (integer)
+- vote_count (integer, default 0)
+- created_at (timestamptz)
+
+poll_votes
+- id (UUID, primary key)
+- poll_id (UUID, references polls)
+- option_id (UUID, references poll_options)
+- voter_member_id (UUID, references apartment_members)
+- voted_at (timestamptz)
+- UNIQUE (poll_id, voter_member_id)
+
+disputes
+- id (UUID, primary key)
+- apartment_id (UUID, references apartments)
+- raised_by (UUID, references apartment_members)
+- related_table (varchar 100)
+- related_id (UUID)
+- title (varchar 255)
+- description (text)
+- evidence_urls (text array)
+- status (varchar: open, under_review, voting, resolved, closed)
+- resolution (text)
+- resolved_by (varchar 50)
+- resolved_at (timestamptz)
+- poll_id (UUID, references polls)
+- created_at, updated_at (timestamptz)
+
+12.5 SYSTEM TABLES
+
+notification_preferences
+- id (UUID, primary key)
+- member_id (UUID, references apartment_members)
+- notification_type (varchar 100)
+- email_enabled (boolean)
+- sms_enabled (boolean)
+- push_enabled (boolean)
+- whatsapp_enabled (boolean)
+- quiet_hours_start, quiet_hours_end (time)
+- frequency (varchar: instant, daily, weekly)
+- updated_at (timestamptz)
+- UNIQUE (member_id, notification_type)
+
+audit_logs
+- id (UUID, primary key)
+- apartment_id (UUID, references apartments)
+- user_id (UUID, references users)
+- action_type (varchar 100)
+- table_name (varchar 100)
+- record_id (UUID)
+- old_values, new_values (jsonb)
+- ip_address (varchar 45)
+- user_agent (text)
+- created_at (timestamptz)
+
+
+==================================================
+13. API ENDPOINTS
+==================================================
+
+13.1 AUTO-GENERATED REST API (SUPABASE)
+Format: /rest/v1/{table}?{filter}
+
+Operations:
+- GET: Read records
+- POST: Create records
+- PATCH: Update records
+- DELETE: Delete records
+
+Examples:
+GET /rest/v1/apartments?id=eq.{id}
+POST /rest/v1/apartments
+PATCH /rest/v1/apartments?id=eq.{id}
+DELETE /rest/v1/apartments?id=eq.{id}
+
+13.2 CUSTOM EDGE FUNCTIONS
+POST /functions/v1/calculate-bill-splits
+POST /functions/v1/process-receipt-ocr
+POST /functions/v1/generate-report
+Scheduled /functions/v1/send-payment-reminders
+Scheduled /functions/v1/escalate-disputes
+Scheduled /functions/v1/rotate-grocery-teams
+
+
+==================================================
+14. SECURITY
+==================================================
+
+14.1 AUTHENTICATION
+- Phone OTP via Twilio
+- JWT tokens with 30-day expiry
+- Automatic token refresh
+- Password: min 8 chars, complexity requirements
+- Account lockout: 5 failed attempts, 15-minute lockout
+- Multi-device sessions
+
+14.2 AUTHORIZATION
+- Row Level Security (RLS) on all tables
+- Users only access their apartment data
+- Role-based permissions (admin, member, guest)
+- Admin actions audit logged
+
+14.3 DATA PROTECTION
+- HTTPS only (TLS 1.3)
+- Password hashing: bcrypt with salt
+- PII encryption at rest: AES-256
+- File upload validation: type and size checks
+- Input sanitization: XSS prevention
+- SQL injection prevention: parameterized queries
+
+14.4 COMPLIANCE
+India DPDPA 2023:
+- Consent required
+- Right to access, correction, erasure
+- Breach notification within 72 hours
+- Data retention: 7 years max
+
+UAE Data Protection Law:
+- Lawful processing basis
+- Data subject rights
+- Privacy notices
+
+Nigeria NDPR:
+- Consent-based processing
+- Data security measures
+- Breach notification
+
+GDPR (if targeting EU):
+- Privacy by design
+- Data minimization
+- Right to be forgotten
+- Data portability
+
+
+==================================================
+15. PERFORMANCE REQUIREMENTS
+==================================================
+
+15.1 RESPONSE TIMES
+- Page load: <2 seconds on 3G
+- API response: <200ms (p95)
+- Database queries: <100ms (p95)
+- Real-time updates: <1 second latency
+- Image optimization: <500KB per image
+
+15.2 SCALABILITY
+- Concurrent users: 1,000 per apartment
+- Total users: 100,000+
+- Database: Connection pooling
+- CDN: Cloudinary for images
+- Caching: React Query 5-minute stale time
+
+15.3 AVAILABILITY
+- Uptime: 99.9%
+- Database backups: Daily automated
+- Point-in-time recovery: 7 days
+- Health checks: API liveness probes
+
+
+==================================================
+16. USER INTERFACE
+==================================================
+
+16.1 DESIGN PRINCIPLES
+- Mobile-first responsive design
+- Clean, minimalist interface
+- Clear visual hierarchy
+- Accessible (WCAG 2.1 Level AA)
+- Fast loading with skeleton screens
+
+16.2 COLOR SCHEME
+Primary: #3B82F6 (Blue)
+Secondary: #10B981 (Green)
+Accent: #F59E0B (Amber)
+Success: #10B981
+Warning: #F59E0B
+Error: #EF4444
+Background: #FFFFFF
+Surface: #F9FAFB
+Text Primary: #111827
+Text Secondary: #6B7280
+
+16.3 TYPOGRAPHY
+Font: Inter
+Headings: 600-700 weight
+Body: 400 weight
+Sizes: 14px (small), 16px (body), 20px/24px/32px (headings)
+
+16.4 KEY SCREENS
+
+Dashboard (Member):
+- Welcome message with loyalty points
+- Upcoming bills widget
+- Community meal menu preview
+- Grocery team duty notification
+- Quick actions (Pay Bill, View Menu)
+
+Dashboard (Admin):
+- Overview cards (members, vacant beds, pending payments, disputes)
+- Recent activity feed
+- Charts (payment compliance, bill breakdown)
+- Admin controls (Create Bill, Verify Payments, Settings)
+
+Bills Page:
+- Tabs: All, Paid, Unpaid, Overdue
+- Bill cards with amount, due date, status
+- Bill detail modal with breakdown
+- Mark as paid form
+
+Community Meal Page:
+- Tabs: Menu, Grocery Teams, Cost Summary
+- Weekly calendar view
+- Team rotation schedule
+- Submit receipt button
+
+Profile Page:
+- Profile header with photo and points
+- Personal info section
+- Location (Apartment > Room > Bed)
+- Meal preferences
+- Notification settings
+- Payment history
+- Points history
+
+16.5 RESPONSIVE BREAKPOINTS
+- Mobile: <640px
+- Tablet: 640-1024px
+- Desktop: >1024px
+
+
+==================================================
+17. INTEGRATIONS
+==================================================
+
+17.1 CLOUDINARY
+Configuration:
+- Cloud name from env
+- Upload preset: roommate_uploads
+- Folder: roommate-app
+- Transformation: 800px width limit, auto quality, auto format
+
+Upload Types:
+- Profile photos: 200x200 circular crop
+- Receipts: OCR-optimized
+- Identity cards: Original quality
+
+17.2 AWS SES
+Configuration:
+- Region: ap-south-1 (India), me-south-1 (UAE)
+- Verified domain
+- DKIM, SPF, DMARC configured
+- Bounce handling
+
+Templates:
+- Payment reminder
+- Bill published
+- Payment verified
+- Dispute notification
+- Poll created
+- Welcome email
+
+17.3 TWILIO
+SMS:
+- Account SID and Auth Token in env
+- Messaging Service SID
+- Regional numbers (India: DLT registered)
+- Fallback: Alpha sender ID
+
+WhatsApp:
+- WhatsApp Business API
+- Pre-approved templates
+- Two-way messaging support
+
+17.4 FIREBASE CLOUD MESSAGING
+Configuration:
+- Service account JSON in secrets
+- Web push certificates
+- Topics for apartment-wide broadcasts
+- Device token management
+
+Payload Structure:
+{
+  "notification": {
+    "title": "Payment Due Tomorrow",
+    "body": "₹1,200 rent payment due",
+    "icon": "/icon-192.png",
+    "click_action": "/bills/123"
+  },
+  "data": {
+    "bill_id": "uuid",
+    "apartment_id": "uuid"
+  }
+}
+
+17.5 AZURE COMPUTER VISION (PRODUCTION)
+Configuration:
+- Region-specific endpoint
+- API Key in secrets
+- Version: v3.2 (Read API)
+- Languages: en, hi, ar
+
+Usage:
+- POST image URL to analyze endpoint
+- Poll operation location for results
+- Parse text and line items
+- Return structured data
+
+
+==================================================
+18. TESTING
+==================================================
+
+18.1 UNIT TESTS
+Coverage: 70%+
+Framework: Vitest
+
+Test Areas:
+- Utility functions
+- Bill split calculations
+- Loyalty point calculations
+- OCR parsing logic
+- Validation functions
+
+18.2 INTEGRATION TESTS
+Framework: Vitest + Supabase local
+
+Test Areas:
+- Authentication flow
+- Bill creation and splitting
+- Payment verification
+- Grocery team rotation
+- Dispute escalation
+
+18.3 E2E TESTS
+Framework: Playwright
+
+Scenarios:
+- User signup and approval
+- Admin creates apartment and invites
+- Member joins and completes profile
+- Bill creation and payment
+- Grocery receipt submission
+
+18.4 PERFORMANCE TESTS
+Metrics:
+- Page load time
+- API response time
+- Database query time
+- OCR processing time
+
+Tools: Lighthouse, k6
+
+18.5 SECURITY TESTS
+Areas:
+- SQL injection attempts
+- XSS attempts
+- CSRF protection
+- RLS policy validation
+- File upload validation
+
+Tools: OWASP ZAP, Manual testing
+
+18.6 ACCESSIBILITY TESTS
+Standards: WCAG 2.1 Level AA
+
+Tools: axe DevTools, WAVE, Manual testing
+
+Areas:
+- Keyboard navigation
+- Screen reader compatibility
+- Color contrast
+- Focus indicators
+
+
+==================================================
+19. DEPLOYMENT
+==================================================
+
+19.1 ENVIRONMENTS
+- Development: Local machine
+- Staging: Preview deployments
+- Production: Main deployment
+
+19.2 CI/CD PIPELINE (GITHUB ACTIONS)
+On push to main:
+1. Run linter (ESLint)
+2. Run tests (Vitest)
+3. Build application
+4. Deploy to production (Netlify/Vercel)
+
+On pull request:
+1. Run linter
+2. Run tests
+3. Create preview deployment
+
+19.3 DEPLOYMENT PLATFORM
+Netlify or Vercel:
+- Build: npm run build
+- Publish: dist/
+- Node: 18
+- Environment variables in dashboard
+- Custom domain
+- Auto SSL/TLS
+- CDN enabled
+
+19.4 DATABASE MIGRATIONS
+- SQL files in supabase/migrations/
+- Naming: YYYYMMDDHHMMSS_description.sql
+- Applied via Supabase CLI
+- Rollback: Down migrations
+- Automated for staging, manual for production
+
+19.5 MONITORING
+Error Tracking: Sentry
+- Auto-capture errors
+- Source maps uploaded
+- User context attached
+
+Analytics: Mixpanel
+- Event tracking
+- Funnel analysis
+- Retention reports
+
+Uptime: Pingdom
+- Check every 5 minutes
+- Alert on downtime
+
+19.6 BACKUP
+Database:
+- Automated daily backups
+- Retention: 7-30 days
+- Point-in-time recovery
+
+Code: GitHub repository
+
+Media: Cloudinary automatic backups
+
+
+==================================================
+20. MAINTENANCE
+==================================================
+
+20.1 REGULAR TASKS
+Daily:
+- Monitor error rates
+- Check notification delivery
+- Review database performance
+
+Weekly:
+- User feedback review
+- Payment verification queue
+- Audit logs review
+- Security updates
+
+Monthly:
+- Dependency updates
+- Database optimization
+- Cost review
+- Analytics review
+
+Quarterly:
+- Security audit
+- Performance optimization
+- User satisfaction survey
+
+20.2 SUPPORT
+Channels:
+- In-app help center (FAQ)
+- Contact form (email)
+- WhatsApp (premium users)
+
+Response Times:
+- Critical (app down): Immediate, resolve <2 hours
+- High (feature broken): <4 hours, resolve <24 hours
+- Medium (minor bugs): <24 hours, resolve <1 week
+- Low (requests): <1 week, roadmap planning
+
+
+==================================================
+21. SUCCESS METRICS
+==================================================
+
+21.1 PRODUCT METRICS
+- Active apartments: 100 (6 months), 1000 (12 months)
+- Active users: 800 (6 months), 8000 (12 months)
+- Average users per apartment: 8-12
+- Bill tracking rate: >90%
+- Payment verification time: <24 hours
+- Grocery receipt submission: >95%
+
+21.2 ENGAGEMENT METRICS
+- DAU/MAU: 30%+
+- WAU/MAU: 60%+
+- MAU growth: 15%+ MoM
+- Session duration: 5+ minutes
+- Sessions per user per week: 3+
+
+21.3 FINANCIAL METRICS
+- MRR: $10,000 (Year 1)
+- ARPU: $2-5/month
+- Churn: <5% monthly
+- CAC: <$10
+- LTV: >$100
+- LTV:CAC: >10:1
+
+21.4 QUALITY METRICS
+- Uptime: >99.9%
+- API response: <200ms (p95)
+- Error rate: <0.1%
+- OCR accuracy: >85%
+- Dispute rate: <2%
+- NPS: >50
+
+
+==================================================
+22. FUTURE ENHANCEMENTS
+==================================================
+
+22.1 POST-MVP FEATURES
+- Payment gateway integration (Stripe, Razorpay)
+- Task management (recurring tasks, schedules)
+- Resource scheduling (washing machine slots)
+- Collaborative investments (live tracking)
+- AI-powered features (expense forecasting)
+- Mobile native apps (iOS, Android)
+- Property manager tools (multi-property)
+- Social features (chat, events)
+- Advanced analytics (trends, predictions)
+- International expansion (10+ languages)
+
+
+==================================================
+23. COMPETITIVE DIFFERENTIATION
+==================================================
+
+23.1 UNIQUE FEATURES
+✓ Rotating grocery teams with OCR
+✓ Community meal management
+✓ Bed-level hierarchical pricing
+✓ Identity verification and approval
+✓ Loyalty points system
+✓ Democratic dispute resolution
+✓ No daily expense limits
+✓ Regional focus (India, UAE, Nigeria, Kuwait)
+
+23.2 VS SPLITWISE
+- No daily limits (Splitwise: 3-4/day)
+- Community meal system (Splitwise: none)
+- Rotating teams (Splitwise: none)
+- Bed pricing (Splitwise: none)
+- Lower price ($0-10 vs $0-30)
+- Roommate-focused (Splitwise: generic)
+
+23.3 VS ROOMIE
+- Community meals (Roomie: none)
+- Grocery teams (Roomie: none)
+- OCR receipts (Roomie: none)
+- Loyalty points (Roomie: none)
+- Democratic voting (Roomie: none)
+
+23.4 VS ACASA
+- Available in target markets (Acasa: UK only)
+- Community meals (Acasa: none)
+- Better calculation accuracy (Acasa: reported errors)
+
+
+==================================================
+24. REGIONAL CONSIDERATIONS
+==================================================
+
+24.1 INDIA
+Market: 25+ million students and young professionals
+Payment: UPI, Bank Transfer, Cash
+SMS: DLT registration mandatory (2-3 weeks)
+Language: Hindi, English
+Culture: Vegetarian preferences, WhatsApp usage, price-sensitive
+Pricing: ₹149-499/month
+
+24.2 UAE
+Market: 3+ million expat workers
+Payment: Bank Transfer, Cash, Credit Card
+SMS: Sender ID registration required
+Language: English, Arabic
+Culture: Diverse nationalities, Friday/Saturday weekends, Ramadan considerations
+Pricing: AED 29-79/month
+
+24.3 NIGERIA
+Market: 5+ million students in urban housing
+Payment: Bank Transfer, Mobile Money, Cash
+SMS: Local provider recommended
+Language: English
+Culture: Unreliable utilities, cash-based, strong community bonds
+Pricing: NGN 2,000-5,000/month
+
+24.4 KUWAIT
+Market: 1+ million expat workers
+Payment: KNET, Bank Transfer, Cash
+SMS: Similar to UAE
+Language: English, Arabic
+Culture: Similar to UAE, KNET integration important
+Pricing: KWD 3-7/month
+
+
+==================================================
+25. GLOSSARY
+==================================================
+
+Apartment: Shared living space with multiple rooms and beds
+Room: Section within apartment with one or more beds
+Bed: Individual sleeping space (Flat, Lower, Upper)
+Member: User who is part of an apartment
+Admin: Member with elevated management permissions
+Bill Split: Portion of bill assigned to specific member
+Community Meal: Shared meal system with chef and rotating teams
+Grocery Team: Group assigned to purchase groceries for a week
+Loyalty Points: Gamification system for good behavior
+Dispute: Contest of bill amount or decision
+Poll: Vote among members on decision
+Quorum: Minimum participation for valid poll
+Proration: Calculation based on partial occupancy
+RLS: Row Level Security (database access control)
+OCR: Optical Character Recognition
+Edge Function: Serverless function on Supabase
+
+
+==================================================
+END OF DOCUMENT
+==================================================
+
+Document Status: FINAL - READY FOR DEVELOPMENT
+Version: 1.0
+Date: 2025-01-05
+
+Next Steps:
+1. Technical team reviews and confirms feasibility
+2. Design team creates mockups
+3. Development team estimates effort
+4. Begin development following agile methodology
