@@ -1,0 +1,751 @@
+================================================================================
+VOTING & POLLS SYSTEM - COMPLETE PAGE SPECIFICATIONS
+RoomMate Manager - Democratic Decision Making Module
+================================================================================
+
+OVERVIEW
+--------
+The Voting & Polls system enables democratic decision-making within apartments.
+Admins create polls, members vote, and results drive actions automatically.
+
+KEY FEATURES
+-----------
+✓ Multiple poll types (Yes/No, Multiple Choice, Rating, Open-ended)
+✓ Customizable quorum and majority requirements
+✓ Anonymous voting option
+✓ Live or hidden results during voting
+✓ Automated dispute escalation to voting
+✓ Real-time vote counting
+✓ Automatic poll closure and result publishing
+✓ Voter notifications and reminders
+✓ Poll templates for common decisions
+✓ Integration with loyalty points
+
+================================================================================
+1. POLLS DASHBOARD
+================================================================================
+
+Route: /polls
+Component: PollsDashboardPage.tsx
+Permission: All Apartment Members
+
+LAYOUT STRUCTURE
+```
+┌─────────────────────────────────────────────┐
+│ Polls & Voting 🗳️                           │
+├─────────────────────────────────────────────┤
+│ ┌──────────┐ ┌──────────┐ ┌──────────┐    │
+│ │Active    │ │Voted     │ │Points    │    │
+│ │Polls     │ │This      │ │Earned    │    │
+│ │3         │ │Month     │ │48 pts    │    │
+│ │[Vote!]   │ │12 ✓     │ │(24 votes)│    │
+│ └──────────┘ └──────────┘ └──────────┘    │
+├─────────────────────────────────────────────┤
+│ ⚠️ URGENT: Dispute requires your vote!     │
+│ Ends in 6 hours | [Vote Now →]             │
+├─────────────────────────────────────────────┤
+│ Tabs: [Active] [Completed] [All]           │
+├─────────────────────────────────────────────┤
+│ ACTIVE POLLS (3)                            │
+│                                              │
+│ ┌─────────────────────────────────────┐    │
+│ │ 🍽️ Add Biryani to Friday Menu?     │    │
+│ │ Poll Type: Yes/No                    │    │
+│ │ Created: Jan 2 by Admin              │    │
+│ │ Ends: Jan 5, 6:00 PM (in 12 hours)  │    │
+│ │ Voted: 12/17 (71%) ✓ Quorum Met     │    │
+│ │ Current Results: Hidden              │    │
+│ │ [Cast Your Vote →]                   │    │
+│ └─────────────────────────────────────┘    │
+│                                              │
+│ ┌─────────────────────────────────────┐    │
+│ │ 🏠 Approve New Roommate: Alex Kumar │    │
+│ │ Poll Type: Yes/No                    │    │
+│ │ Created: Jan 1 by Admin              │    │
+│ │ Ends: Jan 7, 11:59 PM (5 days)      │    │
+│ │ Voted: 8/17 (47%) ⚠️ Needs Quorum    │    │
+│ │ Your Vote: ✓ Yes (voted Jan 2)      │    │
+│ │ Current: Yes 75%, No 25% (visible)  │    │
+│ └─────────────────────────────────────┘    │
+│                                              │
+│ ┌─────────────────────────────────────┐    │
+│ │ ⚖️ DISPUTE: December Electricity    │    │
+│ │ Poll Type: Decision                  │    │
+│ │ Created: Jan 3 (Auto-escalated)     │    │
+│ │ Ends: Jan 5, 3:00 PM (6 hours) 🔥   │    │
+│ │ Voted: 14/17 (82%) ✓ Quorum Met     │    │
+│ │ [View Dispute] [Vote Now]           │    │
+│ └─────────────────────────────────────┘    │
+├─────────────────────────────────────────────┤
+│ RECENTLY COMPLETED                           │
+│                                              │
+│ ┌─────────────────────────────────────┐    │
+│ │ ✓ Best Weekend for Movie Night      │    │
+│ │ Result: Saturday Won (65%)          │    │
+│ │ Closed: Jan 1                       │    │
+│ │ [View Results]                      │    │
+│ └─────────────────────────────────────┘    │
+└─────────────────────────────────────────────┘
+```
+
+POLL CARD STATES
+---------------
+1. Not Voted Yet (Call-to-action)
+   - Prominent "Cast Your Vote" button
+   - Countdown timer
+   - Quorum status indicator
+   
+2. Already Voted
+   - Show what user voted
+   - "Voted on [date]" badge
+   - Live results (if enabled)
+   
+3. Ending Soon (<24 hours)
+   - Orange/yellow indicator
+   - Large countdown
+   - Persistent notification
+   
+4. Completed
+   - Final results
+   - Winner/outcome
+   - Implementation status
+
+COMPONENTS
+----------
+1. SummaryCards
+   - ActivePollsCard (count + action)
+   - VotedThisMonthCard (participation %)
+   - PointsEarnedCard (from voting)
+   
+2. UrgentPollBanner
+   - Appears for ending soon + not voted
+   - Dismissible
+   - Links to poll
+   
+3. TabNavigation
+   - Active (default, shows count)
+   - Completed
+   - All
+   
+4. PollCard
+   - Conditional rendering based on state
+   - Expandable details
+   - Action buttons
+   
+5. QuorumIndicator
+   - Progress bar (voted/total)
+   - Color coded (green if met, red if not)
+
+API CALLS
+---------
+```typescript
+// Get user's apartment polls
+GET /rest/v1/polls?apartment_id=eq.{apartmentId}&order=created_at.desc
+
+// Get user's votes
+GET /rest/v1/poll_votes?voter_member_id=eq.{memberId}
+
+// Get voting summary
+GET /functions/v1/voting-summary?user_id={userId}
+```
+
+REAL-TIME SUBSCRIPTION
+--------------------
+```typescript
+supabase
+  .channel('polls_updates')
+  .on('postgres_changes', {
+    event: 'INSERT',
+    schema: 'public',
+    table: 'polls',
+    filter: `apartment_id=eq.${apartmentId}`
+  }, handleNewPoll)
+  .on('postgres_changes', {
+    event: 'UPDATE',
+    schema: 'public',
+    table: 'poll_options'
+  }, handleVoteCountUpdate)
+  .subscribe()
+```
+
+
+================================================================================
+2. VOTING PAGE
+================================================================================
+
+Route: /polls/:pollId/vote
+Component: VotingPage.tsx
+Permission: Eligible voter (apartment member)
+
+YES/NO POLL LAYOUT
+-----------------
+```
+┌─────────────────────────────────────────────┐
+│ ← Back to Polls                              │
+├─────────────────────────────────────────────┤
+│ 🍽️ Add Biryani to Friday Menu?             │
+│ Created by Admin on Jan 2, 2025             │
+│ Ends: Jan 5, 6:00 PM (11 hours remaining)   │
+├─────────────────────────────────────────────┤
+│ DESCRIPTION                                  │
+│ ┌────────────────────────────────────────┐  │
+│ │ Many members have requested Biryani    │  │
+│ │ on the Friday menu. This will replace  │  │
+│ │ the current Rice + Curry option.       │  │
+│ │                                         │  │
+│ │ Estimated cost: +₹50 per person/week   │  │
+│ └────────────────────────────────────────┘  │
+├─────────────────────────────────────────────┤
+│ VOTING STATUS                                │
+│ ┌────────────────────────────────────────┐  │
+│ │ Voted: 12/17 (71%)                     │  │
+│ │ [██████████████░░░░░░] ✓ Quorum Met   │  │
+│ │                                         │  │
+│ │ Quorum Required: 50% (9/17)            │  │
+│ │ Majority Required: 50%                 │  │
+│ └────────────────────────────────────────┘  │
+├─────────────────────────────────────────────┤
+│ CAST YOUR VOTE                               │
+│ ┌────────────────────────────────────────┐  │
+│ │                                         │  │
+│ │   ┌─────────────────────────┐         │  │
+│ │   │         YES ✓           │         │  │
+│ │   │  Add Biryani to menu    │         │  │
+│ │   │                          │         │  │
+│ │   │    [Click to Vote]       │         │  │
+│ │   └─────────────────────────┘         │  │
+│ │                                         │  │
+│ │   ┌─────────────────────────┐         │  │
+│ │   │         NO ✗            │         │  │
+│ │   │  Keep current menu      │         │  │
+│ │   │                          │         │  │
+│ │   │    [Click to Vote]       │         │  │
+│ │   └─────────────────────────┘         │  │
+│ │                                         │  │
+│ └────────────────────────────────────────┘  │
+│                                              │
+│ 🔒 This is an anonymous poll.               │
+│ Your vote will not be visible to others.    │
+│                                              │
+│ 💡 Earn +2 loyalty points by voting!        │
+└─────────────────────────────────────────────┘
+```
+
+MULTIPLE CHOICE POLL LAYOUT
+--------------------------
+```
+┌─────────────────────────────────────────────┐
+│ 🎬 Best Day for Movie Night?                │
+├─────────────────────────────────────────────┤
+│ CAST YOUR VOTE (Select one)                 │
+│ ┌────────────────────────────────────────┐  │
+│ │ ⚪ Friday Night                         │  │
+│ │    7:00 PM - 10:00 PM                  │  │
+│ ├────────────────────────────────────────┤  │
+│ │ ⚪ Saturday Afternoon                   │  │
+│ │    3:00 PM - 6:00 PM                   │  │
+│ ├────────────────────────────────────────┤  │
+│ │ ⚪ Saturday Night                       │  │
+│ │    8:00 PM - 11:00 PM                  │  │
+│ ├────────────────────────────────────────┤  │
+│ │ ⚪ Sunday Afternoon                     │  │
+│ │    4:00 PM - 7:00 PM                   │  │
+│ └────────────────────────────────────────┘  │
+│                                              │
+│ [Submit Vote]                                │
+│                                              │
+│ Live Results (12 votes):                    │
+│ Friday Night:     ████████░░ 40% (5)        │
+│ Saturday Afternoon: ████░░░░░░ 20% (2)      │
+│ Saturday Night:    ████████████ 60% (7) 👑   │
+│ Sunday Afternoon:  ██░░░░░░░░ 10% (1)       │
+└─────────────────────────────────────────────┘
+```
+
+RATING POLL LAYOUT
+-----------------
+```
+┌─────────────────────────────────────────────┐
+│ ⭐ Rate Chef Performance - December          │
+├─────────────────────────────────────────────┤
+│ CAST YOUR RATING                             │
+│ ┌────────────────────────────────────────┐  │
+│ │ Food Quality                            │  │
+│ │ ⭐⭐⭐⭐⭐                                 │  │
+│ │ (Click stars to rate 1-5)              │  │
+│ │                                         │  │
+│ │ Taste                                   │  │
+│ │ ⭐⭐⭐⭐☆                                 │  │
+│ │                                         │  │
+│ │ Presentation                            │  │
+│ │ ⭐⭐⭐⭐⭐                                 │  │
+│ │                                         │  │
+│ │ Timeliness                              │  │
+│ │ ⭐⭐⭐⭐⭐                                 │  │
+│ │                                         │  │
+│ │ Overall: 4.5/5 (auto-average)          │  │
+│ └────────────────────────────────────────┘  │
+│                                              │
+│ Additional Feedback (optional):              │
+│ ┌────────────────────────────────────────┐  │
+│ │Food has been great this month! Would   │  │
+│ │love more variety in breakfast options. │  │
+│ └────────────────────────────────────────┘  │
+│                                              │
+│ [Submit Rating]                              │
+└─────────────────────────────────────────────┘
+```
+
+VOTING FLOW
+----------
+1. User clicks vote option
+2. Confirmation modal (optional, for important polls)
+3. Submit vote:
+```typescript
+const vote = {
+  poll_id: pollId,
+  option_id: selectedOptionId,
+  voter_member_id: userId,
+  voted_at: new Date()
+}
+
+await supabase.from('poll_votes').insert(vote)
+
+// Increment option vote count
+await supabase.rpc('increment_vote_count', {
+  option_id: selectedOptionId
+})
+```
+
+4. Award loyalty points (+2)
+5. Show success message
+6. Display results (if allowed)
+7. Real-time update dashboard
+
+VOTE CONFIRMATION MODAL
+-----------------------
+```
+┌──────────────────────────────────────────┐
+│ Confirm Your Vote                         │
+├──────────────────────────────────────────┤
+│ You are voting:                           │
+│ YES - Add Biryani to Friday Menu          │
+│                                            │
+│ ⚠️ You cannot change your vote after     │
+│    submission.                            │
+│                                            │
+│ Are you sure?                             │
+│                                            │
+│ [Cancel] [Confirm Vote]                   │
+└──────────────────────────────────────────┘
+```
+
+
+================================================================================
+3. POLL RESULTS PAGE
+================================================================================
+
+Route: /polls/:pollId/results
+Component: PollResultsPage.tsx
+Permission: All members after poll closes
+
+LAYOUT STRUCTURE
+```
+┌─────────────────────────────────────────────┐
+│ ← Back to Polls                              │
+├─────────────────────────────────────────────┤
+│ 🍽️ Add Biryani to Friday Menu?             │
+│ Status: ✓ CLOSED | Winner: YES              │
+│ Ended: Jan 5, 2025 6:00 PM                  │
+├─────────────────────────────────────────────┤
+│ FINAL RESULTS                                │
+│ ┌────────────────────────────────────────┐  │
+│ │ Total Votes: 15/17 (88%)               │  │
+│ │ ✓ Quorum Met (required: 50%)           │  │
+│ │ ✓ Majority Achieved (required: 50%)    │  │
+│ │                                         │  │
+│ │ Outcome: APPROVED ✓                    │  │
+│ └────────────────────────────────────────┘  │
+├─────────────────────────────────────────────┤
+│ VOTE BREAKDOWN                               │
+│ ┌────────────────────────────────────────┐  │
+│ │ ✅ YES - Add Biryani                   │  │
+│ │ ████████████████████ 80% (12 votes) 👑 │  │
+│ │                                         │  │
+│ │ ❌ NO - Keep current menu              │  │
+│ │ █████ 20% (3 votes)                    │  │
+│ │                                         │  │
+│ │ 🔘 Did Not Vote: 2 members             │  │
+│ └────────────────────────────────────────┘  │
+├─────────────────────────────────────────────┤
+│ IMPLEMENTATION                               │
+│ ┌────────────────────────────────────────┐  │
+│ │ ✓ Menu updated for next week            │  │
+│ │ ✓ Chef notified                         │  │
+│ │ ✓ Grocery teams adjusted                │  │
+│ │ Status: Implemented on Jan 6            │  │
+│ └────────────────────────────────────────┘  │
+├─────────────────────────────────────────────┤
+│ PARTICIPATION                                │
+│ ┌────────────────────────────────────────┐  │
+│ │ Top Voters (This Month):                │  │
+│ │ 1. Sarah - 15 votes                    │  │
+│ │ 2. Mike - 14 votes                     │  │
+│ │ 3. You - 12 votes                      │  │
+│ │                                         │  │
+│ │ Non-voters this poll:                  │  │
+│ │ • John (notified, no response)         │  │
+│ │ • Lisa (notified, no response)         │  │
+│ └────────────────────────────────────────┘  │
+├─────────────────────────────────────────────┤
+│ [Download Report PDF]                        │
+└─────────────────────────────────────────────┘
+```
+
+RESULT CALCULATION
+-----------------
+```typescript
+function calculatePollResults(poll: Poll, votes: Vote[]) {
+  const totalEligible = poll.eligible_voters_count
+  const totalVoted = votes.length
+  const votingPercentage = (totalVoted / totalEligible) * 100
+  
+  // Check quorum
+  const quorumMet = votingPercentage >= poll.quorum_percentage
+  
+  // Count votes per option
+  const optionCounts = votes.reduce((acc, vote) => {
+    acc[vote.option_id] = (acc[vote.option_id] || 0) + 1
+    return acc
+  }, {})
+  
+  // Find winner
+  const winner = Object.entries(optionCounts)
+    .sort(([,a], [,b]) => b - a)[0]
+  
+  const winnerPercentage = (winner[1] / totalVoted) * 100
+  
+  // Check majority
+  const majorityAchieved = winnerPercentage >= poll.majority_percentage
+  
+  return {
+    totalEligible,
+    totalVoted,
+    votingPercentage,
+    quorumMet,
+    winner: {
+      optionId: winner[0],
+      votes: winner[1],
+      percentage: winnerPercentage
+    },
+    majorityAchieved,
+    approved: quorumMet && majorityAchieved
+  }
+}
+```
+
+
+================================================================================
+4. CREATE POLL (ADMIN)
+================================================================================
+
+Route: /admin/polls/create
+Component: CreatePollPage.tsx
+Permission: Admin
+
+LAYOUT STRUCTURE
+```
+┌─────────────────────────────────────────────┐
+│ Create New Poll                              │
+├─────────────────────────────────────────────┤
+│ Poll Type *                                  │
+│ [Select Type ▼]                             │
+│ • Yes/No (binary decision)                  │
+│ • Multiple Choice (single selection)        │
+│ • Multiple Choice (multi-selection)         │
+│ • Rating (1-5 stars)                        │
+│ • Open-ended (text feedback)                │
+├─────────────────────────────────────────────┤
+│ Poll Title *                                 │
+│ [Enter clear, concise question_________]    │
+│                                              │
+│ Description                                  │
+│ ┌────────────────────────────────────────┐  │
+│ │Provide context and details...          │  │
+│ │                                         │  │
+│ └────────────────────────────────────────┘  │
+├─────────────────────────────────────────────┤
+│ Options (for Multiple Choice)                │
+│ ┌────────────────────────────────────────┐  │
+│ │ Option 1: [Friday Night________] [×]   │  │
+│ │ Option 2: [Saturday Afternoon__] [×]   │  │
+│ │ Option 3: [Saturday Night______] [×]   │  │
+│ │ Option 4: [Sunday Afternoon____] [×]   │  │
+│ └────────────────────────────────────────┘  │
+│ [+ Add Option] (2-10 options allowed)       │
+├─────────────────────────────────────────────┤
+│ Duration & Timing                            │
+│ Start Date: [📅 Jan 5, 2025] [⏰ 9:00 AM]  │
+│ End Date:   [📅 Jan 8, 2025] [⏰ 6:00 PM]  │
+│ Duration: 3 days, 9 hours                   │
+│                                              │
+│ Quick Select:                                │
+│ [24 Hours] [48 Hours] [3 Days] [1 Week]    │
+├─────────────────────────────────────────────┤
+│ Voting Settings                              │
+│ ┌────────────────────────────────────────┐  │
+│ │ Quorum Requirement                      │  │
+│ │ [50%] of eligible voters must vote     │  │
+│ │ Minimum: 9 votes (based on 17 members) │  │
+│ │                                         │  │
+│ │ Majority Requirement                    │  │
+│ │ [50%] of votes needed to pass          │  │
+│ │                                         │  │
+│ │ ☐ Anonymous Voting                     │  │
+│ │   Hide who voted for what              │  │
+│ │                                         │  │
+│ │ ☑ Show Live Results                    │  │
+│ │   Display results during voting        │  │
+│ └────────────────────────────────────────┘  │
+├─────────────────────────────────────────────┤
+│ Eligible Voters                              │
+│ ⚪ All Apartment Members (17)               │
+│ ⚪ Only Roommates (exclude guests)          │
+│ ⚪ Only Meal Participants (14)              │
+│ ⚪ Custom Selection [Select Members...]     │
+├─────────────────────────────────────────────┤
+│ Category *                                   │
+│ [Select Category ▼]                         │
+│ • Menu Voting                               │
+│ • General Decision                          │
+│ • Team Formation                            │
+│ • Rule Change                               │
+│ • New Member Approval                       │
+│ • Dispute Resolution                        │
+├─────────────────────────────────────────────┤
+│ [Save as Draft] [Create & Publish]          │
+└─────────────────────────────────────────────┘
+```
+
+FORM VALIDATION
+--------------
+```typescript
+const createPollSchema = yup.object({
+  pollType: yup.string().required(),
+  title: yup.string().required().min(10).max(255),
+  description: yup.string().max(1000),
+  options: yup.array()
+    .of(yup.string().required())
+    .min(2, 'At least 2 options required')
+    .max(10, 'Maximum 10 options'),
+  startDate: yup.date().required(),
+  endDate: yup.date()
+    .required()
+    .min(yup.ref('startDate'), 'End date must be after start date'),
+  quorumPercentage: yup.number().min(0).max(100).default(50),
+  majorityPercentage: yup.number().min(0).max(100).default(50),
+  anonymous: yup.boolean().default(false),
+  showLiveResults: yup.boolean().default(true),
+  eligibleVoters: yup.string().required(),
+  category: yup.string().required()
+})
+```
+
+POLL TEMPLATES
+-------------
+Quick-start templates:
+
+1. Menu Addition Template
+   - Type: Yes/No
+   - Duration: 3 days
+   - Eligible: Meal participants
+   - Quorum: 50%, Majority: 50%
+
+2. New Member Approval Template
+   - Type: Yes/No
+   - Duration: 7 days
+   - Eligible: All roommates
+   - Quorum: 75%, Majority: 66%
+
+3. Rule Change Template
+   - Type: Yes/No
+   - Duration: 5 days
+   - Eligible: All members
+   - Quorum: 66%, Majority: 66%
+
+4. Team Selection Template
+   - Type: Multiple Choice
+   - Duration: 2 days
+   - Eligible: Relevant team members
+
+5. Dispute Resolution Template (Auto-created)
+   - Type: Binary decision
+   - Duration: 48 hours
+   - Eligible: All members except disputing parties
+   - Quorum: 50%, Majority: 50%
+
+
+================================================================================
+5. AUTOMATED POLL ACTIONS
+================================================================================
+
+AUTOMATIC DISPUTE ESCALATION
+---------------------------
+Trigger: Dispute open >48 hours without admin resolution
+
+```typescript
+export async function escalateDisputeToPoll(disputeId: string) {
+  const { data: dispute } = await supabase
+    .from('disputes')
+    .select('*')
+    .eq('id', disputeId)
+    .single()
+  
+  // Create poll
+  const poll = {
+    apartment_id: dispute.apartment_id,
+    title: `Resolve Dispute: ${dispute.title}`,
+    description: `This dispute has been escalated to voting.\n\n` +
+                 `Original complaint: ${dispute.description}\n\n` +
+                 `Please review the evidence and vote.`,
+    poll_type: 'multiple_choice_single',
+    start_date: new Date(),
+    end_date: addHours(new Date(), 48),
+    quorum_percentage: 50,
+    majority_percentage: 50,
+    show_results_during_voting: false,
+    anonymous_voting: false,
+    created_by: 'SYSTEM',
+    status: 'active'
+  }
+  
+  const { data: createdPoll } = await supabase
+    .from('polls')
+    .insert(poll)
+    .select()
+    .single()
+  
+  // Create options
+  const options = [
+    {
+      poll_id: createdPoll.id,
+      option_text: 'In favor of complainant',
+      option_order: 1
+    },
+    {
+      poll_id: createdPoll.id,
+      option_text: 'In favor of admin decision',
+      option_order: 2
+    }
+  ]
+  
+  await supabase.from('poll_options').insert(options)
+  
+  // Update dispute
+  await supabase
+    .from('disputes')
+    .update({
+      status: 'voting',
+      poll_id: createdPoll.id
+    })
+    .eq('id', disputeId)
+  
+  // Notify all members
+  await notifyAllMembers({
+    apartmentId: dispute.apartment_id,
+    title: '⚖️ Dispute Escalated to Voting',
+    message: `A dispute requires your vote. Ends in 48 hours.`,
+    link: `/polls/${createdPoll.id}/vote`
+  })
+}
+```
+
+AUTO-CLOSE POLLS
+---------------
+Scheduled Edge Function (runs every hour):
+
+```typescript
+export async function autoCloseExpiredPolls() {
+  const now = new Date()
+  
+  // Find active polls past end date
+  const { data: expiredPolls } = await supabase
+    .from('polls')
+    .select('*')
+    .eq('status', 'active')
+    .lt('end_date', now.toISOString())
+  
+  for (const poll of expiredPolls) {
+    // Calculate results
+    const results = await calculatePollResults(poll)
+    
+    // Update poll status
+    await supabase
+      .from('polls')
+      .update({
+        status: 'closed',
+        final_results: results
+      })
+      .eq('id', poll.id)
+    
+    // Execute outcome if approved
+    if (results.approved) {
+      await executePollOutcome(poll, results)
+    }
+    
+    // Notify all participants
+    await notifyPollClosed(poll, results)
+  }
+}
+```
+
+POLL REMINDERS
+-------------
+Scheduled Edge Function (runs daily):
+
+```typescript
+export async function sendPollReminders() {
+  // Find polls ending in 24 hours
+  const tomorrow = addHours(new Date(), 24)
+  
+  const { data: endingSoon } = await supabase
+    .from('polls')
+    .select('*')
+    .eq('status', 'active')
+    .lte('end_date', tomorrow.toISOString())
+  
+  for (const poll of endingSoon) {
+    // Find members who haven't voted
+    const { data: nonVoters } = await supabase
+      .from('apartment_members')
+      .select('*')
+      .eq('apartment_id', poll.apartment_id)
+      .not('id', 'in', `(
+        SELECT voter_member_id FROM poll_votes WHERE poll_id = '${poll.id}'
+      )`)
+    
+    // Send reminder
+    for (const member of nonVoters) {
+      await sendNotification({
+        userId: member.user_id,
+        title: '⏰ Poll Ending Soon',
+        message: `"${poll.title}" ends in 24 hours. Cast your vote!`,
+        link: `/polls/${poll.id}/vote`,
+        channels: ['email', 'push', 'in_app']
+      })
+    }
+  }
+}
+```
+
+================================================================================
+[Document Complete]
+================================================================================
+
+Pages Covered: 5 major pages
+Components: 15+ reusable components
+API Endpoints: 12+
+Scheduled Functions: 3
+
+Status: COMPLETE SPECIFICATION
+

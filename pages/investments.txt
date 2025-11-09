@@ -1,0 +1,744 @@
+================================================================================
+MONEY POOLS & INVESTMENTS - COMPLETE PAGE SPECIFICATIONS
+RoomMate Manager - Collaborative Savings & Investment Module
+================================================================================
+
+OVERVIEW
+--------
+The Money Pools system enables roommates to pool money for rotating payouts
+(chit fund model) and track collaborative investments. This is a unique
+financial management tool for roommate communities.
+
+KEY FEATURES
+-----------
+✓ Rotating payout system (chit fund model)
+✓ Automated payout scheduling
+✓ Manual contribution tracking (MVP)
+✓ Contribution verification by admin
+✓ Penalties for missed contributions
+✓ Early exit handling
+✓ Pool completion tracking
+✓ Investment tracking (manual entry, informational only)
+✓ Multi-pool support per apartment
+✓ Contribution history and reports
+
+TERMINOLOGY
+-----------
+Money Pool: A group savings mechanism where members contribute fixed amounts
+            monthly, and each member receives the full pool amount in rotation
+            
+Chit Fund: Traditional rotating savings model (inspiration for this feature)
+
+Payout: When a member receives the entire pool amount for that period
+
+Contribution: Monthly payment each member makes to the pool
+
+================================================================================
+1. MONEY POOLS DASHBOARD
+================================================================================
+
+Route: /money-pools
+Component: MoneyPoolsDashboardPage.tsx
+Permission: All Apartment Members
+
+LAYOUT STRUCTURE
+```
+┌─────────────────────────────────────────────┐
+│ Money Pools & Investments 💰                 │
+├─────────────────────────────────────────────┤
+│ ┌──────────┐ ┌──────────┐ ┌──────────┐    │
+│ │Active    │ │Total     │ │Next      │    │
+│ │Pools     │ │Contributed│Payout    │    │
+│ │2         │ │₹24,000   │ ₹12,000  │    │
+│ │          │ │All time  │ Month 8  │    │
+│ └──────────┘ └──────────┘ └──────────┘    │
+├─────────────────────────────────────────────┤
+│ Tabs: [Active Pools] [Completed] [Investments]│
+├─────────────────────────────────────────────┤
+│ ACTIVE POOLS (2)                             │
+│                                              │
+│ ┌─────────────────────────────────────┐    │
+│ │ 🎯 Emergency Fund Pool              │    │
+│ │ Started: Jan 2025 | 9 months total  │    │
+│ │                                      │    │
+│ │ Your Status:                         │    │
+│ │ • Position: 7/9                     │    │
+│ │ • Contributed: ₹1,000 × 6 = ₹6K    │    │
+│ │ • Expected Payout: Month 7 (Jul '25)│    │
+│ │ • Amount to Receive: ₹9,000         │    │
+│ │                                      │    │
+│ │ This Month (Month 6):                │    │
+│ │ • Your Contribution: ₹1,000 ✓ Paid  │    │
+│ │ • Payout Recipient: Sarah           │    │
+│ │ • Pool Status: 8/9 paid ⏱️          │    │
+│ │                                      │    │
+│ │ [View Details] [Payment History]    │    │
+│ └─────────────────────────────────────┘    │
+│                                              │
+│ ┌─────────────────────────────────────┐    │
+│ │ 🏖️ Vacation Fund Pool               │    │
+│ │ Started: Mar 2025 | 12 months total │    │
+│ │                                      │    │
+│ │ Your Status:                         │    │
+│ │ • Position: 3/12 ⭐ PAYOUT SOON!    │    │
+│ │ • Contributed: ₹500 × 2 = ₹1K       │    │
+│ │ • Expected Payout: Month 3 (May '25) │    │
+│ │ • Amount to Receive: ₹6,000         │    │
+│ │                                      │    │
+│ │ This Month (Month 2):                │    │
+│ │ • Your Contribution: ₹500 ✓ Paid    │    │
+│ │ • Payout Recipient: Mike            │    │
+│ │                                      │    │
+│ │ [View Details] [Make Contribution]  │    │
+│ └─────────────────────────────────────┘    │
+├─────────────────────────────────────────────┤
+│ [+ Create New Money Pool] (Admin Only)      │
+└─────────────────────────────────────────────┘
+```
+
+POOL CARD COMPONENTS
+-------------------
+Each pool card shows:
+
+1. Pool Header
+   - Pool name and emoji
+   - Start date and duration
+   - Status badge (Active/Completing/Completed)
+
+2. Your Position & Contribution
+   - Your payout position in queue
+   - Total contributed so far
+   - Expected payout month
+   - Amount you'll receive
+
+3. Current Month Status
+   - Your contribution status (Paid/Pending)
+   - This month's payout recipient
+   - Overall payment status (X/Y paid)
+
+4. Action Buttons
+   - View Details (full breakdown)
+   - Payment History (your contributions)
+   - Make Contribution (if pending)
+
+POOL STATUS INDICATORS
+---------------------
+Active: Green - Pool is ongoing
+Completing: Yellow - Final months
+Completed: Gray - All payouts done
+Your Turn: Gold highlight - Next payout is yours
+
+API CALLS
+---------
+```typescript
+// Get user's money pools
+GET /rest/v1/money_pool_participants?user_id=eq.{userId}&select=*,money_pools(*)
+
+// Get contribution summary
+GET /functions/v1/money-pool-summary?user_id={userId}
+
+// Get current month status
+GET /rest/v1/money_pool_contributions?user_id=eq.{userId}&contribution_date=gte.{thisMonth}
+```
+
+COMPONENTS
+----------
+1. SummaryCardsGrid
+   - ActivePoolsCard
+   - TotalContributedCard
+   - NextPayoutCard
+
+2. TabNavigation
+   - Active Pools (default)
+   - Completed Pools
+   - Investments
+
+3. PoolCard (repeated component)
+   - PoolHeader
+   - YourStatusSection
+   - CurrentMonthSection
+   - ActionButtons
+
+
+================================================================================
+2. MONEY POOL DETAIL PAGE
+================================================================================
+
+Route: /money-pools/:poolId
+Component: MoneyPoolDetailPage.tsx
+Permission: Pool Participant or Admin
+
+LAYOUT STRUCTURE
+```
+┌─────────────────────────────────────────────┐
+│ ← Back to Money Pools                        │
+├─────────────────────────────────────────────┤
+│ 🎯 Emergency Fund Pool                      │
+│ Status: ACTIVE (Month 6 of 9)               │
+├─────────────────────────────────────────────┤
+│ POOL OVERVIEW                                │
+│ ┌────────────────────────────────────────┐  │
+│ │ Contribution: ₹1,000/month             │  │
+│ │ Participants: 9 members                │  │
+│ │ Pool Amount: ₹9,000/month              │  │
+│ │ Total Duration: 9 months               │  │
+│ │ Started: January 2025                  │  │
+│ │ Expected End: September 2025           │  │
+│ └────────────────────────────────────────┘  │
+├─────────────────────────────────────────────┤
+│ YOUR POSITION                                │
+│ ┌────────────────────────────────────────┐  │
+│ │ Payout Position: 7 of 9                │  │
+│ │ Your Payout Month: July 2025 (Month 7)│  │
+│ │ Expected Amount: ₹9,000                │  │
+│ │                                         │  │
+│ │ Progress:                               │  │
+│ │ Contributed: ₹6,000 (6 months)         │  │
+│ │ Remaining: ₹2,000 (2 months)           │  │
+│ │ [██████████░░░░] 75%                   │  │
+│ │                                         │  │
+│ │ Net Benefit:                            │  │
+│ │ Pay: ₹8,000 total (8 months × ₹1K)    │  │
+│ │ Receive: ₹9,000 (month 7)             │  │
+│ │ You'll pay ₹1,000 less than received  │  │
+│ └────────────────────────────────────────┘  │
+├─────────────────────────────────────────────┤
+│ PAYOUT SCHEDULE (9 months)                   │
+│ ┌────────────────────────────────────────┐  │
+│ │ Month 1 (Jan '25) │ John      │ ✓ Paid │  │
+│ │ Month 2 (Feb '25) │ Lisa      │ ✓ Paid │  │
+│ │ Month 3 (Mar '25) │ Mike      │ ✓ Paid │  │
+│ │ Month 4 (Apr '25) │ Sarah     │ ✓ Paid │  │
+│ │ Month 5 (May '25) │ Alex      │ ✓ Paid │  │
+│ │ Month 6 (Jun '25) │ Chris     │ ⏱️ Now  │  │
+│ │ Month 7 (Jul '25) │ YOU ⭐   │ 📅 Next │  │
+│ │ Month 8 (Aug '25) │ Emma      │ Pending│  │
+│ │ Month 9 (Sep '25) │ David     │ Pending│  │
+│ └────────────────────────────────────────┘  │
+├─────────────────────────────────────────────┤
+│ CONTRIBUTION STATUS (This Month)             │
+│ ┌────────────────────────────────────────┐  │
+│ │ Month 6 (June 2025)                    │  │
+│ │ Due Date: June 5, 2025                 │  │
+│ │                                         │  │
+│ │ Payment Status: 8/9 Paid               │  │
+│ │ [████████████████████░░░] 89%         │  │
+│ │                                         │  │
+│ │ ✓ You (Paid: Jun 2)                   │  │
+│ │ ✓ John, Lisa, Mike, Sarah, Alex       │  │
+│ │ ✓ Emma, David                          │  │
+│ │ ⏱️ Chris (Due: Jun 5) ← Payout holder │  │
+│ │                                         │  │
+│ │ Payout: ₹9,000 to Chris               │  │
+│ │ Status: Awaiting Chris's contribution │  │
+│ └────────────────────────────────────────┘  │
+├─────────────────────────────────────────────┤
+│ YOUR CONTRIBUTION HISTORY                    │
+│ ┌────────────────────────────────────────┐  │
+│ │ Month │ Due Date  │ Paid Date │ Status │  │
+│ ├────────────────────────────────────────┤  │
+│ │ 6     │ Jun 5 '25 │ Jun 2 '25 │ ✓ Paid │  │
+│ │ 5     │ May 5 '25 │ May 1 '25 │ ✓ Paid │  │
+│ │ 4     │ Apr 5 '25 │ Apr 3 '25 │ ✓ Paid │  │
+│ │ 3     │ Mar 5 '25 │ Mar 4 '25 │ ✓ Paid │  │
+│ │ 2     │ Feb 5 '25 │ Feb 1 '25 │ ✓ Paid │  │
+│ │ 1     │ Jan 5 '25 │ Jan 2 '25 │ ✓ Paid │  │
+│ └────────────────────────────────────────┘  │
+│ Perfect Record! 🏆 100% on-time              │
+├─────────────────────────────────────────────┤
+│ [Mark Contribution Paid] [Request Exit]     │
+│ [Download Statement PDF]                     │
+└─────────────────────────────────────────────┘
+```
+
+KEY SECTIONS
+-----------
+1. Pool Overview
+   - Basic pool configuration
+   - Contribution amount
+   - Timeline
+
+2. Your Position
+   - When you'll receive payout
+   - Progress tracker
+   - Net benefit calculation (important!)
+
+3. Payout Schedule
+   - All 9 months listed
+   - Who gets payout each month
+   - Status of each payout
+   - Highlight your month
+
+4. Current Month Status
+   - Who's paid and who hasn't
+   - This month's payout recipient
+   - Overall collection status
+
+5. Your History
+   - All your contributions
+   - Payment dates
+   - Perfect record badge
+
+HOW PAYOUT WORKS
+---------------
+Important Concept:
+
+When it's YOUR payout month (Month 7):
+- You DON'T contribute that month
+- You RECEIVE ₹9,000 from other 8 members
+- Other members each pay ₹1,000
+
+Example Math:
+- Total months: 9
+- You pay in: 8 months × ₹1,000 = ₹8,000
+- You receive: 1 month × ₹9,000 = ₹9,000
+- Net: You get ₹1,000 more than you paid
+
+This is why position matters:
+- Position 1 (early): Get money first, but pay more later
+- Position 9 (late): Pay everything first, then get it back
+- Middle positions: Balanced
+
+
+================================================================================
+3. CREATE MONEY POOL (ADMIN)
+================================================================================
+
+Route: /admin/money-pools/create
+Component: CreateMoneyPoolPage.tsx
+Permission: Admin
+
+LAYOUT STRUCTURE
+```
+┌─────────────────────────────────────────────┐
+│ Create New Money Pool                        │
+├─────────────────────────────────────────────┤
+│ Pool Name *                                  │
+│ [Emergency Fund___________________]         │
+│ Add emoji: 🎯                               │
+├─────────────────────────────────────────────┤
+│ Pool Type                                    │
+│ ⚪ Equal Contribution (recommended)          │
+│    Everyone pays the same amount            │
+│ ⚪ Variable Contribution                     │
+│    Members can pay different amounts        │
+├─────────────────────────────────────────────┤
+│ Contribution Amount per Person *             │
+│ ₹ [1000] per month                          │
+│                                              │
+│ Contribution Frequency                       │
+│ ⚪ Weekly                                    │
+│ 🔘 Monthly (recommended)                     │
+│ ⚪ Quarterly                                 │
+├─────────────────────────────────────────────┤
+│ Select Participants *                        │
+│ ┌────────────────────────────────────────┐  │
+│ │ ☑ John Doe                             │  │
+│ │ ☑ Sarah Smith                          │  │
+│ │ ☑ Mike Johnson                         │  │
+│ │ ☑ Lisa Brown                           │  │
+│ │ ☑ You (Admin)                          │  │
+│ │ ☑ Alex Wilson                          │  │
+│ │ ☑ Chris Lee                            │  │
+│ │ ☑ Emma Davis                           │  │
+│ │ ☑ David Miller                         │  │
+│ └────────────────────────────────────────┘  │
+│ Selected: 9 members                          │
+│                                              │
+│ Pool Calculation:                            │
+│ Contribution: ₹1,000/month × 9 = ₹9,000     │
+│ Duration: 9 months (one per participant)    │
+│ Total Pool Amount: ₹81,000                  │
+├─────────────────────────────────────────────┤
+│ Payout Order                                 │
+│ ⚪ Random Assignment                         │
+│ ⚪ First-Come-First-Serve                    │
+│ 🔘 Manual Order (I'll set it)               │
+│                                              │
+│ [Set Payout Order →]                        │
+├─────────────────────────────────────────────┤
+│ Start Date *                                 │
+│ [📅 January 5, 2025]                        │
+│                                              │
+│ Monthly Due Date                             │
+│ Day [5] of each month                       │
+├─────────────────────────────────────────────┤
+│ Rules & Penalties                            │
+│ ┌────────────────────────────────────────┐  │
+│ │ Late Payment Grace Period               │  │
+│ │ [3] days after due date                │  │
+│ │                                         │  │
+│ │ Late Fee                                │  │
+│ │ ₹ [100] per late contribution          │  │
+│ │                                         │  │
+│ │ Loyalty Points Penalty                  │  │
+│ │ [-50] points per missed contribution   │  │
+│ │                                         │  │
+│ │ Early Exit Policy                       │  │
+│ │ ☑ Must pay remaining contributions     │  │
+│ │ ☐ Can find replacement member          │  │
+│ │ ☐ Forfeit payout if already received   │  │
+│ └────────────────────────────────────────┘  │
+├─────────────────────────────────────────────┤
+│ [Save as Draft] [Create & Notify Members]   │
+└─────────────────────────────────────────────┘
+```
+
+PAYOUT ORDER MODAL
+-----------------
+```
+┌──────────────────────────────────────────┐
+│ Set Payout Order                          │
+├──────────────────────────────────────────┤
+│ Drag to reorder members:                  │
+│                                            │
+│ ┌────────────────────────────────────┐   │
+│ │ 1. [≡] John Doe                    │   │
+│ │ 2. [≡] Lisa Brown                  │   │
+│ │ 3. [≡] Mike Johnson                │   │
+│ │ 4. [≡] Sarah Smith                 │   │
+│ │ 5. [≡] Alex Wilson                 │   │
+│ │ 6. [≡] Emma Davis                  │   │
+│ │ 7. [≡] You (Admin)                 │   │
+│ │ 8. [≡] Chris Lee                   │   │
+│ │ 9. [≡] David Miller                │   │
+│ └────────────────────────────────────┘   │
+│                                            │
+│ 💡 Tip: Position 1 gets payout first      │
+│    Position 9 gets payout last            │
+│                                            │
+│ [Randomize Order] [Cancel] [Confirm]      │
+└──────────────────────────────────────────┘
+```
+
+CREATION FLOW
+------------
+1. Validate form
+2. Create money_pools record:
+```typescript
+const pool = {
+  apartment_id: apartmentId,
+  pool_name: formData.poolName,
+  contribution_amount: formData.amount,
+  contribution_frequency: formData.frequency,
+  total_participants: participants.length,
+  start_date: formData.startDate,
+  duration_months: participants.length, // 1 month per person
+  payout_order: selectedOrder, // Array of user IDs
+  current_payout_index: 0,
+  status: 'active',
+  settings: {
+    gracePeriod: formData.gracePeriod,
+    lateFee: formData.lateFee,
+    loyaltyPenalty: formData.loyaltyPenalty,
+    earlyExitRules: formData.exitRules
+  }
+}
+
+await supabase.from('money_pools').insert(pool)
+```
+
+3. Create money_pool_participants records:
+```typescript
+const participantRecords = selectedOrder.map((userId, index) => ({
+  money_pool_id: pool.id,
+  user_id: userId,
+  payout_position: index + 1,
+  has_received_payout: false,
+  payout_received_date: null
+}))
+
+await supabase.from('money_pool_participants').insert(participantRecords)
+```
+
+4. Send notifications to all participants
+5. Create first month contributions (status: pending)
+6. Redirect to pool detail page
+
+
+================================================================================
+4. MARK CONTRIBUTION PAID
+================================================================================
+
+Component: MarkContributionPaidModal.tsx
+Trigger: User clicks "Mark Contribution Paid"
+
+```
+┌──────────────────────────────────────────┐
+│ Mark Contribution as Paid                 │
+├──────────────────────────────────────────┤
+│ Pool: Emergency Fund                      │
+│ Month: 6 (June 2025)                     │
+│ Amount: ₹1,000                           │
+│ Due Date: June 5, 2025                   │
+├──────────────────────────────────────────┤
+│ Payment Method *                          │
+│ [Select Method ▼]                         │
+│ • Cash to Admin                          │
+│ • Bank Transfer                          │
+│ • UPI                                    │
+│ • Other                                  │
+├──────────────────────────────────────────┤
+│ Payment Date *                            │
+│ [📅 Jun 2, 2025] (default: today)        │
+├──────────────────────────────────────────┤
+│ Transaction Reference (if applicable)     │
+│ [Optional reference number___________]    │
+├──────────────────────────────────────────┤
+│ Notes (optional)                          │
+│ ┌────────────────────────────────────┐   │
+│ │ Paid via UPI to admin              │   │
+│ └────────────────────────────────────┘   │
+├──────────────────────────────────────────┤
+│ [Cancel] [Submit for Verification]        │
+└──────────────────────────────────────────┘
+```
+
+SUBMISSION FLOW
+--------------
+1. Validate form
+2. Create contribution record:
+```typescript
+const contribution = {
+  money_pool_id: poolId,
+  user_id: userId,
+  contribution_date: formData.paymentDate,
+  amount: poolAmount,
+  payment_status: 'pending', // Admin must verify
+  payment_method: formData.method,
+  transaction_reference: formData.reference,
+  notes: formData.notes,
+  month_number: currentMonth
+}
+
+await supabase.from('money_pool_contributions').insert(contribution)
+```
+
+3. Notify admin for verification
+4. Check if all contributions received for this month
+5. If yes, trigger payout processing
+6. Award loyalty points when verified
+
+
+================================================================================
+5. PAYOUT PROCESSING (ADMIN)
+================================================================================
+
+Route: /admin/money-pools/:poolId/payout
+Component: ProcessPayoutPage.tsx
+Permission: Admin
+
+```
+┌─────────────────────────────────────────────┐
+│ Process Payout - Month 6                     │
+├─────────────────────────────────────────────┤
+│ Pool: Emergency Fund                         │
+│ Payout Recipient: Chris Lee                 │
+│ Payout Amount: ₹9,000                       │
+│ Due Date: June 5, 2025                      │
+├─────────────────────────────────────────────┤
+│ CONTRIBUTION STATUS (8 contributors)         │
+│ ┌────────────────────────────────────────┐  │
+│ │ Member       │Status  │Paid Date│Verify││
+│ ├────────────────────────────────────────┤  │
+│ │ John         │✓ Paid  │Jun 1    │  ✓  ││
+│ │ Lisa         │✓ Paid  │Jun 2    │  ✓  ││
+│ │ Mike         │✓ Paid  │Jun 3    │  ✓  ││
+│ │ Sarah        │✓ Paid  │Jun 1    │  ✓  ││
+│ │ Alex         │✓ Paid  │Jun 2    │  ✓  ││
+│ │ You (Admin)  │✓ Paid  │Jun 1    │  ✓  ││
+│ │ Emma         │✓ Paid  │Jun 4    │  ✓  ││
+│ │ David        │⏱️ Pending│-       │  -  ││
+│ └────────────────────────────────────────┘  │
+│                                              │
+│ Status: 7/8 Verified (88%)                  │
+│ Amount Collected: ₹7,000 / ₹8,000           │
+│ Outstanding: David (₹1,000)                 │
+├─────────────────────────────────────────────┤
+│ PAYOUT OPTIONS                               │
+│                                              │
+│ ⚪ Wait for all contributions                │
+│    Don't pay until everyone has paid        │
+│                                              │
+│ 🔘 Pay now with deduction                   │
+│    Pay ₹7,000 now (Chris's contribution     │
+│    covers the missing ₹1,000)               │
+│                                              │
+│ ⚪ Pay full from apartment fund             │
+│    Pay ₹8,000 now, collect from David later│
+├─────────────────────────────────────────────┤
+│ Payout Method                                │
+│ [Select Method ▼]                            │
+│ • Cash                                       │
+│ • Bank Transfer                              │
+│ • UPI                                        │
+├──────────────────────────────────────────────┤
+│ Transaction Reference                        │
+│ [Enter reference____________]               │
+├──────────────────────────────────────────────┤
+│ [Cancel] [Process Payout]                   │
+└─────────────────────────────────────────────┘
+```
+
+PAYOUT LOGIC
+-----------
+Important: Chris is getting payout this month, so Chris doesn't contribute.
+8 other members must contribute ₹1,000 each = ₹8,000 total.
+
+Wait Option: Do nothing until all 8 pay.
+
+Pay Now with Deduction:
+- Chris would have contributed ₹1,000 if not their payout month
+- That ₹1,000 covers the missing contribution
+- Pay Chris ₹7,000 (the collected amount)
+- Chris effectively breaks even
+
+Pay Full from Apartment:
+- Admin pays Chris full ₹8,000
+- Mark David's contribution as overdue
+- Chase David for payment later
+- Apartment fund bears risk
+
+PROCESS PAYOUT FUNCTION
+-----------------------
+```typescript
+async function processPayout({
+  poolId,
+  month,
+  recipientId,
+  amount,
+  payoutMethod,
+  transactionRef,
+  option
+}: ProcessPayoutParams) {
+  // Update participant record
+  await supabase
+    .from('money_pool_participants')
+    .update({
+      has_received_payout: true,
+      payout_received_date: new Date()
+    })
+    .eq('money_pool_id', poolId)
+    .eq('user_id', recipientId)
+  
+  // Move to next payout index
+  await supabase
+    .from('money_pools')
+    .update({
+      current_payout_index: currentIndex + 1
+    })
+    .eq('id', poolId)
+  
+  // Create payout record
+  await supabase.from('money_pool_payouts').insert({
+    money_pool_id: poolId,
+    recipient_id: recipientId,
+    amount: amount,
+    month_number: month,
+    payout_method: payoutMethod,
+    transaction_reference: transactionRef,
+    paid_at: new Date(),
+    processed_by: adminId
+  })
+  
+  // Notify recipient
+  await sendNotification({
+    userId: recipientId,
+    title: '💰 Money Pool Payout Received',
+    message: `You've received ₹${amount} from ${poolName}!`,
+    channels: ['email', 'push', 'in_app']
+  })
+  
+  // Award loyalty points to all who paid on time
+  await awardPaymentPoints(poolId, month)
+  
+  // Check if pool is complete
+  if (currentIndex + 1 === totalParticipants) {
+    await completePool(poolId)
+  }
+}
+```
+
+
+================================================================================
+6. INVESTMENTS TRACKING (MVP)
+================================================================================
+
+Route: /investments
+Component: InvestmentsPage.tsx
+Permission: Apartment Members
+
+NOTE: MVP version is manual tracking only, no financial calculations
+
+```
+┌─────────────────────────────────────────────┐
+│ Collaborative Investments 📈                 │
+├─────────────────────────────────────────────┤
+│ 💡 This is for tracking only. No financial  │
+│    calculations or automatic management.     │
+├─────────────────────────────────────────────┤
+│ [+ Add Investment] (Admin Only)              │
+├─────────────────────────────────────────────┤
+│ ACTIVE INVESTMENTS (3)                       │
+│                                              │
+│ ┌─────────────────────────────────────┐    │
+│ │ 📊 Mutual Fund - HDFC Balanced      │    │
+│ │ Started: Jan 2025                    │    │
+│ │                                      │    │
+│ │ Participants: 5 members              │    │
+│ │ • John: ₹5,000                      │    │
+│ │ • Sarah: ₹5,000                     │    │
+│ │ • You: ₹5,000                       │    │
+│ │ • Mike: ₹3,000                      │    │
+│ │ • Lisa: ₹2,000                      │    │
+│ │ Total: ₹20,000                      │    │
+│ │                                      │    │
+│ │ Expected Return: 12% p.a.           │    │
+│ │ Maturity: Jan 2030 (5 years)        │    │
+│ │                                      │    │
+│ │ [View Details] [Add Note]           │    │
+│ └─────────────────────────────────────┘    │
+│                                              │
+│ ┌─────────────────────────────────────┐    │
+│ │ 🏢 Fixed Deposit - SBI Bank         │    │
+│ │ ...similar structure...              │    │
+│ └─────────────────────────────────────┘    │
+└─────────────────────────────────────────────┘
+```
+
+FEATURES (MANUAL TRACKING)
+-------------------------
+✓ Record investment details (name, type, amount)
+✓ Track participants and their contributions
+✓ Record expected returns and maturity dates
+✓ Add notes and updates
+✓ View history
+
+✗ No automatic profit/loss calculation
+✗ No live market value tracking
+✗ No transaction processing
+✗ No withdrawal management
+
+This is purely informational - members track their
+collaborative investments manually here for reference.
+
+FUTURE ENHANCEMENTS (Post-MVP)
+----------------------------
+- Integration with investment platforms API
+- Real-time portfolio value
+- Profit/loss calculations
+- Dividend tracking
+- Tax reporting
+- Automatic distributions
+
+================================================================================
+[Document Complete]
+================================================================================
+
+Pages Covered: 6 major pages
+Database Tables: 5 tables
+Core Features: Rotating payout system (unique!)
+
+Status: COMPLETE SPECIFICATION
+Next: Implementation begins!
+

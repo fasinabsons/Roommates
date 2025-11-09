@@ -1,0 +1,604 @@
+================================================================================
+BILLS & PAYMENT MANAGEMENT - COMPLETE PAGE SPECIFICATIONS
+RoomMate Manager - Billing Module Documentation
+================================================================================
+
+This document provides complete specifications for all billing-related pages,
+components, workflows, and business logic.
+
+================================================================================
+TABLE OF CONTENTS
+================================================================================
+1. Overview & Architecture
+2. User Bills Pages (Member View)
+3. Admin Bills Pages
+4. Payment Workflows
+5. Dispute Management
+6. Components Library
+7. API Integration
+8. State Management
+9. Business Logic
+10. Error Handling
+11. Testing Scenarios
+
+================================================================================
+1. OVERVIEW & ARCHITECTURE
+================================================================================
+
+BILLING SYSTEM ARCHITECTURE
+---------------------------
+Three-Layer System:
+1. Bill Types (Templates) → Define how bills work
+2. Bills (Instances) → Created from types, have total amounts
+3. Bill Splits (Individual) → Each user's share of a bill
+
+Key Features:
+✓ Multiple calculation methods (equal, per-bed, prorated, custom)
+✓ Manual payment tracking with admin verification
+✓ Automated reminders (5, 3, 1 days before, overdue)
+✓ Payment proof uploads via Cloudinary
+✓ Dispute resolution with chat
+✓ Payment frequency options (monthly, quarterly, annual)
+✓ Late payment penalties and loyalty points
+✓ Pro-rated calculations for mid-month join/exit
+
+USER ROLES IN BILLING
+---------------------
+Member:
+- View their bills
+- Mark payments as paid
+- Upload payment proofs
+- View payment history
+- Dispute bill amounts
+- Receive payment reminders
+
+Admin:
+- Create and configure bill types
+- Create bills for billing periods
+- Verify submitted payments
+- Reject payments with reasons
+- Resolve disputes
+- Adjust bill amounts
+- Apply late fees and waivers
+- View payment analytics
+
+BILL LIFECYCLE
+-------------
+1. Creation: Admin creates bill with amount and due date
+2. Calculation: System splits bill among eligible members
+3. Notification: All members notified of new bill
+4. Reminders: Automated reminders at intervals
+5. Payment: Member marks as paid with details
+6. Verification: Admin reviews and approves/rejects
+7. Completion: Bill marked paid, loyalty points awarded
+8. Overdue: If not paid, penalties applied
+
+
+================================================================================
+2. USER BILLS PAGES (MEMBER VIEW)
+================================================================================
+
+PAGE 2.1: MY BILLS DASHBOARD
+---------------------------
+Route: /bills
+Component: MyBillsPage.tsx
+Permission: Authenticated Member
+
+LAYOUT STRUCTURE
+```
+┌─────────────────────────────────────────────┐
+│ Header: "My Bills"                          │
+├─────────────────────────────────────────────┤
+│ ┌──────────┐ ┌──────────┐ ┌──────────┐    │
+│ │Total Due │ │Paid This │ │Overdue   │    │
+│ │₹15,000   │ │Month     │ │₹2,000    │    │
+│ │[Pay All] │ │₹10,000 ✓│ │⚠️ [Pay]  │    │
+│ └──────────┘ └──────────┘ └──────────┘    │
+├─────────────────────────────────────────────┤
+│ Next Payment Due: ₹5,000 in 3 days         │
+│ [View Details] →                            │
+├─────────────────────────────────────────────┤
+│ Tabs: [Pending] [Paid] [Overdue] [All]    │
+├─────────────────────────────────────────────┤
+│ Filters: [Type ▼] [Date Range]  [Sort ▼]  │
+├─────────────────────────────────────────────┤
+│ ┌─────────────────────────────────────┐    │
+│ │ 🏠 Rent - January 2025              │    │
+│ │ ₹10,000 | Due: Jan 5 | ⏱️ 3 days   │    │
+│ │ Status: PENDING 🟡                  │    │
+│ │ [Pay Now] [View Details] [Dispute] │    │
+│ └─────────────────────────────────────┘    │
+│                                              │
+│ ┌─────────────────────────────────────┐    │
+│ │ ⚡ Electricity - December 2024      │    │
+│ │ ₹1,200 | Paid: Dec 28 | ✓ Verified │    │
+│ │ Status: PAID ✅                     │    │
+│ │ [View Receipt]                      │    │
+│ └─────────────────────────────────────┘    │
+│                                              │
+│ [Load More Bills...]                        │
+└─────────────────────────────────────────────┘
+```
+
+COMPONENTS NEEDED
+-----------------
+1. SummaryCardsGrid
+   - TotalDueCard
+   - PaidThisMonthCard
+   - OverdueCard
+   
+2. NextPaymentCard
+   - Countdown component
+   - Due date display
+   - Quick action button
+   
+3. TabNavigation
+   - Pending (default, shows count badge)
+   - Paid
+   - Overdue (shows count if any)
+   - All
+   
+4. FilterBar
+   - Bill type dropdown
+   - Date range picker
+   - Sort dropdown (by date, amount)
+   - Clear filters button
+   
+5. BillCard (repeated component)
+   - Bill type icon and name
+   - Amount (large, bold)
+   - Due date with countdown
+   - Status badge (with color coding)
+   - Action buttons (conditional based on status)
+   - Expandable detail section
+
+API CALLS
+---------
+Initial Load:
+```typescript
+// Get user's bill splits
+GET /rest/v1/bill_splits?member_id=eq.{user_id}&select=*,bills(*),apartment_members(*)
+
+// Get summary data
+GET /functions/v1/billing-summary?user_id={user_id}
+```
+
+Real-time Subscription:
+```typescript
+supabase
+  .channel('bill_updates')
+  .on('postgres_changes', {
+    event: '*',
+    schema: 'public',
+    table: 'bill_splits',
+    filter: `member_id=eq.${userId}`
+  }, handleBillUpdate)
+  .subscribe()
+```
+
+STATE MANAGEMENT
+----------------
+```typescript
+interface BillsPageState {
+  bills: BillSplit[]
+  summary: {
+    totalDue: number
+    paidThisMonth: number
+    overdueAmount: number
+    nextDueDate: string | null
+  }
+  filters: {
+    status: 'all' | 'pending' | 'paid' | 'overdue'
+    billType: string | null
+    dateRange: { start: Date; end: Date } | null
+    sortBy: 'date' | 'amount' | 'status'
+  }
+  loading: boolean
+  error: string | null
+}
+```
+
+INTERACTIONS
+-----------
+1. Click "Pay All" → Opens multi-payment modal
+2. Click "Pay Now" on specific bill → Opens payment modal
+3. Click "View Details" → Expands bill card or navigates to detail page
+4. Click "Dispute" → Opens dispute creation modal
+5. Change tab → Filters bills by status
+6. Apply filters → Re-fetches filtered bills
+7. Real-time update → Updates bill card status
+
+
+PAGE 2.2: BILL DETAIL PAGE
+-------------------------
+Route: /bills/:billId
+Component: BillDetailPage.tsx
+Permission: Member (must have access to this bill)
+
+LAYOUT STRUCTURE
+```
+┌─────────────────────────────────────────────┐
+│ ← Back to Bills                              │
+├─────────────────────────────────────────────┤
+│ 🏠 RENT - JANUARY 2025                      │
+│ Period: Jan 1 - Jan 31, 2025                │
+│ Status: PENDING ⏱️                          │
+├─────────────────────────────────────────────┤
+│ ┌──────────────────────────────────┐        │
+│ │ BILL SUMMARY                     │        │
+│ │                                   │        │
+│ │ Total Apartment Bill: ₹40,000    │        │
+│ │ Split among: 4 members           │        │
+│ │                                   │        │
+│ │ YOUR SHARE: ₹10,000 (Large)     │        │
+│ │                                   │        │
+│ │ Due Date: January 5, 2025        │        │
+│ │ Days Remaining: 3 days ⏱️        │        │
+│ └──────────────────────────────────┘        │
+├─────────────────────────────────────────────┤
+│ ┌──────────────────────────────────┐        │
+│ │ BREAKDOWN                        │        │
+│ │                                   │        │
+│ │ Your Location:                   │        │
+│ │ Greg's Apartment > Room 305 >    │        │
+│ │ Lower Bed                        │        │
+│ │                                   │        │
+│ │ Bed Monthly Rate: ₹8,000         │        │
+│ │ + Shared Utilities: ₹2,000       │        │
+│ │ ────────────────────────────     │        │
+│ │ Total: ₹10,000                   │        │
+│ │                                   │        │
+│ │ Calculation Method:              │        │
+│ │ Per Bed (proportional)           │        │
+│ │                                   │        │
+│ │ Formula:                         │        │
+│ │ (Your bed rate / Total beds) ×   │        │
+│ │ Total amount                     │        │
+│ └──────────────────────────────────┘        │
+├─────────────────────────────────────────────┤
+│ ┌──────────────────────────────────┐        │
+│ │ PAYMENT STATUS                   │        │
+│ │                                   │        │
+│ │ ⚠️ PAYMENT REQUIRED               │        │
+│ │                                   │        │
+│ │ Please pay ₹10,000 by Jan 5      │        │
+│ │                                   │        │
+│ │ [Mark as Paid] [Dispute Amount]  │        │
+│ └──────────────────────────────────┘        │
+├─────────────────────────────────────────────┤
+│ ┌──────────────────────────────────┐        │
+│ │ SPLIT AMONG MEMBERS (view only)  │        │
+│ │                                   │        │
+│ │ • John (Room 301, Flat): ₹12,000│        │
+│ │ • Sarah (Room 303, Lower): ₹10K │        │
+│ │ • Mike (Room 305, Upper): ₹8,000│        │
+│ │ • You (Room 305, Lower): ₹10,000│        │
+│ └──────────────────────────────────┘        │
+└─────────────────────────────────────────────┘
+```
+
+KEY FEATURES
+-----------
+1. Bill Header
+   - Bill type with icon
+   - Period dates
+   - Status badge (animated for pending)
+
+2. Bill Summary Card
+   - Total apartment bill (context)
+   - YOUR SHARE (prominent, large font)
+   - Due date with countdown
+   - Visual countdown indicator
+
+3. Breakdown Section
+   - Your bed location and type
+   - Itemized calculation
+   - Clear explanation of formula
+   - Visual representation (chart if multiple components)
+
+4. Payment Status Section
+   - Dynamic based on status:
+     * Pending: Call-to-action to pay
+     * Paid: Confirmation with date + receipt link
+     * Overdue: Warning with late fee info
+     * Disputed: Current dispute status
+     
+5. Split Details
+   - See how bill was split
+   - All member amounts (for transparency)
+   - Sorted by amount or room
+
+6. Action Buttons
+   - Mark as Paid (primary, if pending/overdue)
+   - Dispute Amount (secondary)
+   - Download Invoice (future)
+
+API CALLS
+---------
+```typescript
+// Get bill details
+GET /rest/v1/bills?id=eq.{billId}&select=*,apartments(*)
+
+// Get user's split
+GET /rest/v1/bill_splits?bill_id=eq.{billId}&member_id=eq.{memberId}
+
+// Get all splits for this bill (for transparency)
+GET /rest/v1/bill_splits?bill_id=eq.{billId}&select=*,apartment_members(name,photo_url)
+
+// Get payments (if any)
+GET /rest/v1/payments?bill_split_id=eq.{splitId}
+```
+
+COMPONENTS
+----------
+- BillHeader
+- BillSummaryCard
+- BreakdownSection
+- PaymentStatusCard
+- SplitDetailsTable
+- ActionButtons
+- CountdownTimer
+
+
+PAGE 2.3: PAYMENT SUBMISSION MODAL
+---------------------------------
+Component: MarkAsPaidModal.tsx
+Trigger: Click "Mark as Paid" button
+Props: billSplitId, amount
+
+LAYOUT STRUCTURE
+```
+┌──────────────────────────────────────────┐
+│ Mark Payment as Paid                  ×  │
+├──────────────────────────────────────────┤
+│ ┌────────────────────────────────────┐  │
+│ │ BILL SUMMARY (read-only)           │  │
+│ │ Rent - January 2025                │  │
+│ │ Amount Due: ₹10,000                │  │
+│ │ Due Date: January 5, 2025          │  │
+│ └────────────────────────────────────┘  │
+├──────────────────────────────────────────┤
+│ Payment Method *                          │
+│ [Select Method ▼]                         │
+│ • Cash                                    │
+│ • Bank Transfer                           │
+│ • UPI (India)                            │
+│ • KNET (Kuwait)                          │
+│ • Mobile Money                           │
+│ • Credit Card                            │
+│ • Other                                  │
+├──────────────────────────────────────────┤
+│ Transaction Reference/ID *                │
+│ [Enter transaction ID]                    │
+│ e.g., TXN123456, UPI Ref: 987654321      │
+├──────────────────────────────────────────┤
+│ Payment Date *                            │
+│ [📅 Select Date] (default: today)        │
+├──────────────────────────────────────────┤
+│ Payment Proof (optional)                  │
+│ ┌────────────────────────────────────┐  │
+│ │     📷 Upload Screenshot or        │  │
+│ │     📁 Select from Gallery         │  │
+│ │                                     │  │
+│ │  [Click to Upload]                 │  │
+│ └────────────────────────────────────┘  │
+│ Max file size: 5MB (JPG, PNG, PDF)       │
+│                                            │
+│ Preview: [thumbnail if uploaded]          │
+├──────────────────────────────────────────┤
+│ Additional Notes (optional)               │
+│ ┌────────────────────────────────────┐  │
+│ │ Add any notes about this payment   │  │
+│ │                                     │  │
+│ └────────────────────────────────────┘  │
+├──────────────────────────────────────────┤
+│        [Cancel]  [Submit for Verification]│
+└──────────────────────────────────────────┘
+```
+
+FORM VALIDATION
+--------------
+Required Fields:
+- Payment method (must select one)
+- Transaction reference (min 4 characters)
+- Payment date (cannot be future date)
+
+Optional Fields:
+- Payment proof (Cloudinary upload)
+- Notes (max 500 characters)
+
+Validation Rules:
+```typescript
+const validationSchema = yup.object({
+  paymentMethod: yup.string().required('Payment method is required'),
+  transactionReference: yup.string()
+    .required('Transaction reference is required')
+    .min(4, 'Must be at least 4 characters'),
+  paymentDate: yup.date()
+    .required('Payment date is required')
+    .max(new Date(), 'Cannot be a future date'),
+  proofUrl: yup.string().url().nullable(),
+  notes: yup.string().max(500).nullable()
+})
+```
+
+CLOUDINARY UPLOAD FLOW
+---------------------
+1. User clicks upload button
+2. Cloudinary widget opens
+3. User selects/captures image
+4. Image uploads to: /roommate-manager/payments/{user_id}/{bill_id}/
+5. Returns secure URL
+6. Display thumbnail preview
+7. Store URL in form state
+
+```typescript
+const uploadPaymentProof = async (file: File) => {
+  const formData = new FormData()
+  formData.append('file', file)
+  formData.append('upload_preset', 'payment_proofs')
+  formData.append('folder', `roommate-manager/payments/${userId}/${billId}`)
+  
+  const response = await fetch(
+    `https://api.cloudinary.com/v1_1/${cloudName}/upload`,
+    { method: 'POST', body: formData }
+  )
+  
+  const data = await response.json()
+  return data.secure_url
+}
+```
+
+SUBMISSION FLOW
+--------------
+1. User fills form
+2. Click "Submit for Verification"
+3. Validate form
+4. Upload proof to Cloudinary (if provided)
+5. Create payment record:
+```typescript
+const payment = {
+  apartment_id: apartmentId,
+  payer_member_id: userId,
+  bill_split_id: billSplitId,
+  amount: billAmount,
+  payment_method: formData.paymentMethod,
+  transaction_reference: formData.transactionReference,
+  receipt_url: proofUrl,
+  payment_date: formData.paymentDate,
+  status: 'pending_verification',
+  notes: formData.notes
+}
+
+await supabase.from('payments').insert(payment)
+```
+
+6. Update bill split status to 'pending_verification'
+7. Send notification to admin
+8. Show success message
+9. Close modal
+10. Refresh bills list
+
+SUCCESS MESSAGE
+--------------
+Toast notification:
+"Payment submitted successfully! ✓
+Your payment is awaiting admin verification.
+You'll be notified once it's approved."
+
+COMPONENTS
+----------
+- BillSummary (read-only display)
+- PaymentMethodDropdown
+- TransactionIdInput
+- DatePicker
+- CloudinaryUploadWidget
+- ImagePreview
+- NotesTextarea
+- SubmitButton
+
+
+PAGE 2.4: PAYMENT HISTORY PAGE
+-----------------------------
+Route: /bills/history
+Component: PaymentHistoryPage.tsx
+Permission: Member
+
+LAYOUT STRUCTURE
+```
+┌─────────────────────────────────────────────┐
+│ Payment History                              │
+├─────────────────────────────────────────────┤
+│ ┌────────┐ ┌────────┐ ┌────────┐ ┌────────┐│
+│ │Total   │ │Average │ │On-Time │ │Savings ││
+│ │Paid    │ │Monthly │ │Rate    │ │(Annual)││
+│ │₹120K   │ │₹10K    │ │95%     │ │₹18K    ││
+│ └────────┘ └────────┘ └────────┘ └────────┘│
+├─────────────────────────────────────────────┤
+│ Filters: [Date Range] [Type] [Status]       │
+│ [Export CSV] [Export PDF]                   │
+├─────────────────────────────────────────────┤
+│ ┌─────────────────────────────────────────┐ │
+│ │ Date     │Type │Amount│Method│Status│  │ │
+│ ├─────────────────────────────────────────┤ │
+│ │Jan 3 '25 │Rent │₹10K  │UPI   │✓Paid │…││
+│ │Dec 28'24 │Elec │₹1.2K │Cash  │✓Paid │…││
+│ │Dec 5 '24 │Rent │₹10K  │Bank  │✓Paid │…││
+│ │...                                      │ │
+│ └─────────────────────────────────────────┘ │
+│ [Load More...] Showing 1-20 of 150          │
+└─────────────────────────────────────────────┘
+```
+
+TABLE COLUMNS
+------------
+- Payment Date (sortable)
+- Bill Type (filterable)
+- Amount (sortable)
+- Payment Method (filterable)
+- Status (Paid/Verified/Rejected)
+- Verified By (admin name)
+- Actions (View Receipt, Download)
+
+STATS CARDS
+----------
+1. Total Paid
+   - Sum of all verified payments
+   - Period selector (This Year, All Time)
+   
+2. Average Monthly
+   - Total paid / months
+   - Trend indicator (↑↓)
+   
+3. On-Time Payment Rate
+   - (On-time payments / Total) × 100%
+   - Color coded: Green >90%, Yellow 70-90%, Red <70%
+   
+4. Savings from Annual Payment
+   - If user paid annually, show discount amount
+   - "You saved ₹18,000 this year!"
+
+FILTERS & EXPORTS
+----------------
+Filters:
+- Date Range (preset + custom)
+- Bill Type (multi-select)
+- Status (multi-select)
+- Payment Method
+
+Export Options:
+- CSV: All columns, raw data
+- PDF: Formatted report with summary
+
+API CALLS
+---------
+```typescript
+GET /rest/v1/payments?payer_member_id=eq.{memberId}&status=eq.verified&order=payment_date.desc
+
+GET /functions/v1/payment-summary?user_id={userId}&period=this_year
+```
+
+
+================================================================================
+3. ADMIN BILLS PAGES
+================================================================================
+
+PAGE 3.1: ADMIN BILLS DASHBOARD
+------------------------------
+Route: /admin/bills
+Component: BillsDashboardPage.tsx
+Permission: Admin
+
+[Complete specification in next section due to length...]
+
+================================================================================
+[Document continues with Admin pages, Payment workflows, Components, etc.]
+================================================================================
+
+Total Sections: 11
+Current: Completed sections 1-2 (User pages)
+Next: Admin pages, workflows, components library
+
+Status: FOUNDATION COMPLETE
+Remaining: ~70% (Admin views, workflows, components, business logic)
+

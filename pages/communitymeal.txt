@@ -1,0 +1,676 @@
+================================================================================
+COMMUNITY MEAL MANAGEMENT - COMPLETE PAGE SPECIFICATIONS
+RoomMate Manager - Meal & Grocery Module Documentation
+================================================================================
+
+OVERVIEW
+--------
+The Community Meal system is the most complex and unique feature of RoomMate Manager.
+It handles chef management, weekly menus, rotating grocery teams, OCR receipt scanning,
+cost splitting, and team performance ratings.
+
+KEY FEATURES
+-----------
+✓ Chef profile management with salary splitting
+✓ Weekly menu planning with food photos
+✓ Automated grocery team rotation (4-week cycles)
+✓ OCR receipt scanning (Tesseract.js + Azure CV)
+✓ Dynamic cost splitting based on meal participation
+✓ Team performance rating system (1-5 stars)
+✓ Flexible participation (Full/Lunch/Dinner/Custom)
+✓ Water opt-in/opt-out
+✓ Budget models (Fixed vs Dynamic)
+✓ Admin approval workflow for purchases
+
+================================================================================
+1. COMMUNITY MEAL DASHBOARD
+================================================================================
+
+Route: /meals
+Component: CommunityMealDashboardPage.tsx
+Permission: Meal Participant or Admin
+
+LAYOUT STRUCTURE
+```
+┌─────────────────────────────────────────────┐
+│ Community Meals 🍽️                          │
+├─────────────────────────────────────────────┤
+│ Your Meal Plan: Full (B+L+D) + Water       │
+│ Weekly Cost: ₹265 | Chef Share: ₹882/month │
+│ [Change Preferences]                         │
+├─────────────────────────────────────────────┤
+│ Tabs: [This Week's Menu] [Grocery Teams]   │
+│       [Cost Summary] [Settings]             │
+├─────────────────────────────────────────────┤
+│ THIS WEEK'S MENU (Jan 1-7)                 │
+│ ┌──────────────────────────────────────┐   │
+│ │ Monday  │ Breakfast │ Lunch  │ Dinner│   │
+│ │ Jan 1   │ Idli      │ Rice + │ Roti +│   │
+│ │         │ Sambar    │ Chicken│ Dal   │   │
+│ │         │ [Photo]   │ Curry  │ Paneer│   │
+│ │         │           │ [Photo]│ [Photo│   │
+│ ├─────────────────────────────────────────┤   │
+│ │ Tuesday │...                           │   │
+│ └──────────────────────────────────────┘   │
+├─────────────────────────────────────────────┤
+│ GROCERY DUTY THIS WEEK                      │
+│ ┌──────────────────────────────────────┐   │
+│ │ Team A (Sarah & Mike)                │   │
+│ │ Your team's turn this week!          │   │
+│ │ Budget: ₹5,000 | Spent: ₹4,500 ✓    │   │
+│ │ Status: Purchased ✓ Pending Approval│   │
+│ │ [View Receipt] [Upload More]        │   │
+│ └──────────────────────────────────────┘   │
+│                                              │
+│ OR (if not your turn):                       │
+│ ┌──────────────────────────────────────┐   │
+│ │ This Week: Team B (John & Lisa)     │   │
+│ │ Your Turn: Week of Jan 15           │   │
+│ │ Team: You + Alex                    │   │
+│ │ [View Rotation Schedule]            │   │
+│ └──────────────────────────────────────┘   │
+├─────────────────────────────────────────────┤
+│ CHEF INFORMATION                             │
+│ ┌──────────────────────────────────────┐   │
+│ │ [Photo] Chef Kumar                   │   │
+│ │ ⭐ 4.5/5 (24 ratings)                │   │
+│ │ Contact: +91-9999999999             │   │
+│ │ Salary: ₹15,000/month               │   │
+│ │ Your Share: ₹882/month (17 members)│   │
+│ │ [Rate Chef] [View Profile]          │   │
+│ └──────────────────────────────────────┘   │
+└─────────────────────────────────────────────┘
+```
+
+COMPONENTS
+----------
+1. MealPlanBanner
+   - Current plan display
+   - Weekly cost
+   - Chef share
+   - Edit button
+   
+2. TabNavigation
+   - This Week's Menu
+   - Grocery Teams
+   - Cost Summary
+   - Settings (admin only)
+   
+3. WeeklyMenuGrid
+   - 7 days × 3 meals = 21 cards
+   - Each card: Meal name, items, photo
+   - Click to see details
+   - Vote on menu changes
+   
+4. GroceryDutyCard
+   - Conditional display (your turn vs others)
+   - Team members
+   - Budget info
+   - Status
+   - Action buttons
+   
+5. ChefInfoCard
+   - Photo, name, rating
+   - Contact info
+   - Salary breakdown
+   - Actions
+
+API CALLS
+---------
+```typescript
+// Get user's meal participation
+GET /rest/v1/meal_participants?user_id=eq.{userId}
+
+// Get this week's menu
+GET /rest/v1/menus?community_meal_id=eq.{mealId}&week_start_date=eq.{monday}
+
+// Get current grocery team
+GET /rest/v1/grocery_teams?community_meal_id=eq.{mealId}&week_number=eq.{week}
+
+// Get chef info
+GET /rest/v1/chefs?apartment_id=eq.{apartmentId}&status=eq.active
+```
+
+================================================================================
+2. WEEKLY MENU PLANNER (ADMIN)
+================================================================================
+
+Route: /admin/meals/menu
+Component: MenuPlannerPage.tsx
+Permission: Admin
+
+LAYOUT STRUCTURE
+```
+┌─────────────────────────────────────────────┐
+│ Weekly Menu Planner                          │
+│ Week of: [Jan 1-7, 2025 ▼]                 │
+│ [Save as Draft] [Publish] [Copy Last Week] │
+├─────────────────────────────────────────────┤
+│        │ Breakfast  │ Lunch     │ Dinner   │
+├────────┼────────────┼───────────┼──────────┤
+│ Mon    │ [Edit ✏️]  │ [Edit ✏️] │ [Edit ✏️]│
+│ Jan 1  │ Idli       │ Rice +    │ Roti +  │
+│        │ Sambar     │ Chicken   │ Dal     │
+│        │ Chutney    │ Curry     │ Paneer  │
+│        │ [📷 Photo] │ [📷]      │ [📷]    │
+├────────┼────────────┼───────────┼──────────┤
+│ Tue    │ [Edit ✏️]  │ [Edit ✏️] │ [Edit ✏️]│
+│ Jan 2  │ ...        │ ...       │ ...     │
+├────────┼────────────┼───────────┼──────────┤
+│ ... (7 days total)                         │
+└─────────────────────────────────────────────┘
+```
+
+EDIT MEAL MODAL
+--------------
+```
+┌──────────────────────────────────────────┐
+│ Edit Meal: Monday Lunch                  │
+├──────────────────────────────────────────┤
+│ Main Course *                             │
+│ [Rice] [Roti] [Porotta] (checkboxes)    │
+│                                            │
+│ Curry 1 *                                 │
+│ [Chicken Curry___________________]        │
+│                                            │
+│ Curry 2                                   │
+│ [Dal Tadka_______________________]        │
+│                                            │
+│ Side Dish                                 │
+│ [Salad, Raita____________________]        │
+│                                            │
+│ Dessert (optional)                        │
+│ [Ice Cream_______________________]        │
+│                                            │
+│ Beverage (optional)                       │
+│ [Juice___________________________]        │
+│                                            │
+│ Food Photo (Cloudinary)                   │
+│ ┌────────────────────────────────┐       │
+│ │ [Current Photo Preview]        │       │
+│ │ [Click to Change]              │       │
+│ └────────────────────────────────┘       │
+│                                            │
+│ [Cancel] [Save]                           │
+└──────────────────────────────────────────┘
+```
+
+FEATURES
+--------
+1. Week Navigation
+   - Dropdown to select week
+   - Previous/Next week buttons
+   - Jump to current week
+   
+2. Bulk Actions
+   - Save as Draft (not visible to users)
+   - Publish (makes visible + notifies users)
+   - Copy Last Week (duplicates all 21 meals)
+   - Clear All
+   
+3. Individual Meal Edit
+   - Click any cell to edit
+   - Form with meal components
+   - Photo upload to Cloudinary
+   - Save individual meal
+   
+4. Menu Templates
+   - Save current week as template
+   - Load template
+   - Useful for rotating menus
+
+CLOUDINARY UPLOAD
+-----------------
+Folder: /roommate-manager/meals/{meal_id}/photos/
+Transformation: w_800,h_600,c_fill,q_auto,f_auto
+
+================================================================================
+3. GROCERY TEAM MANAGEMENT
+================================================================================
+
+PAGE 3.1: TEAM ROTATION VIEW
+---------------------------
+Route: /meals/teams
+Component: GroceryTeamsPage.tsx
+Permission: Meal Participant
+
+```
+┌─────────────────────────────────────────────┐
+│ Grocery Team Rotation                        │
+├─────────────────────────────────────────────┤
+│ 4-Week Cycle: Jan 1 - Jan 28, 2025         │
+├─────────────────────────────────────────────┤
+│ ┌──────────────────────────────────────┐   │
+│ │ WEEK 1 (Jan 1-7) - YOUR TURN        │   │
+│ │ Team A: Sarah (You) + Mike           │   │
+│ │ Status: ✓ Completed                  │   │
+│ │ Spent: ₹4,500 | Rating: ⭐ 4.8/5    │   │
+│ │ [View Receipt] [View Feedback]      │   │
+│ └──────────────────────────────────────┘   │
+│                                              │
+│ ┌──────────────────────────────────────┐   │
+│ │ WEEK 2 (Jan 8-14) - CURRENT         │   │
+│ │ Team B: John + Lisa                  │   │
+│ │ Status: ⏱️ In Progress               │   │
+│ │ Budget: ₹5,000 | Spent: Not yet     │   │
+│ └──────────────────────────────────────┘   │
+│                                              │
+│ ┌──────────────────────────────────────┐   │
+│ │ WEEK 3 (Jan 15-21)                   │   │
+│ │ Team C: Alex + Chris                 │   │
+│ │ Status: Scheduled                    │   │
+│ └──────────────────────────────────────┘   │
+│                                              │
+│ ┌──────────────────────────────────────┐   │
+│ │ WEEK 4 (Jan 22-28)                   │   │
+│ │ Team D: David + Emma                 │   │
+│ │ Status: Scheduled                    │   │
+│ └──────────────────────────────────────┘   │
+├─────────────────────────────────────────────┤
+│ Your Next Turn: Week of Feb 5, 2025        │
+│ Teammate: Mike                              │
+│ [Set Reminder] [Contact Teammate]          │
+└─────────────────────────────────────────────┘
+```
+
+TEAM GENERATION ALGORITHM
+------------------------
+```typescript
+function generateGroceryTeams(participants: User[]): Team[] {
+  const teamSize = 2
+  const shuffled = shuffle(participants)
+  const teams: Team[] = []
+  
+  for (let i = 0; i < shuffled.length; i += teamSize) {
+    const members = shuffled.slice(i, i + teamSize)
+    teams.push({
+      number: teams.length + 1,
+      members,
+      weekNumber: (teams.length % 4) + 1
+    })
+  }
+  
+  // If odd number, last team has 3 members
+  return teams
+}
+
+// Example: 17 participants
+// Team 1 (2): User 1, User 2
+// Team 2 (2): User 3, User 4
+// ...
+// Team 8 (3): User 15, User 16, User 17 ← 3 members
+```
+
+ADMIN TEAM MANAGEMENT
+--------------------
+Route: /admin/meals/teams
+Permission: Admin
+
+Features:
+- View all teams
+- Manually reassign members
+- Override rotation
+- Generate new rotation
+- View team performance history
+
+```
+Generate Teams Button Actions:
+1. Get all meal participants
+2. Run generation algorithm
+3. Create grocery_teams records for 4 weeks
+4. Create team_members junction records
+5. Notify all users of their assignments
+```
+
+
+PAGE 3.2: UPLOAD GROCERY RECEIPT
+-------------------------------
+Component: UploadReceiptModal.tsx
+Trigger: Grocery team's week, click "Upload Receipt"
+
+```
+┌──────────────────────────────────────────┐
+│ Upload Grocery Receipt              Step 1/4│
+├──────────────────────────────────────────┤
+│ Upload Receipt Photo                      │
+│ ┌────────────────────────────────┐       │
+│ │                                 │       │
+│ │      📷 Take Photo             │       │
+│ │         or                     │       │
+│ │      📁 Upload from Gallery    │       │
+│ │                                 │       │
+│ │  [Click to Upload]             │       │
+│ │                                 │       │
+│ └────────────────────────────────┘       │
+│ Max 5MB | JPG, PNG formats               │
+│                                            │
+│ Already uploaded: 2 receipts              │
+│ [receipt1.jpg] [×]                        │
+│ [receipt2.jpg] [×]                        │
+│                                            │
+│ [Back] [Next →]                           │
+└──────────────────────────────────────────┘
+
+Step 2: OCR Processing
+┌──────────────────────────────────────────┐
+│ Upload Grocery Receipt              Step 2/4│
+├──────────────────────────────────────────┤
+│ Processing Receipt...                     │
+│ [████████████░░░░░░] 75%                 │
+│ Extracting items and prices...           │
+│                                            │
+│ (Auto-advances when complete)             │
+└──────────────────────────────────────────┘
+
+Step 3: Review & Edit Items
+┌──────────────────────────────────────────┐
+│ Upload Grocery Receipt              Step 3/4│
+├──────────────────────────────────────────┤
+│ Review Extracted Items                    │
+│ Click any item to edit | [+ Add Item]    │
+│                                            │
+│ ┌─────────────────────────────────────┐  │
+│ │Item Name    │Qty  │Price │Total │✏️│×││
+│ ├─────────────────────────────────────┤  │
+│ │Chicken      │3 kg │₹150  │₹450  │✏️│×││
+│ │Fish         │2 kg │₹300  │₹600  │✏️│×││
+│ │Rice (Basmati│10 kg│₹80   │₹800  │✏️│×││
+│ │Tomatoes     │5 kg │₹30   │₹150  │✏️│×││
+│ │Onions       │3 kg │₹30   │₹90   │✏️│×││
+│ │...          │     │      │      │  │ ││
+│ │             │     │      │      │  │ ││
+│ │TOTAL        │     │      │₹4,500│  │ ││
+│ └─────────────────────────────────────┘  │
+│                                            │
+│ Confidence: High ✓ (85% average)         │
+│                                            │
+│ [Back] [Next →]                           │
+└──────────────────────────────────────────┘
+
+Step 4: Additional Details
+┌──────────────────────────────────────────┐
+│ Upload Grocery Receipt              Step 4/4│
+├──────────────────────────────────────────┤
+│ Purchase Date *                           │
+│ [📅 Jan 3, 2025]                         │
+│                                            │
+│ Store Name *                              │
+│ [SuperMart_______________________]        │
+│                                            │
+│ Total Amount *                            │
+│ [₹4,500] (auto-calculated)               │
+│                                            │
+│ Notes (optional)                          │
+│ ┌────────────────────────────────┐       │
+│ │Bought extra vegetables as they │       │
+│ │were on sale. Saved ₹500.       │       │
+│ └────────────────────────────────┘       │
+│                                            │
+│ Budget Status:                            │
+│ Budget: ₹5,000 | Spent: ₹4,500           │
+│ Under Budget: ₹500 ✓                     │
+│                                            │
+│ [Back] [Submit for Approval]             │
+└──────────────────────────────────────────┘
+```
+
+OCR PROCESSING LOGIC
+-------------------
+```typescript
+async function processReceiptOCR(imageUrl: string) {
+  // Step 1: Use Tesseract.js for MVP
+  const worker = createWorker()
+  await worker.load()
+  await worker.loadLanguage('eng')
+  await worker.initialize('eng')
+  
+  const { data: { text } } = await worker.recognize(imageUrl)
+  await worker.terminate()
+  
+  // Step 2: Parse extracted text
+  const items = parseReceiptText(text)
+  
+  // Step 3: Extract totals, store name, date
+  const parsed = {
+    storeName: extractStoreName(text),
+    date: extractDate(text),
+    items: items,
+    subtotal: extractSubtotal(text),
+    tax: extractTax(text),
+    total: extractTotal(text)
+  }
+  
+  return parsed
+}
+
+function parseReceiptText(text: string): GroceryItem[] {
+  // Regex patterns for common receipt formats
+  const linePattern = /(.+?)\s+(\d+\.?\d*)\s*kg?\s*₹?(\d+\.?\d*)/gi
+  const items: GroceryItem[] = []
+  
+  let match
+  while ((match = linePattern.exec(text)) !== null) {
+    items.push({
+      name: match[1].trim(),
+      quantity: parseFloat(match[2]),
+      price: parseFloat(match[3]),
+      confidence: 0.85 // Calculate actual confidence
+    })
+  }
+  
+  return items
+}
+```
+
+SUBMISSION FLOW
+--------------
+1. Validate all items have name, qty, price
+2. Validate total matches sum of items (±5% tolerance)
+3. Upload to database:
+```typescript
+const purchase = {
+  grocery_team_id: teamId,
+  purchase_date: formData.date,
+  total_amount: formData.total,
+  receipt_url: imageUrl,
+  store_name: formData.storeName,
+  status: 'pending_approval',
+  submitted_by: userId,
+  notes: formData.notes
+}
+
+await supabase.from('grocery_purchases').insert(purchase)
+
+// Insert all items
+const itemsData = items.map(item => ({
+  grocery_purchase_id: purchase.id,
+  item_name: item.name,
+  quantity: item.quantity,
+  unit_price: item.price / item.quantity,
+  total_price: item.price,
+  confidence_score: item.confidence
+}))
+
+await supabase.from('grocery_items').insert(itemsData)
+```
+
+4. Send notification to admin
+5. Show success message
+6. Update team status to "Pending Approval"
+
+
+PAGE 3.3: ADMIN PURCHASE REVIEW
+------------------------------
+Route: /admin/meals/purchases
+Component: PurchaseReviewPage.tsx
+Permission: Admin
+
+```
+┌─────────────────────────────────────────────┐
+│ Grocery Purchases - Pending Approval        │
+├─────────────────────────────────────────────┤
+│ ┌──────────────────────────────────────┐   │
+│ │ Team A (Sarah + Mike) - Week 1       │   │
+│ │ Submitted: Jan 3, 2025 10:30 AM     │   │
+│ │                                       │   │
+│ │ Store: SuperMart                     │   │
+│ │ Date: Jan 3, 2025                    │   │
+│ │ Total: ₹4,500                        │   │
+│ │ Budget: ₹5,000                       │   │
+│ │ Variance: -₹500 (Under ✓)           │   │
+│ │                                       │   │
+│ │ Items: 28 | [View Receipt 📷]        │   │
+│ │ [View Itemized List ▼]              │   │
+│ │                                       │   │
+│ │ Notes: "Bought extra vegetables..."  │   │
+│ │                                       │   │
+│ │ [Approve ✓] [Reject ×] [Request Info]│   │
+│ └──────────────────────────────────────┘   │
+└─────────────────────────────────────────────┘
+```
+
+APPROVE FLOW
+-----------
+1. Admin clicks "Approve"
+2. Confirmation modal
+3. System actions:
+   - Update purchase status to 'approved'
+   - Record approved_by and approved_at
+   - Trigger cost calculation Edge Function
+   - Create bills for all meal participants
+   - Send notifications
+   - Unlock rating for other participants
+
+COST CALCULATION EDGE FUNCTION
+-----------------------------
+```typescript
+export async function calculateMealCosts({
+  groceryPurchaseId
+}: {
+  groceryPurchaseId: string
+}) {
+  // Get purchase details
+  const { data: purchase } = await supabase
+    .from('grocery_purchases')
+    .select('*, grocery_teams(*)')
+    .eq('id', groceryPurchaseId)
+    .single()
+  
+  // Get all meal participants
+  const { data: participants } = await supabase
+    .from('meal_participants')
+    .select('*')
+    .eq('community_meal_id', purchase.grocery_teams.community_meal_id)
+  
+  const totalCost = purchase.total_amount
+  
+  // Calculate shares based on meal types
+  const shares = participants.map(p => {
+    let multiplier = 0
+    
+    if (p.meal_types.includes('breakfast')) multiplier += 0.3
+    if (p.meal_types.includes('lunch')) multiplier += 0.4
+    if (p.meal_types.includes('dinner')) multiplier += 0.5
+    
+    // Full meals (all 3) = 1.2, normalize to 1.0 for calculation
+    const normalizedMultiplier = multiplier / 1.2
+    
+    let share = totalCost * normalizedMultiplier
+    
+    // Add water cost if opted in
+    if (p.include_water) {
+      share += 50 // ₹50 per week for water
+    }
+    
+    return {
+      user_id: p.user_id,
+      amount: Math.round(share)
+    }
+  })
+  
+  // Create bill splits
+  for (const share of shares) {
+    await supabase.from('bill_splits').insert({
+      member_id: share.user_id,
+      bill_type_id: 'grocery_bill_type_id',
+      amount: share.amount,
+      payment_status: 'unpaid'
+    })
+  }
+  
+  return { success: true, shares }
+}
+```
+
+
+PAGE 3.4: TEAM RATING
+-------------------
+Component: RateTeamModal.tsx
+Trigger: End of week, non-team members rate
+
+```
+┌──────────────────────────────────────────┐
+│ Rate Grocery Team                         │
+├──────────────────────────────────────────┤
+│ Team A (Sarah + Mike)                     │
+│ Week: Jan 1-7, 2025                      │
+│ Total Spent: ₹4,500                      │
+│                                            │
+│ ┌────────────────────────────────────┐   │
+│ │ Rate each category:                │   │
+│ │                                     │   │
+│ │ Budget Management                  │   │
+│ │ ⭐⭐⭐⭐⭐ (5/5)                     │   │
+│ │ Came under budget, great!          │   │
+│ │                                     │   │
+│ │ Quality of Items                   │   │
+│ │ ⭐⭐⭐⭐⭐ (5/5)                     │   │
+│ │ Fresh and high quality             │   │
+│ │                                     │   │
+│ │ Timeliness                         │   │
+│ │ ⭐⭐⭐⭐⭐ (5/5)                     │   │
+│ │ Shopped early in the week          │   │
+│ │                                     │   │
+│ │ Communication                      │   │
+│ │ ⭐⭐⭐⭐☆ (4/5)                     │   │
+│ │ Good updates                       │   │
+│ │                                     │   │
+│ │ Overall: ⭐ 4.75/5 (auto-avg)      │   │
+│ └────────────────────────────────────┘   │
+│                                            │
+│ Feedback (optional):                      │
+│ ┌────────────────────────────────────┐   │
+│ │Great job! Everything was fresh and │   │
+│ │they managed the budget well.       │   │
+│ └────────────────────────────────────┘   │
+│                                            │
+│ [Cancel] [Submit Rating]                  │
+└──────────────────────────────────────────┘
+```
+
+RATING SYSTEM
+------------
+Categories (1-5 stars each):
+1. Budget Management (did they stay within budget?)
+2. Quality of Items (freshness, brands)
+3. Timeliness (shopped early vs last minute?)
+4. Communication (updates to group?)
+
+Overall Rating: Average of 4 categories
+
+Loyalty Points:
+- 5 stars: +30 points per member
+- 4-4.9 stars: +25 points per member
+- 3-3.9 stars: +15 points per member
+- <3 stars: -100 points per member (poor performance)
+
+================================================================================
+[Document continues...]
+================================================================================
+
+Total Pages: 8 major pages
+Status: Core pages documented
+Remaining: Settings, Cost Summary, Reports
+
+This module is the most complex in the application!
+

@@ -1,0 +1,461 @@
+================================================================================
+PAGE DOCUMENTATION INDEX
+RoomMate Manager - Complete Page Specifications
+================================================================================
+
+VERSION: 1.1
+LAST UPDATED: November 4, 2025
+TOTAL PAGES DOCUMENTED: 50+ pages across 8 major modules
+
+⭐⭐⭐ NEW: See TASKS.txt in root folder for step-by-step implementation guide! ⭐⭐⭐
+
+================================================================================
+DOCUMENTATION STRUCTURE
+================================================================================
+
+This folder contains complete specifications for every page in the RoomMate
+Manager application. Each file includes:
+
+✓ Page layout with ASCII diagrams
+✓ Component specifications
+✓ API integration details
+✓ State management patterns
+✓ User interaction flows
+✓ Business logic algorithms
+✓ Error handling
+✓ Validation rules
+
+================================================================================
+PAGE DOCUMENTATION FILES
+================================================================================
+
+1. authentication.txt
+   - Login Page
+   - Phone OTP Login
+   - Registration (4-step form)
+   - Approval Pending Page
+   - Admin Approval Page
+   - Onboarding Tour
+   - Forgot Password
+   - Reset Password
+   
+   Total: 8 pages
+
+2. dashboard.txt
+   - Member Dashboard (main landing page)
+   - Admin Dashboard (admin view)
+   - Apartment Hierarchy Page (folder view)
+   - Profile Page
+   - Tasks & Schedules Page
+   - Resources & Booking Page
+   - Notifications Center
+   - Ad Watching Page
+   
+   Total: 8 pages
+
+3. bills.txt
+   - My Bills Dashboard
+   - Bill Detail Page
+   - Payment Submission Modal
+   - Payment History Page
+   - Admin Bills Dashboard (foundation)
+   - Admin Payment Verification
+   - Bill Creation (admin)
+   - Dispute Management
+   
+   Total: 8+ pages
+
+4. communitymeal.txt
+   - Community Meal Dashboard
+   - Weekly Menu Planner (admin)
+   - Grocery Team Management
+   - Upload Receipt (4-step OCR flow)
+   - Admin Purchase Review
+   - Team Rating System
+   - Cost Summary Page
+   - Meal Settings (admin)
+   
+   Total: 8+ pages
+
+5. voting.txt
+   - Polls Dashboard
+   - Voting Page (multiple poll types)
+   - Poll Results Page
+   - Create Poll (admin)
+   - Automated Dispute Escalation
+   - Poll Management (admin)
+   
+   Total: 6 pages
+
+6. investments.txt
+   - Money Pools Dashboard
+   - Money Pool Detail Page
+   - Create Money Pool (admin)
+   - Mark Contribution Paid
+   - Payout Processing (admin)
+   - Investments Tracking (MVP)
+   
+   Total: 6 pages
+
+7. admin-management.txt
+   - User Management Page
+   - Settings Page (6 tabs)
+   - Reports & Analytics Page
+   - Invite Management Page
+   - Activity Log Page
+   - Apartment Configuration Page
+   - Bulk Actions Page
+   
+   Total: 7 pages
+
+8. additional-features.txt ⭐ NEW!
+   - Vacancy Management Page
+   - Collaboration/Investment Pooling Page
+   - Ad Watching & Donations Page
+   - Guest Registration Page
+   - Guest Dashboard Page
+   
+   Total: 5 pages
+
+9. theme.txt (Design System)
+   - Complete UI/UX specifications
+   - Color palette
+   - Typography
+   - Component styles
+   - Animations
+   - Responsive guidelines
+   - Accessibility standards
+
+================================================================================
+QUICK REFERENCE: PAGE ROUTES
+================================================================================
+
+PUBLIC ROUTES
+-------------
+/login                          → Login Page
+/register                       → Registration Page
+/forgot-password                → Forgot Password
+/reset-password?token=xxx       → Reset Password
+/join/:inviteCode               → Join with Invite
+
+AUTHENTICATED MEMBER ROUTES
+--------------------------
+/dashboard                      → Member Dashboard
+/profile                        → User Profile
+/bills                          → My Bills
+/bills/:billId                  → Bill Detail
+/bills/history                  → Payment History
+/tasks                          → Tasks & Schedules
+/resources                      → Resources & Booking
+/meals                          → Community Meals
+/meals/teams                    → Grocery Teams
+/polls                          → Polls & Voting
+/polls/:pollId/vote             → Voting Page
+/polls/:pollId/results          → Poll Results
+/money-pools                    → Money Pools
+/money-pools/:poolId            → Pool Detail
+/investments                    → Investments
+/notifications                  → Notifications Center
+/ads                            → Ad Watching
+/apartment                      → Apartment Hierarchy
+/vacancy                        → Vacancy Management
+/collaboration                  → Collaboration & Investments
+/guest/:code                    → Guest Registration
+/guest/dashboard                → Guest Dashboard (limited)
+
+ADMIN ROUTES
+-----------
+/admin/dashboard                → Admin Dashboard
+/admin/users                    → User Management
+/admin/approvals                → Member Approvals
+/admin/bills                    → Bill Management
+/admin/bills/create             → Create Bill
+/admin/meals/menu               → Menu Planner
+/admin/meals/teams              → Team Management
+/admin/meals/purchases          → Purchase Review
+/admin/polls/create             → Create Poll
+/admin/money-pools/create       → Create Money Pool
+/admin/money-pools/:id/payout   → Process Payout
+/admin/settings                 → Settings (6 tabs)
+/admin/reports                  → Reports & Analytics
+/admin/invites                  → Invite Management
+/admin/activity-log             → Activity Log
+/admin/apartment/config         → Apartment Config
+/admin/bulk-actions             → Bulk Actions
+
+SPECIAL PAGES
+------------
+/approval-pending               → Awaiting Admin Approval
+/onboarding                     → First-time User Tour
+
+================================================================================
+COMPONENT HIERARCHY
+================================================================================
+
+LAYOUT COMPONENTS (Used across all pages)
+-----------------------------------------
+- AppLayout (main wrapper)
+  - TopNavigation (desktop)
+  - Sidebar (desktop)
+  - BottomNavigation (mobile)
+  - NotificationBell
+  - UserMenu
+  
+PAGE-SPECIFIC COMPONENTS
+-----------------------
+Each page file contains detailed specifications for:
+- Cards
+- Modals
+- Forms
+- Tables
+- Charts
+- Lists
+- Widgets
+
+Total Reusable Components: 100+
+
+================================================================================
+STATE MANAGEMENT PATTERNS
+================================================================================
+
+GLOBAL STATE (Zustand)
+---------------------
+- Auth state (user, token, role)
+- Apartment context (current apartment)
+- UI state (sidebar, modals)
+
+SERVER STATE (React Query)
+-------------------------
+- Bills data
+- Tasks data
+- Meals data
+- Polls data
+- User data
+- Reports data
+
+FORM STATE (React Hook Form)
+---------------------------
+- All form inputs
+- Validation with Zod
+- Multi-step forms
+
+REAL-TIME (Supabase Realtime)
+----------------------------
+- Bill updates
+- Payment verifications
+- Poll votes
+- Task completions
+- Notifications
+
+================================================================================
+API INTEGRATION PATTERNS
+================================================================================
+
+REST API (Supabase Auto-generated)
+----------------------------------
+GET    /rest/v1/{table}?filters
+POST   /rest/v1/{table}
+PATCH  /rest/v1/{table}?id=eq.{id}
+DELETE /rest/v1/{table}?id=eq.{id}
+
+EDGE FUNCTIONS (Custom Logic)
+-----------------------------
+POST /functions/v1/calculate-bill-splits
+POST /functions/v1/process-receipt-ocr
+POST /functions/v1/generate-report
+POST /functions/v1/calculate-meal-costs
+POST /functions/v1/process-payout
+
+SCHEDULED FUNCTIONS (Cron)
+--------------------------
+/functions/v1/send-payment-reminders (daily)
+/functions/v1/escalate-disputes (hourly)
+/functions/v1/rotate-grocery-teams (weekly)
+/functions/v1/auto-close-polls (hourly)
+
+================================================================================
+IMAGE STORAGE (Cloudinary)
+================================================================================
+
+FOLDER STRUCTURE
+---------------
+/roommate-manager/
+  /users/{user_id}/
+    /profile/              → Profile photos
+    /documents/            → ID cards, resumes
+  /apartments/{apt_id}/
+    /resources/            → Resource photos
+  /meals/{meal_id}/
+    /photos/               → Food photos
+  /groceries/{purchase_id}/
+    /receipts/             → Grocery receipts
+  /tasks/{task_id}/
+    /proofs/               → Task completion proofs
+  /payments/{payment_id}/
+    /receipts/             → Payment proofs
+  /disputes/{dispute_id}/
+    /evidence/             → Dispute evidence
+
+TRANSFORMATIONS
+--------------
+- Profile photos: 300×300, circular crop, face detection
+- ID cards: Original quality, no transformations
+- Receipts: OCR-optimized, auto-rotate
+- Task proofs: 1200×900, quality 85%
+- General: 800×600, quality auto, format auto
+
+================================================================================
+DEVELOPMENT WORKFLOW
+================================================================================
+
+SUGGESTED ORDER OF IMPLEMENTATION
+---------------------------------
+Phase 1 - Foundation (Weeks 1-4)
+  ✓ Authentication pages
+  ✓ Dashboard pages
+  ✓ User profile
+  ✓ Apartment hierarchy
+
+Phase 2 - Bills & Payments (Weeks 5-6)
+  ✓ Bills pages (user + admin)
+  ✓ Payment tracking
+  ✓ Payment verification
+
+Phase 3 - Community Meals (Weeks 7-10)
+  ✓ Meal dashboard
+  ✓ Menu planner
+  ✓ Grocery teams
+  ✓ OCR receipt processing
+
+Phase 4 - Tasks & Resources (Weeks 11-12)
+  ✓ Task management
+  ✓ Resource booking
+  ✓ Rotation systems
+
+Phase 5 - Engagement Features (Weeks 13-14)
+  ✓ Voting & polls
+  ✓ Dispute handling
+  ✓ Loyalty points
+
+Phase 6 - Money Pools (Weeks 15-16)
+  ✓ Pool creation
+  ✓ Contribution tracking
+  ✓ Payout processing
+
+Phase 7 - Admin Tools (Weeks 17-18)
+  ✓ Admin management pages
+  ✓ Reports & analytics
+  ✓ Bulk actions
+
+Phase 8 - Polish & Testing (Weeks 19-20)
+  ✓ Ad integration
+  ✓ Notifications
+  ✓ Testing & bug fixes
+
+================================================================================
+TESTING CHECKLIST
+================================================================================
+
+Each page should be tested for:
+
+FUNCTIONALITY
+□ All buttons and links work
+□ Forms validate correctly
+□ Data saves and loads properly
+□ Real-time updates work
+□ Error states handled
+
+UI/UX
+□ Responsive on mobile/tablet/desktop
+□ Matches design system (theme.txt)
+□ Animations smooth
+□ Loading states present
+□ Empty states designed
+
+SECURITY
+□ Route permissions enforced
+□ RLS policies working
+□ Input sanitization
+□ XSS prevention
+□ CSRF protection
+
+PERFORMANCE
+□ Page loads < 2 seconds
+□ Images optimized
+□ Code split properly
+□ Infinite scroll works
+□ No memory leaks
+
+ACCESSIBILITY
+□ Keyboard navigation
+□ Screen reader compatible
+□ Color contrast meets WCAG 2.1 AA
+□ Focus indicators visible
+□ Alt text on images
+
+================================================================================
+DEPLOYMENT CHECKLIST
+================================================================================
+
+BEFORE DEPLOYING EACH PAGE
+--------------------------
+□ Linting passes (ESLint)
+□ Unit tests pass (Vitest)
+□ Integration tests pass
+□ E2E tests pass (Playwright)
+□ Accessibility audit passes (axe)
+□ Performance audit passes (Lighthouse > 90)
+□ Manual testing completed
+□ Code review completed
+□ Documentation updated
+
+================================================================================
+SUPPORT & MAINTENANCE
+================================================================================
+
+DOCUMENTATION UPDATES
+--------------------
+When updating pages, update corresponding .txt file with:
+- New components added
+- API changes
+- Business logic changes
+- UI/UX changes
+
+VERSION CONTROL
+--------------
+Keep this INDEX.txt updated with:
+- New pages added
+- Pages removed
+- Route changes
+- Major feature changes
+
+================================================================================
+CONTACT & RESOURCES
+================================================================================
+
+Design System:      theme.txt
+API Documentation:  ../api-endpoints.txt
+Database Schema:    ../database-schema.sql
+PRD:                ../prdfinal.txt
+User Flows:         ../user-flows.txt
+
+================================================================================
+STATISTICS
+================================================================================
+
+Total Pages Documented:     40+
+Total Components:           100+
+Total API Endpoints:        50+
+Total Database Tables:      25+
+Lines of Documentation:     10,000+
+Estimated Dev Time:         20 weeks (solo developer)
+                           10 weeks (2 developers)
+                           5 weeks (4 developers)
+
+================================================================================
+END OF INDEX
+================================================================================
+
+Ready for development! 🚀
+Each page has complete specifications for pixel-perfect implementation.
+

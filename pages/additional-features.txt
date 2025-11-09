@@ -1,0 +1,674 @@
+================================================================================
+ADDITIONAL FEATURES - COMPLETE SPECIFICATIONS
+RoomMate Manager - Vacancy, Collaboration, Ad Watching & Guest Access
+================================================================================
+
+OVERVIEW
+--------
+This document covers the remaining essential pages:
+1. Guest Access System (temporary residents)
+2. Vacancy Management (finding new roommates)
+3. Collaboration/Investment Pooling (group investments)
+4. Ad Watching & Donations (earning system)
+
+================================================================================
+1. VACANCY MANAGEMENT PAGE
+================================================================================
+
+Route: /vacancy
+Component: VacancyManagementPage.tsx
+Permission: All Members
+
+LAYOUT STRUCTURE
+```
+┌─────────────────────────────────────────────┐
+│ Vacancy Management 🔴                        │
+├─────────────────────────────────────────────┤
+│ ⚠️ 2 beds vacant in your apartment          │
+│ Rent share increases when beds are empty!   │
+├─────────────────────────────────────────────┤
+│ VACANT BEDS                                  │
+│ ┌─────────────────────────────────────┐    │
+│ │ 🔴 Room 305 > Upper Bed 2           │    │
+│ │ Rent: ₹8,000/month                  │    │
+│ │ Type: Upper Bed                     │    │
+│ │ Vacant since: Jan 1, 2025 (5 days) │    │
+│ │                                      │    │
+│ │ Current Impact:                      │    │
+│ │ Your share increased by: +₹470/month│    │
+│ │                                      │    │
+│ │ [Share Vacancy] [Generate Invite]   │    │
+│ └─────────────────────────────────────┘    │
+│                                              │
+│ ┌─────────────────────────────────────┐    │
+│ │ 🔴 Room 307 > Lower Bed 1           │    │
+│ │ Rent: ₹10,000/month                 │    │
+│ │ Type: Lower Bed                     │    │
+│ │ Vacant since: Dec 28, 2024 (8 days)│    │
+│ │                                      │    │
+│ │ [Share Vacancy] [Generate Invite]   │    │
+│ └─────────────────────────────────────┘    │
+├─────────────────────────────────────────────┤
+│ SHARE VACANCY                                │
+│ ┌────────────────────────────────────────┐  │
+│ │ Share via:                             │  │
+│ │ [WhatsApp] [Email] [Copy Link]        │  │
+│ │                                         │  │
+│ │ Generate Invite:                       │  │
+│ │ [Create Invite Link] [Generate QR]     │  │
+│ └────────────────────────────────────────┘  │
+├─────────────────────────────────────────────┤
+│ FIND ROOMMATES                               │
+│ Post on social media:                        │
+│ [Post to Facebook] [Post to Twitter]        │
+│ [Share on WhatsApp Groups]                  │
+│                                              │
+│ Or share this message:                       │
+│ ┌────────────────────────────────────────┐  │
+│ │ "Room available at Greg's Apartment!   │  │
+│ │  Upper Bed - ₹8,000/month              │  │
+│ │  Join: [link]"                         │  │
+│ │ [Copy Message]                          │  │
+│ └────────────────────────────────────────┘  │
+└─────────────────────────────────────────────┘
+```
+
+FEATURES
+--------
+1. Vacancy Alert System
+   - Red indicators for vacant beds
+   - Days vacant counter
+   - Cost impact calculator
+
+2. Share Options
+   - WhatsApp direct share
+   - Email invitation
+   - Copy shareable link
+   - Social media posts
+
+3. Invite Management
+   - Generate unique invite links
+   - QR code generation
+   - Track invite usage
+
+4. Cost Impact Display
+   - Show how vacancy affects each member
+   - Calculate increased share
+   - Motivate quick filling
+
+API ENDPOINTS
+------------
+```typescript
+// Get vacant beds
+GET /rest/v1/locations
+  ?apartment_id=eq.{id}
+  &is_vacant=eq.true
+  &type=eq.bed
+  &select=*
+
+// Calculate cost impact
+GET /functions/v1/calculate-vacancy-impact
+  ?apartment_id={id}
+Response: {
+  vacantBeds: number,
+  totalVacantRent: number,
+  memberImpact: Array<{memberId: string, additionalCost: number}>
+}
+
+// Generate invite link
+POST /rest/v1/apartment_invites
+Body: {
+  apartment_id: string,
+  location_id: string,  // Pre-assign bed
+  created_by: string,
+  invite_code: string,
+  expires_at: timestamp,
+  max_uses: number
+}
+```
+
+
+================================================================================
+2. COLLABORATION / INVESTMENT POOLING PAGE
+================================================================================
+
+Route: /collaboration
+Component: CollaborationPage.txt
+Permission: All Members
+
+LAYOUT STRUCTURE
+```
+┌─────────────────────────────────────────────┐
+│ Collaboration & Investments 📈               │
+├─────────────────────────────────────────────┤
+│ Pool money together and invest for growth!  │
+├─────────────────────────────────────────────┤
+│ YOUR COLLABORATIVE INVESTMENTS               │
+│ ┌─────────────────────────────────────┐    │
+│ │ 📊 Mutual Fund - HDFC Balanced      │    │
+│ │ Started: Jan 2025                    │    │
+│ │                                      │    │
+│ │ Your Share: ₹5,000                  │    │
+│ │ Total Pool: ₹20,000 (5 members)    │    │
+│ │                                      │    │
+│ │ Participants:                        │    │
+│ │ • You - ₹5,000 (25%)                │    │
+│ │ • John - ₹5,000 (25%)               │    │
+│ │ • Sarah - ₹5,000 (25%)              │    │
+│ │ • Mike - ₹3,000 (15%)               │    │
+│ │ • Lisa - ₹2,000 (10%)               │    │
+│ │                                      │    │
+│ │ Investment Details:                  │    │
+│ │ • Type: Mutual Fund                 │    │
+│ │ • Expected Return: 12% p.a.         │    │
+│ │ • Lock-in: 3 years                  │    │
+│ │ • Maturity: Jan 2028                │    │
+│ │                                      │    │
+│ │ Current Value (Manual Update):       │    │
+│ │ ₹21,500 (+7.5%) ⬆️                  │    │
+│ │ Your Share Value: ₹5,375            │    │
+│ │ Last Updated: Jan 4, 2025           │    │
+│ │                                      │    │
+│ │ [Update Value] [Add Note] [View]    │    │
+│ └─────────────────────────────────────┘    │
+│                                              │
+│ ┌─────────────────────────────────────┐    │
+│ │ 🏢 Fixed Deposit - SBI Bank         │    │
+│ │ Started: Dec 2024                    │    │
+│ │ Your Share: ₹10,000                 │    │
+│ │ Total Pool: ₹50,000 (8 members)    │    │
+│ │ Expected Return: 7% p.a.            │    │
+│ │ Maturity: Dec 2025                  │    │
+│ │ [View Details]                       │    │
+│ └─────────────────────────────────────┘    │
+├─────────────────────────────────────────────┤
+│ CREATE NEW INVESTMENT POOL (Admin Only)     │
+│ [+ Create Investment Pool]                  │
+├─────────────────────────────────────────────┤
+│ INVESTMENT NOTES & UPDATES                   │
+│ Track progress and share insights:          │
+│ • Jan 4: Fund grew by 5% this month! 📈     │
+│ • Dec 28: Dividends received - ₹1,200       │
+│ • Dec 15: New fund added to portfolio       │
+│ [Add Note]                                   │
+└─────────────────────────────────────────────┘
+```
+
+CREATE INVESTMENT POOL MODAL
+```
+┌──────────────────────────────────────────┐
+│ Create Investment Pool                    │
+├──────────────────────────────────────────┤
+│ Investment Name *                         │
+│ [HDFC Mutual Fund_______________]        │
+│                                            │
+│ Investment Type *                          │
+│ [Mutual Fund ▼]                           │
+│ • Mutual Fund                             │
+│ • Fixed Deposit                           │
+│ • Stocks                                  │
+│ • Cryptocurrency                          │
+│ • Real Estate                             │
+│ • Gold                                    │
+│ • Other                                   │
+│                                            │
+│ Select Participants *                      │
+│ ┌────────────────────────────────────┐   │
+│ │ ☑ You                              │   │
+│ │   Amount: ₹ [5000]                 │   │
+│ │                                     │   │
+│ │ ☑ John Doe                         │   │
+│ │   Amount: ₹ [5000]                 │   │
+│ │                                     │   │
+│ │ ☑ Sarah Smith                      │   │
+│ │   Amount: ₹ [5000]                 │   │
+│ │                                     │   │
+│ │ Total Pool: ₹15,000                │   │
+│ └────────────────────────────────────┘   │
+│                                            │
+│ Expected Return Rate *                     │
+│ [12] % per annum                          │
+│                                            │
+│ Investment Date *                          │
+│ [📅 Jan 1, 2025]                          │
+│                                            │
+│ Maturity/Exit Date                         │
+│ [📅 Jan 1, 2028] (3 years)                │
+│                                            │
+│ Lock-in Period                             │
+│ [36] months                               │
+│                                            │
+│ Notes/Description                          │
+│ ┌────────────────────────────────────┐   │
+│ │ Long-term wealth building strategy │   │
+│ │ targeting 12% annual returns       │   │
+│ └────────────────────────────────────┘   │
+│                                            │
+│ 💡 Note: This is manual tracking only.   │
+│    No automatic transactions.             │
+│                                            │
+│ [Cancel] [Create Investment Pool]         │
+└──────────────────────────────────────────┘
+```
+
+FEATURES
+--------
+1. **Manual Investment Tracking**
+   - Track pooled investments
+   - Record contributions per member
+   - Update values manually
+   - Calculate profit/loss share
+
+2. **Multiple Investment Types**
+   - Mutual Funds
+   - Fixed Deposits
+   - Stocks
+   - Cryptocurrency
+   - Real Estate
+   - Gold
+   - Custom
+
+3. **Participant Management**
+   - Flexible contribution amounts
+   - Ownership percentage
+   - Individual gains/losses
+
+4. **Notes & Updates**
+   - Track investment progress
+   - Share market insights
+   - Record dividends
+   - Note important dates
+
+5. **Value Tracking**
+   - Manual value updates
+   - Profit/Loss calculation
+   - Individual share value
+   - Performance metrics
+
+API ENDPOINTS
+------------
+```typescript
+// Get all investment pools
+GET /rest/v1/investment_pools
+  ?apartment_id=eq.{id}
+  &select=*,investment_participants(*)
+
+// Create investment pool
+POST /rest/v1/investment_pools
+Body: {
+  apartment_id: string,
+  name: string,
+  investment_type: string,
+  total_amount: number,
+  expected_return_rate: number,
+  start_date: date,
+  maturity_date: date,
+  lock_in_months: number,
+  description: string,
+  participants: Array<{
+    member_id: string,
+    amount: number,
+    ownership_percentage: number
+  }>
+}
+
+// Update investment value
+POST /rest/v1/investment_updates
+Body: {
+  investment_pool_id: string,
+  current_value: number,
+  updated_by: string,
+  notes: string
+}
+
+// Add investment note
+POST /rest/v1/investment_notes
+Body: {
+  investment_pool_id: string,
+  note_text: string,
+  created_by: string
+}
+```
+
+
+================================================================================
+3. AD WATCHING & DONATIONS PAGE
+================================================================================
+
+Route: /ads
+Component: AdWatchingPage.tsx
+Permission: All Members
+
+LAYOUT STRUCTURE
+```
+┌─────────────────────────────────────────────┐
+│ Watch Ads & Earn 🎥                          │
+├─────────────────────────────────────────────┤
+│ YOUR EARNINGS TODAY                          │
+│ ┌──────────┐ ┌──────────┐ ┌──────────┐    │
+│ │Morning   │ │Evening   │ │Total     │    │
+│ │5/5 ads ✅│ │3/5 ads ⏳│ │₹16       │    │
+│ │₹8        │ │₹4.80     │ │earned    │    │
+│ └──────────┘ └──────────┘ └──────────┘    │
+├─────────────────────────────────────────────┤
+│ AVAILABLE AD SESSIONS                        │
+│ ┌─────────────────────────────────────┐    │
+│ │ 🌅 MORNING SESSION (6 AM - 12 PM)   │    │
+│ │ ✅ Completed! All 5 ads watched      │    │
+│ │ Earned: ₹8.00                       │    │
+│ │ Bonus: +5 loyalty points 🏆         │    │
+│ │ Next session: Tomorrow 6 AM         │    │
+│ └─────────────────────────────────────┘    │
+│                                              │
+│ ┌─────────────────────────────────────┐    │
+│ │ 🌆 EVENING SESSION (6 PM - 11 PM)   │    │
+│ │ 3 of 5 ads watched                  │    │
+│ │ Earned: ₹4.80                       │    │
+│ │ Remaining: 2 ads (₹3.20 more)       │    │
+│ │                                      │    │
+│ │ [▶️ Watch Next Ad] (30 seconds)     │    │
+│ └─────────────────────────────────────┘    │
+├─────────────────────────────────────────────┤
+│ EARNINGS SUMMARY                             │
+│ ┌────────────────────────────────────────┐  │
+│ │ This Month (January 2025)              │  │
+│ │                                         │  │
+│ │ Ads Watched: 210 / 310 possible       │  │
+│ │ [████████████░░░░░] 68%               │  │
+│ │                                         │  │
+│ │ Earnings Breakdown:                    │  │
+│ │ • Your ads: ₹336.00                    │  │
+│ │ • Your share: ₹235.20 (70%)           │  │
+│ │ • Platform: ₹100.80 (30%)             │  │
+│ │                                         │  │
+│ │ Total Earned: ₹235.20                  │  │
+│ │ Loyalty Points: +42 pts 🏆            │  │
+│ └────────────────────────────────────────┘  │
+├─────────────────────────────────────────────┤
+│ DONATE TO DEVELOPER 💝                       │
+│ ┌────────────────────────────────────────┐  │
+│ │ Help us keep the app free!             │  │
+│ │                                         │  │
+│ │ Donate from your earnings:             │  │
+│ │ ⚪ ₹10  ⚪ ₹20  ⚪ ₹50  ⚪ ₹100          │  │
+│ │ ⚪ Custom: ₹ [_____]                   │  │
+│ │                                         │  │
+│ │ Or watch extra ads for us:             │  │
+│ │ [Watch 5 Bonus Ads for Developer]      │  │
+│ │ (Revenue goes 100% to development)     │  │
+│ │                                         │  │
+│ │ [💝 Donate Now]                         │  │
+│ └────────────────────────────────────────┘  │
+├─────────────────────────────────────────────┤
+│ APARTMENT LEADERBOARD (This Month)           │
+│ 1. 🥇 John - 295 ads - ₹413 earned         │
+│ 2. 🥈 You - 210 ads - ₹294 earned          │
+│ 3. 🥉 Sarah - 205 ads - ₹287 earned        │
+│ 4. Mike - 180 ads - ₹252 earned            │
+│ [View Full Leaderboard]                      │
+├─────────────────────────────────────────────┤
+│ WATCH STREAKS & BONUSES 🔥                   │
+│ Current Streak: 7 days 🔥                   │
+│ Next Bonus: 1.5x earnings at 30 days!      │
+│ [███████░░░░░░░░░░░░] 7/30 days            │
+└─────────────────────────────────────────────┘
+```
+
+AD WATCHING INTERFACE
+```
+┌──────────────────────────────────────────┐
+│ Watching Ad 4 of 5                  [×]  │
+├──────────────────────────────────────────┤
+│                                            │
+│         [AD VIDEO PLAYER]                 │
+│       (15-30 seconds video)               │
+│                                            │
+│     Time remaining: 12 seconds            │
+│     [████████████░░░] 60%                 │
+│                                            │
+│  ⚠️ Watch full ad to earn rewards         │
+│                                            │
+├──────────────────────────────────────────┤
+│ After this ad:                             │
+│ • +₹1.60 earnings                         │
+│ • +1 ad toward daily goal                 │
+│ • Progress toward 30-day streak           │
+│                                            │
+│ [Ad will auto-advance when complete]      │
+└──────────────────────────────────────────┘
+```
+
+FEATURES
+--------
+1. **Dual Session System**
+   - Morning: 5 ads (6 AM - 12 PM)
+   - Evening: 5 ads (6 PM - 11 PM)
+   - 10 ads max per day
+
+2. **Revenue Sharing**
+   - 70% to user
+   - 30% to platform
+   - Real-time tracking
+
+3. **Donation Options**
+   - Donate from earnings
+   - Watch bonus ads for developer
+   - 100% of bonus ad revenue goes to development
+
+4. **Gamification**
+   - Watch streaks
+   - Multiplier bonuses
+   - Leaderboards
+   - Loyalty points
+
+5. **Tracking Dashboard**
+   - Daily/Monthly earnings
+   - Ads watched vs possible
+   - Participation rate
+   - Payout schedule
+
+API ENDPOINTS
+------------
+```typescript
+// Get user ad stats
+GET /rest/v1/ad_views
+  ?user_id=eq.{id}
+  &view_date=gte.{startOfMonth}
+  &select=*
+
+// Record ad view
+POST /rest/v1/ad_views
+Body: {
+  user_id: string,
+  apartment_id: string,
+  view_date: date,
+  session_type: 'morning' | 'evening',
+  ad_count: number,
+  revenue_generated: number,
+  points_earned: number
+}
+
+// Process donation
+POST /rest/v1/developer_donations
+Body: {
+  user_id: string,
+  amount: number,
+  donation_type: 'earnings' | 'bonus_ads',
+  ad_count_if_bonus: number
+}
+
+// Get leaderboard
+GET /functions/v1/ad-leaderboard
+  ?apartment_id={id}
+  &period=this_month
+Response: Array<{
+  memberId: string,
+  name: string,
+  adsWatched: number,
+  earnings: number,
+  rank: number
+}>
+```
+
+
+================================================================================
+4. GUEST ACCESS SYSTEM
+================================================================================
+
+Route: /guest/register/:sponsorCode
+Component: GuestRegistrationPage.tsx
+Permission: Public (with valid sponsor code)
+
+LAYOUT STRUCTURE
+```
+┌─────────────────────────────────────────────┐
+│ Guest Registration                           │
+│ Sponsored by: Sarah Smith                   │
+├─────────────────────────────────────────────┤
+│ GUEST INFORMATION                            │
+│                                              │
+│ Full Name *                                  │
+│ [John's Brother_________________]           │
+│                                              │
+│ Relationship to Sponsor *                    │
+│ [Brother ▼]                                  │
+│                                              │
+│ Phone Number *                               │
+│ [+91 ▼] [9876543210_______________]         │
+│                                              │
+│ Stay Duration *                              │
+│ From: [📅 Jan 5, 2025]                      │
+│ To:   [📅 Jan 15, 2025] (10 days)          │
+│                                              │
+│ ID Proof * (for security)                   │
+│ [Upload ID Card]                            │
+│                                              │
+│ Photo *                                      │
+│ [Upload or Take Photo]                      │
+│                                              │
+│ ☑ I agree to apartment rules               │
+│ ☑ Sponsor is financially responsible        │
+│                                              │
+│ [Submit for Approval]                        │
+└─────────────────────────────────────────────┘
+```
+
+GUEST DASHBOARD
+```
+┌─────────────────────────────────────────────┐
+│ Guest Portal 🏠                              │
+├─────────────────────────────────────────────┤
+│ Welcome, John!                               │
+│ Sponsored by: Sarah Smith                   │
+│ Stay: Jan 5 - Jan 15 (10 days)             │
+│ Days Remaining: 8 days                      │
+├─────────────────────────────────────────────┤
+│ YOUR ACCESS                                  │
+│ ✅ Entry Code: #2580                        │
+│ ✅ WiFi: Available                          │
+│ ✅ Meals: Opted In (₹160/day)              │
+│ ✅ Resources: Enabled                       │
+├─────────────────────────────────────────────┤
+│ TODAY'S MEALS                                │
+│ • Lunch: 12-2 PM - Rice, Curry (₹80)       │
+│ • Dinner: 7-9 PM - Roti, Paneer (₹80)      │
+├─────────────────────────────────────────────┤
+│ CHARGES SUMMARY                              │
+│ Meals: ₹640 (8 days)                        │
+│ Total billed to sponsor                     │
+└─────────────────────────────────────────────┘
+```
+
+FEATURES
+--------
+- Temporary access (1-30 days)
+- Sponsored by existing member
+- Limited features access
+- Automatic billing to sponsor
+- Entry codes and WiFi access
+
+
+================================================================================
+DATABASE TABLES FOR NEW FEATURES
+================================================================================
+
+```sql
+-- Vacancy Alerts
+CREATE TABLE vacancy_alerts (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    location_id UUID REFERENCES locations(id),
+    apartment_id UUID REFERENCES apartments(id),
+    vacant_since DATE NOT NULL,
+    shared_count INTEGER DEFAULT 0,
+    created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Investment Pools
+CREATE TABLE investment_pools (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    apartment_id UUID REFERENCES apartments(id),
+    name VARCHAR(255) NOT NULL,
+    investment_type VARCHAR(50),
+    total_amount DECIMAL(10,2),
+    current_value DECIMAL(10,2),
+    expected_return_rate DECIMAL(5,2),
+    start_date DATE,
+    maturity_date DATE,
+    lock_in_months INTEGER,
+    description TEXT,
+    created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Investment Participants
+CREATE TABLE investment_participants (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    investment_pool_id UUID REFERENCES investment_pools(id),
+    member_id UUID REFERENCES apartment_members(id),
+    amount DECIMAL(10,2),
+    ownership_percentage DECIMAL(5,2),
+    joined_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Developer Donations
+CREATE TABLE developer_donations (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    user_id UUID REFERENCES auth.users(id),
+    apartment_id UUID REFERENCES apartments(id),
+    amount DECIMAL(10,2),
+    donation_type VARCHAR(20),
+    ad_count INTEGER,
+    donated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Guests
+CREATE TABLE guests (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    apartment_id UUID REFERENCES apartments(id),
+    sponsor_member_id UUID REFERENCES apartment_members(id),
+    name VARCHAR(255),
+    relationship VARCHAR(100),
+    phone VARCHAR(20),
+    email VARCHAR(255),
+    photo_url TEXT,
+    id_proof_url TEXT,
+    stay_from DATE,
+    stay_to DATE,
+    status VARCHAR(20) DEFAULT 'pending',
+    entry_code VARCHAR(20),
+    created_at TIMESTAMPTZ DEFAULT NOW()
+);
+```
+
+================================================================================
+[Document Complete]
+================================================================================
+
+Missing Pages Added: 4 major features
+- Vacancy Management
+- Collaboration/Investment Pooling  
+- Ad Watching & Donations
+- Guest Access System
+
+All vendor references removed!
+Status: COMPLETE
+
